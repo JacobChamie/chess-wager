@@ -1,54 +1,73 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { memo, useEffect, useState, useRef } from 'react';
 
-const Timer = ({ timeMs, player, active, score = 0 }) => {
+const Timer = memo(({ timeMs, player, active }) => {
   const [displayTime, setDisplayTime] = useState(timeMs);
   const lastSyncRef = useRef(Date.now());
 
-  // Sync from server
   useEffect(() => {
     setDisplayTime(timeMs);
     lastSyncRef.current = Date.now();
   }, [timeMs]);
 
-  // Local interpolation for smooth countdown
+  const isLowTime = displayTime < 30000;
+
   useEffect(() => {
     if (!active) return;
-
     const interval = setInterval(() => {
       const elapsed = Date.now() - lastSyncRef.current;
       const current = Math.max(0, timeMs - elapsed);
       setDisplayTime(current);
-    }, 100);
-
+    }, isLowTime ? 50 : 100);
     return () => clearInterval(interval);
-  }, [active, timeMs]);
+  }, [active, timeMs, isLowTime]);
 
-  const totalSeconds = Math.max(0, Math.ceil(displayTime / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
+  let timeDisplay;
+  if (displayTime < 30000) {
+    const totalTenths = Math.max(0, Math.floor(displayTime / 100));
+    const secs = Math.floor(totalTenths / 10);
+    const tenths = totalTenths % 10;
+    timeDisplay = `${secs}.${tenths}`;
+  } else {
+    const totalSeconds = Math.max(0, Math.ceil(displayTime / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    timeDisplay = `${minutes}:${seconds < 10 ? `0${seconds}` : seconds}`;
+  }
+
+  const timerClass = active
+    ? isLowTime
+      ? 'timer timer--low'
+      : 'timer timer--active'
+    : 'timer timer--inactive';
 
   return (
-    <div
-      style={{
-        margin: '8px 0',
-        padding: '10px 16px',
-        fontWeight: 'bold',
-        color: '#f5f5f5',
-        backgroundColor: active ? '#4caf50' : '#333',
-        borderRadius: '10px',
-        textAlign: 'center',
-        fontSize: '16px',
-        minWidth: '220px',
-      }}
-    >
-      <div style={{ marginBottom: '4px' }}>
-        {player} {score > 0 ? `· Score: ${score}` : ''}
+    <div className={timerClass} style={{ margin: '6px 0' }}>
+      <div
+        style={{
+          fontSize: '12px',
+          fontWeight: 600,
+          opacity: 0.8,
+          marginBottom: '2px',
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px',
+        }}
+      >
+        {player}
       </div>
-      <div>
-        {minutes}:{seconds < 10 ? `0${seconds}` : seconds}
+      <div
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: isLowTime ? '24px' : '20px',
+          fontWeight: 700,
+          lineHeight: 1.2,
+        }}
+      >
+        {timeDisplay}
       </div>
     </div>
   );
-};
+});
+
+Timer.displayName = 'Timer';
 
 export default Timer;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGameSocket } from '../hooks/useGameSocket.js';
 import ChessboardComponent from '../components/chessboard.jsx';
@@ -6,6 +6,31 @@ import ChatBox from '../components/chatbox.jsx';
 import Timer from '../components/timer.jsx';
 import GameOverModal from '../components/GameOverModal.jsx';
 import DrawOfferBar from '../components/DrawOfferBar.jsx';
+import PromotionPicker from '../components/PromotionPicker.jsx';
+
+// Live countdown banner for opponent disconnect
+const DisconnectBanner = ({ disconnectTime }) => {
+  const [secondsLeft, setSecondsLeft] = useState(() => {
+    const elapsed = Date.now() - disconnectTime.start;
+    return Math.max(0, Math.ceil((disconnectTime.timeout - elapsed) / 1000));
+  });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - disconnectTime.start;
+      const remaining = Math.max(0, Math.ceil((disconnectTime.timeout - elapsed) / 1000));
+      setSecondsLeft(remaining);
+      if (remaining <= 0) clearInterval(interval);
+    }, 200);
+    return () => clearInterval(interval);
+  }, [disconnectTime]);
+
+  return (
+    <div className="disconnect-banner">
+      Opponent disconnected — {secondsLeft}s to reconnect
+    </div>
+  );
+};
 
 const GamePage = () => {
   const { gameId } = useParams();
@@ -17,8 +42,12 @@ const GamePage = () => {
     drawOffer,
     rematchOffer,
     rematchGameId,
-    opponentDisconnected,
+    disconnectTime,
     chatMessages,
+    moveError,
+    boardResetKey,
+    premoveSquares,
+    tryLocalMove,
     sendMove,
     resign,
     offerDraw,
@@ -26,9 +55,14 @@ const GamePage = () => {
     requestRematch,
     respondRematch,
     sendChat,
+    addPremove,
+    clearPremoves,
   } = useGameSocket(gameId);
 
-  const [boardSize, setBoardSize] = useState(320);
+  const [boardSize, setBoardSize] = useState(() => {
+    if (typeof window === 'undefined') return 320;
+    return Math.min(480, Math.max(240, Math.floor(window.innerWidth * 0.9) - 40));
+  });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenBoardSize, setFullscreenBoardSize] = useState(() => {
     if (typeof window === 'undefined') return 480;
@@ -36,21 +70,23 @@ const GamePage = () => {
     return Math.max(320, Math.floor(shorter * 0.8));
   });
 
-  // Navigate to rematch game
+  const [pendingPromotion, setPendingPromotion] = useState(null);
+
+  const gameStateRef = useRef(gameState);
+  useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
+
   useEffect(() => {
     if (rematchGameId) {
       navigate(`/game/${rematchGameId}`, { replace: true });
     }
   }, [rematchGameId, navigate]);
 
-  // Fullscreen board sizing
   useEffect(() => {
     if (!isFullscreen) return;
     const computeSize = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
-      const padding = 140;
-      const shorter = Math.min(w, h - padding);
+      const shorter = Math.min(w, h - 140);
       setFullscreenBoardSize(Math.max(320, Math.floor(shorter * 0.95)));
     };
     computeSize();
@@ -58,30 +94,85 @@ const GamePage = () => {
     return () => window.removeEventListener('resize', computeSize);
   }, [isFullscreen]);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') clearPremoves();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [clearPremoves]);
+
   const handlePieceDrop = useCallback(
-    (sourceSquare, targetSquare) => {
-      if (!gameState || gameState.status !== 'active') return false;
-      if (gameState.turn !== gameState.myColor) return false;
-      sendMove(sourceSquare, targetSquare, 'q');
+    (sourceSquare, targetSquare, piece) => {
+      const gs = gameStateRef.current;
+      if (!gs || gs.status !== 'active') return false;
+
+      if (gs.turn !== gs.myColor) {
+        const isPawn = piece?.[1] === 'P' || piece?.[1] === 'p';
+        const isPromoRank =
+          (gs.myColor === 'w' && targetSquare[1] === '8') ||
+          (gs.myColor === 'b' && targetSquare[1] === '1');
+        const promotion = isPawn && isPromoRank ? 'q' : undefined;
+        addPremove(sourceSquare, targetSquare, promotion);
+        return false;
+      }
+
+      const isPawn = piece?.[1] === 'P' || piece?.[1] === 'p';
+      const isPromoRank =
+        (gs.myColor === 'w' && targetSquare[1] === '8') ||
+        (gs.myColor === 'b' && targetSquare[1] === '1');
+
+      if (isPawn && isPromoRank) {
+        setPendingPromotion({ from: sourceSquare, to: targetSquare });
+        return false;
+      }
+
+      const localMove = tryLocalMove(sourceSquare, targetSquare);
+      if (!localMove) return false;
+
+      sendMove(sourceSquare, targetSquare);
       return true;
     },
-    [gameState, sendMove]
+    [tryLocalMove, sendMove, addPremove]
   );
+
+  const handlePromotionChoice = useCallback(
+    (piece) => {
+      if (!pendingPromotion) return;
+      const { from, to } = pendingPromotion;
+      setPendingPromotion(null);
+      const localMove = tryLocalMove(from, to, piece);
+      if (!localMove) return;
+      sendMove(from, to, piece);
+    },
+    [pendingPromotion, tryLocalMove, sendMove]
+  );
+
+  const handlePromotionCancel = useCallback(() => {
+    setPendingPromotion(null);
+  }, []);
+
+  const handleSquareRightClick = useCallback(() => {
+    clearPremoves();
+  }, [clearPremoves]);
 
   if (!connected || !gameState) {
     return (
       <div
         style={{
           minHeight: '100vh',
-          backgroundColor: '#1e1e1e',
-          color: '#f5f5f5',
+          background: 'var(--bg-base)',
           display: 'flex',
+          flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
-          fontSize: '18px',
+          gap: '16px',
         }}
       >
-        Connecting to game...
+        <div className="spinner" />
+        <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>
+          Connecting to game...
+        </p>
       </div>
     );
   }
@@ -91,49 +182,43 @@ const GamePage = () => {
   const myColor = gameState.myColor;
   const orientation = myColor === 'b' ? 'black' : 'white';
 
-  // Determine which timer is "top" (opponent) and "bottom" (me)
   const myName = myColor === 'w' ? gameState.whiteName : gameState.blackName;
-  const opponentName =
-    myColor === 'w' ? gameState.blackName : gameState.whiteName;
-  const myTime =
-    myColor === 'w' ? gameState.whiteTime : gameState.blackTime;
-  const opponentTime =
-    myColor === 'w' ? gameState.blackTime : gameState.whiteTime;
+  const opponentName = myColor === 'w' ? gameState.blackName : gameState.whiteName;
+  const myTime = myColor === 'w' ? gameState.whiteTime : gameState.blackTime;
+  const opponentTime = myColor === 'w' ? gameState.blackTime : gameState.whiteTime;
   const myTurnActive = gameState.turn === myColor && isActive;
   const opponentTurnActive = gameState.turn !== myColor && isActive;
 
-  // Draw offer is for me to respond to
   const showDrawOffer = drawOffer && drawOffer !== myColor;
 
   return (
     <div
       style={{
         textAlign: 'center',
-        backgroundColor: '#1e1e1e',
+        background: 'var(--bg-base)',
         minHeight: '100vh',
-        color: '#f5f5f5',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        paddingTop: '8px',
+        paddingTop: '12px',
         position: 'relative',
       }}
     >
-      <h1 style={{ fontSize: '2rem', marginTop: 0, lineHeight: 2.5 }}>
-        Chess Wager
-      </h1>
+      {disconnectTime && <DisconnectBanner disconnectTime={disconnectTime} />}
 
-      {opponentDisconnected && (
+      {moveError && (
         <div
           style={{
             padding: '8px 16px',
-            backgroundColor: '#e53935',
-            borderRadius: '8px',
+            background: 'rgba(255, 152, 0, 0.12)',
+            border: '1px solid rgba(255, 152, 0, 0.3)',
+            borderRadius: 'var(--radius-sm)',
             marginBottom: '8px',
-            fontSize: '14px',
+            fontSize: '13px',
+            color: '#ffa726',
           }}
         >
-          Opponent disconnected. They have 60s to reconnect.
+          Move rejected: {moveError}
         </div>
       )}
 
@@ -142,7 +227,7 @@ const GamePage = () => {
           display: 'flex',
           flexDirection: 'row',
           justifyContent: 'center',
-          alignItems: 'flex-start',
+          alignItems: 'stretch',
           gap: '20px',
         }}
       >
@@ -153,9 +238,9 @@ const GamePage = () => {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
+              position: 'relative',
             }}
           >
-            {/* Opponent timer (top) */}
             <Timer
               timeMs={opponentTime}
               player={opponentName}
@@ -163,41 +248,32 @@ const GamePage = () => {
             />
 
             <ChessboardComponent
+              key={boardResetKey}
               position={gameState.fen}
               onPieceDrop={handlePieceDrop}
               boardSize={boardSize}
               onBoardSizeChange={setBoardSize}
               boardOrientation={orientation}
+              premoveSquares={premoveSquares}
+              onSquareRightClick={handleSquareRightClick}
             />
 
-            {/* Board controls */}
-            <div
-              style={{
-                marginTop: '8px',
-                display: 'flex',
-                gap: '8px',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.85rem',
-              }}
-            >
-              <button
-                onClick={() => setIsFullscreen(true)}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  backgroundColor: '#4caf50',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  fontSize: '0.85rem',
-                }}
-              >
-                Full board
-              </button>
-            </div>
+            {pendingPromotion && (
+              <PromotionPicker
+                color={myColor}
+                onSelect={handlePromotionChoice}
+                onCancel={handlePromotionCancel}
+              />
+            )}
 
-            {/* My timer (bottom) */}
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => setIsFullscreen(true)}
+              style={{ marginTop: '8px', fontSize: '12px' }}
+            >
+              Full board
+            </button>
+
             <Timer
               timeMs={myTime}
               player={myName}
@@ -214,12 +290,15 @@ const GamePage = () => {
               flexDirection: 'column',
               alignItems: 'stretch',
               gap: '8px',
+              width: '340px',
+              flexShrink: 0,
             }}
           >
             <ChatBox
               messages={chatMessages}
               onSend={sendChat}
               moves={gameState.moves}
+              myName={myName}
             />
 
             {showDrawOffer && (
@@ -230,41 +309,19 @@ const GamePage = () => {
             )}
 
             {isActive && (
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '8px',
-                  justifyContent: 'space-between',
-                }}
-              >
+              <div style={{ display: 'flex', gap: '8px' }}>
                 <button
+                  className="btn btn-danger"
                   onClick={resign}
-                  style={{
-                    flex: 1,
-                    padding: '10px 12px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    backgroundColor: '#e53935',
-                    color: '#fff',
-                    cursor: 'pointer',
-                    fontWeight: 'bold',
-                  }}
+                  style={{ flex: 1 }}
                 >
                   Resign
                 </button>
                 <button
+                  className={`btn btn-ghost${drawOffer ? '' : ''}`}
                   onClick={offerDraw}
                   disabled={!!drawOffer}
-                  style={{
-                    flex: 1,
-                    padding: '10px 12px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    backgroundColor: drawOffer ? '#444' : '#555',
-                    color: '#fff',
-                    cursor: drawOffer ? 'default' : 'pointer',
-                    fontWeight: 'bold',
-                  }}
+                  style={{ flex: 1 }}
                 >
                   {drawOffer === myColor ? 'Draw Offered' : 'Offer Draw'}
                 </button>
@@ -274,7 +331,6 @@ const GamePage = () => {
         )}
       </div>
 
-      {/* Game Over Modal */}
       {isCompleted && (
         <GameOverModal
           result={gameState.result}
@@ -288,13 +344,12 @@ const GamePage = () => {
         />
       )}
 
-      {/* FULLSCREEN MODE */}
       {isActive && isFullscreen && (
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: '#121212',
+            background: 'var(--bg-base)',
             zIndex: 950,
             display: 'flex',
             justifyContent: 'center',
@@ -302,7 +357,6 @@ const GamePage = () => {
             overflow: 'hidden',
           }}
         >
-          {/* Opponent timer top-left */}
           <div style={{ position: 'absolute', top: 24, left: 24 }}>
             <Timer
               timeMs={opponentTime}
@@ -311,7 +365,6 @@ const GamePage = () => {
             />
           </div>
 
-          {/* My timer bottom-left */}
           <div style={{ position: 'absolute', bottom: 24, left: 24 }}>
             <Timer
               timeMs={myTime}
@@ -321,13 +374,25 @@ const GamePage = () => {
           </div>
 
           <ChessboardComponent
+            key={`fs-${boardResetKey}`}
             position={gameState.fen}
             onPieceDrop={handlePieceDrop}
             boardSize={fullscreenBoardSize}
             boardOrientation={orientation}
+            premoveSquares={premoveSquares}
+            onSquareRightClick={handleSquareRightClick}
           />
 
-          {/* Actions bottom-right */}
+          {pendingPromotion && (
+            <div style={{ position: 'absolute', zIndex: 1000 }}>
+              <PromotionPicker
+                color={myColor}
+                onSelect={handlePromotionChoice}
+                onCancel={handlePromotionCancel}
+              />
+            </div>
+          )}
+
           <div
             style={{
               position: 'absolute',
@@ -339,50 +404,18 @@ const GamePage = () => {
               alignItems: 'flex-end',
             }}
           >
-            <button
-              onClick={resign}
-              style={{
-                padding: '10px 16px',
-                borderRadius: '8px',
-                border: 'none',
-                backgroundColor: '#e53935',
-                color: '#fff',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-              }}
-            >
+            <button className="btn btn-danger" onClick={resign}>
               Resign
             </button>
-            <button
-              onClick={offerDraw}
-              style={{
-                padding: '10px 16px',
-                borderRadius: '8px',
-                border: 'none',
-                backgroundColor: '#555',
-                color: '#fff',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-              }}
-            >
+            <button className="btn btn-ghost" onClick={offerDraw}>
               Offer Draw
             </button>
           </div>
 
-          {/* Exit fullscreen top-right */}
           <div style={{ position: 'absolute', top: 24, right: 24 }}>
             <button
+              className="btn btn-ghost"
               onClick={() => setIsFullscreen(false)}
-              style={{
-                padding: '8px 14px',
-                borderRadius: '8px',
-                border: 'none',
-                backgroundColor: '#333',
-                color: '#fff',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                fontSize: '0.9rem',
-              }}
             >
               Exit full board
             </button>

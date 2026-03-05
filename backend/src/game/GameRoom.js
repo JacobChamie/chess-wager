@@ -4,7 +4,10 @@ import { ClockManager } from './ClockManager.js';
 export class GameRoom {
   constructor(gameId, timeControl) {
     this.gameId = gameId;
-    this.timeControl = timeControl; // seconds
+    // Normalize: store as { time, increment } object
+    this.timeControl = typeof timeControl === 'object'
+      ? { time: timeControl.time || 300, increment: timeControl.increment || 0 }
+      : { time: timeControl || 300, increment: 0 };
     this.chess = new Chess();
     this.status = 'waiting'; // waiting | active | completed
 
@@ -85,17 +88,19 @@ export class GameRoom {
     }
   }
 
-  tryMove(sessionId, { from, to, promotion }) {
+  tryMove(socketOrSessionId, { from, to, promotion }) {
     if (this.status !== 'active') {
       return { valid: false, message: 'Game is not active' };
     }
 
-    const color = this.getPlayerColor(sessionId);
+    const color = this.getPlayerColor(socketOrSessionId);
     if (!color) {
+      console.log(`[tryMove] Player not found: id=${socketOrSessionId}, white=${this.white?.socketId}/${this.white?.sessionId}, black=${this.black?.socketId}/${this.black?.sessionId}`);
       return { valid: false, message: 'Not a player in this game' };
     }
 
     if (this.chess.turn() !== color) {
+      console.log(`[tryMove] Not your turn: color=${color}, turn=${this.chess.turn()}`);
       return { valid: false, message: 'Not your turn' };
     }
 
@@ -132,6 +137,7 @@ export class GameRoom {
       turn: this.chess.turn(),
       whiteTime: times.whiteTime,
       blackTime: times.blackTime,
+      moves: this.moveHistory,
       gameOver,
     };
   }
@@ -254,9 +260,10 @@ export class GameRoom {
 
   getFullState(sessionId) {
     const color = this.getPlayerColor(sessionId);
+    const baseTimeMs = this.timeControl.time * 1000;
     const times = this.clock ? this.clock.getTimesMs() : {
-      whiteTime: this.timeControl * 1000,
-      blackTime: this.timeControl * 1000,
+      whiteTime: baseTimeMs,
+      blackTime: baseTimeMs,
     };
 
     return {

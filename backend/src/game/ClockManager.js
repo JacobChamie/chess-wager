@@ -1,7 +1,12 @@
 export class ClockManager {
-  constructor(timeControlSeconds, onTimeout) {
-    this.whiteTimeMs = timeControlSeconds * 1000;
-    this.blackTimeMs = timeControlSeconds * 1000;
+  constructor(timeControl, onTimeout) {
+    // Support both number (seconds) and object { time, increment }
+    const timeSeconds = typeof timeControl === 'object' ? timeControl.time : timeControl;
+    const incrementSec = typeof timeControl === 'object' ? (timeControl.increment || 0) : 0;
+
+    this.whiteTimeMs = timeSeconds * 1000;
+    this.blackTimeMs = timeSeconds * 1000;
+    this.incrementMs = incrementSec * 1000;
     this.activeSide = null; // 'w' | 'b' | null
     this.lastSwitchTimestamp = null;
     this.timeoutHandle = null;
@@ -19,10 +24,11 @@ export class ClockManager {
 
     const elapsed = Date.now() - this.lastSwitchTimestamp;
 
+    // Deduct elapsed, then add increment for the player who just moved
     if (this.activeSide === 'w') {
-      this.whiteTimeMs = Math.max(0, this.whiteTimeMs - elapsed);
+      this.whiteTimeMs = Math.max(0, this.whiteTimeMs - elapsed) + this.incrementMs;
     } else {
-      this.blackTimeMs = Math.max(0, this.blackTimeMs - elapsed);
+      this.blackTimeMs = Math.max(0, this.blackTimeMs - elapsed) + this.incrementMs;
     }
 
     clearTimeout(this.timeoutHandle);

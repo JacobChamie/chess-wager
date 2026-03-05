@@ -1,7 +1,35 @@
-export function registerHandlers(io, socket, sessionId, gameManager, lobbyManager) {
+import { createRateLimiter } from '../utils/rateLimiter.js';
+
+const rateLimiter = createRateLimiter(15, 1000); // 15 events per second
+
+function broadcastLobbyState(io, lobbyManager) {
+  io.emit('lobby:state_update', {
+    openGames: lobbyManager.getOpenGames(),
+    seekers: lobbyManager.getSeekers(),
+  });
+}
+
+export function registerHandlers(io, socket, sessionId, gameManager, lobbyManager, authUser) {
+  const checkRate = () => {
+    if (!rateLimiter(socket.id)) {
+      console.warn(`[RateLimit] Socket ${socket.id} exceeded rate limit`);
+      return false;
+    }
+    return true;
+  };
+
   // --- Lobby Events ---
 
+  socket.on('lobby:get_state', () => {
+    if (!checkRate()) return;
+    socket.emit('lobby:state_update', {
+      openGames: lobbyManager.getOpenGames(),
+      seekers: lobbyManager.getSeekers(),
+    });
+  });
+
   socket.on('lobby:play', ({ timeControl, playerName }) => {
+    if (!checkRate()) return;
     const match = lobbyManager.addToQueue(
       sessionId,
       socket.id,
@@ -21,13 +49,17 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     } else {
       socket.emit('lobby:queued', {});
     }
+    broadcastLobbyState(io, lobbyManager);
   });
 
   socket.on('lobby:cancel_play', () => {
+    if (!checkRate()) return;
     lobbyManager.removeFromQueue(sessionId);
+    broadcastLobbyState(io, lobbyManager);
   });
 
   socket.on('lobby:create_game', ({ timeControl, playerName }) => {
+    if (!checkRate()) return;
     const gameId = lobbyManager.createPendingGame(
       sessionId,
       socket.id,
@@ -35,9 +67,11 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       timeControl || 300
     );
     socket.emit('lobby:game_created', { gameId });
+    broadcastLobbyState(io, lobbyManager);
   });
 
   socket.on('lobby:join_game', ({ gameId, playerName }) => {
+    if (!checkRate()) return;
     const result = lobbyManager.joinPendingGame(
       gameId,
       sessionId,
@@ -54,11 +88,13 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
 
     _emitGameStart(io, room, creator, joiner);
     _setupGameCallbacks(io, room, gameManager);
+    broadcastLobbyState(io, lobbyManager);
   });
 
   // --- Game Events ---
 
   socket.on('game:join', ({ gameId }) => {
+    if (!checkRate()) return;
     const room = gameManager.getGame(gameId);
     if (!room) {
       socket.emit('lobby:error', { message: 'Game not found' });
@@ -92,6 +128,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
   });
 
   socket.on('game:move', ({ gameId, from, to, promotion }) => {
+    if (!checkRate()) return;
     const room = gameManager.getGame(gameId);
     if (!room) return;
 
@@ -110,6 +147,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       turn: result.turn,
       whiteTime: result.whiteTime,
       blackTime: result.blackTime,
+      moves: result.moves,
     });
 
     if (result.gameOver) {
@@ -119,6 +157,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
   });
 
   socket.on('game:resign', ({ gameId }) => {
+    if (!checkRate()) return;
     const room = gameManager.getGame(gameId);
     if (!room) return;
 
@@ -130,6 +169,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
   });
 
   socket.on('game:offer_draw', ({ gameId }) => {
+    if (!checkRate()) return;
     const room = gameManager.getGame(gameId);
     if (!room) return;
 
@@ -145,6 +185,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
   });
 
   socket.on('game:respond_draw', ({ gameId, accept }) => {
+    if (!checkRate()) return;
     const room = gameManager.getGame(gameId);
     if (!room) return;
 
@@ -160,6 +201,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
   });
 
   socket.on('game:rematch', ({ gameId }) => {
+    if (!checkRate()) return;
     const room = gameManager.getGame(gameId);
     if (!room) return;
 
@@ -175,6 +217,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
   });
 
   socket.on('game:respond_rematch', ({ gameId, accept }) => {
+    if (!checkRate()) return;
     const room = gameManager.getGame(gameId);
     if (!room) return;
 
@@ -221,6 +264,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
   // --- Chat Events ---
 
   socket.on('chat:send', ({ gameId, message }) => {
+    if (!checkRate()) return;
     const room = gameManager.getGame(gameId);
     if (!room || !message?.trim()) return;
 
@@ -237,6 +281,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
 
     lobbyManager.removeFromQueue(sessionId);
     lobbyManager.removePendingBySession(sessionId);
+    broadcastLobbyState(io, lobbyManager);
 
     // Find any active game and handle disconnect
     const activeGame = gameManager.getActiveGameForSession(sessionId);

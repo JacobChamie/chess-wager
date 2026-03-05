@@ -16,5 +16,19 @@ export const socket = io(SERVER_URL, {
   reconnection: true,
   reconnectionAttempts: 10,
   reconnectionDelay: 1000,
-  auth: { sessionId },
+  auth: {
+    sessionId,
+    token: localStorage.getItem('chess_token'),
+  },
 });
+
+export function updateSocketAuth(token) {
+  socket.auth = {
+    ...socket.auth,
+    token: token || undefined,
+  };
+  // Reconnect with new auth if currently connected
+  if (socket.connected) {
+    socket.disconnect().connect();
+  }
+}

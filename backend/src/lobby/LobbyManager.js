@@ -1,3 +1,9 @@
+// Serialize time control for matching comparison
+function tcKey(tc) {
+  if (typeof tc === 'object') return `${tc.time}+${tc.increment || 0}`;
+  return `${tc}+0`;
+}
+
 export class LobbyManager {
   constructor(gameManager) {
     this.gameManager = gameManager;
@@ -14,9 +20,10 @@ export class LobbyManager {
     this.queue.push({ sessionId, socketId, playerName, timeControl });
 
     // Try to find a match with same time control (different socket)
+    const myKey = tcKey(timeControl);
     const match = this.queue.find(
       (entry) =>
-        entry.socketId !== socketId && entry.timeControl === timeControl
+        entry.socketId !== socketId && tcKey(entry.timeControl) === myKey
     );
 
     if (match) {
@@ -103,6 +110,25 @@ export class LobbyManager {
         break;
       }
     }
+  }
+
+  getOpenGames() {
+    const games = [];
+    for (const [gameId, pending] of this.pendingGames) {
+      games.push({
+        gameId,
+        creatorName: pending.playerName,
+        timeControl: pending.timeControl,
+      });
+    }
+    return games;
+  }
+
+  getSeekers() {
+    return this.queue.map((entry) => ({
+      playerName: entry.playerName,
+      timeControl: entry.timeControl,
+    }));
   }
 
   _createMatch(player1, player2) {

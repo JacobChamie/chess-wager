@@ -1,13 +1,15 @@
 // src/components/chessboard.jsx
-import React from 'react';
+import { memo } from 'react';
 import { Chessboard } from 'react-chessboard';
 
-const ChessboardComponent = ({
+const ChessboardComponent = memo(({
   position,
   onPieceDrop,
   boardSize = 320,
   onBoardSizeChange,
   boardOrientation = 'white',
+  premoveSquares,
+  onSquareRightClick,
 }) => {
   const minSize = 240;
   const maxSize = 640;
@@ -62,14 +64,14 @@ const ChessboardComponent = ({
         onPieceDrop={onPieceDrop}
         boardWidth={boardSize}
         boardOrientation={boardOrientation}
+        animationDuration={100}
         customBoardStyle={{
           borderRadius: '12px',
           overflow: 'hidden',
           boxShadow: '0 0 25px rgba(0, 0, 0, 0.7)',
         }}
-        customSquareStyles={{
-          cursor: 'pointer',
-        }}
+        customSquareStyles={premoveSquares}
+        onSquareRightClick={onSquareRightClick}
       />
 
       {/* draggable resize "button" only in normal (resizable) mode */}
@@ -106,6 +108,8 @@ const ChessboardComponent = ({
       )}
     </div>
   );
-};
+});
+
+ChessboardComponent.displayName = 'ChessboardComponent';
 
 export default ChessboardComponent;

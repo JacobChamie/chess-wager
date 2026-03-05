@@ -13,7 +13,10 @@
       "Bash(curl:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(psql:*)",
+      "Bash(lsof:*)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }

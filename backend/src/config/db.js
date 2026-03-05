@@ -1,5 +1,5 @@
 import pg from 'pg';
-import { readFileSync } from 'fs';
+import { readFileSync, readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -15,11 +15,16 @@ export async function initDb() {
   await pool.query('SELECT NOW()');
   console.log('Database connected');
 
-  // Run migrations
-  const migration = readFileSync(
-    join(__dirname, '../../migrations/001_create_games.sql'),
-    'utf-8'
-  );
-  await pool.query(migration);
+  // Run all migrations in sorted order
+  const migrationsDir = join(__dirname, '../../migrations');
+  const files = readdirSync(migrationsDir)
+    .filter((f) => f.endsWith('.sql'))
+    .sort();
+
+  for (const file of files) {
+    const sql = readFileSync(join(migrationsDir, file), 'utf-8');
+    await pool.query(sql);
+    console.log(`Migration applied: ${file}`);
+  }
   console.log('Migrations complete');
 }

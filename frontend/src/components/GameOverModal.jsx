@@ -1,15 +1,13 @@
-import React from 'react';
-
 const RESULT_LABELS = {
   checkmate: 'Checkmate',
   stalemate: 'Stalemate',
-  threefold_repetition: 'Draw by threefold repetition',
-  insufficient_material: 'Draw by insufficient material',
+  threefold_repetition: 'Threefold Repetition',
+  insufficient_material: 'Insufficient Material',
   draw: 'Draw',
-  draw_agreement: 'Draw by agreement',
-  timeout: 'Win on time',
-  resign: 'Win by resignation',
-  abandonment: 'Win by abandonment',
+  draw_agreement: 'Draw by Agreement',
+  timeout: 'Time Ran Out',
+  resign: 'Resignation',
+  abandonment: 'Abandonment',
   game_over: 'Game Over',
 };
 
@@ -25,120 +23,111 @@ const GameOverModal = ({
 }) => {
   const resultText = RESULT_LABELS[reason] || 'Game Over';
 
-  let outcomeText;
+  let outcomeText, outcomeColor;
   if (!winner) {
-    outcomeText = 'The game ended in a draw.';
+    outcomeText = 'Draw';
+    outcomeColor = 'var(--text-secondary)';
   } else if (winner === myColor) {
-    outcomeText = 'You won!';
+    outcomeText = 'You Won!';
+    outcomeColor = 'var(--accent)';
   } else {
-    outcomeText = 'You lost.';
+    outcomeText = 'You Lost';
+    outcomeColor = 'var(--danger)';
   }
 
-  // If opponent offered rematch
   const showRespondRematch = rematchOffer && rematchOffer !== myColor;
-  // If I offered rematch
   const waitingForRematch = rematchOffer === myColor;
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.65)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 900,
-      }}
-    >
-      <div
-        style={{
-          backgroundColor: '#2a2a2a',
-          padding: '24px 32px',
-          borderRadius: '12px',
-          boxShadow: '0 0 20px rgba(0,0,0,0.7)',
-          minWidth: '280px',
-          textAlign: 'center',
-          color: '#f5f5f5',
-        }}
-      >
-        <h2 style={{ marginBottom: '12px', fontSize: '1.8rem' }}>
-          {resultText}
+    <div className="modal-overlay">
+      <div className="modal-card">
+        <div
+          style={{
+            fontSize: '48px',
+            lineHeight: 1,
+            marginBottom: '8px',
+            opacity: 0.7,
+          }}
+        >
+          {winner === myColor ? '\uD83C\uDFC6' : winner ? '\u265A' : '\uD83E\uDD1D'}
+        </div>
+
+        <h2
+          style={{
+            fontSize: '28px',
+            fontWeight: 800,
+            color: outcomeColor,
+            marginBottom: '4px',
+          }}
+        >
+          {outcomeText}
         </h2>
 
-        <p style={{ marginBottom: '16px', fontSize: '1.1rem' }}>
-          {outcomeText}
+        <p
+          style={{
+            fontSize: '14px',
+            color: 'var(--text-secondary)',
+            marginBottom: '8px',
+          }}
+        >
+          {resultText}
         </p>
 
-        <p style={{ marginBottom: '16px', fontSize: '0.95rem', color: '#ccc' }}>
-          Result: {result}
+        <p
+          style={{
+            fontSize: '13px',
+            color: 'var(--text-muted)',
+            marginBottom: '24px',
+            fontFamily: 'var(--font-mono)',
+          }}
+        >
+          {result}
         </p>
 
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '8px',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
           {showRespondRematch ? (
             <>
               <button
+                className="btn btn-primary"
                 onClick={() => onRespondRematch(true)}
-                style={{
-                  padding: '10px 20px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  backgroundColor: '#4caf50',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                }}
               >
                 Accept Rematch
               </button>
               <button
+                className="btn btn-danger"
                 onClick={() => onRespondRematch(false)}
-                style={{
-                  padding: '10px 20px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  backgroundColor: '#e53935',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                }}
               >
                 Decline
               </button>
             </>
           ) : waitingForRematch ? (
-            <p style={{ fontSize: '0.95rem', color: '#aaa' }}>
-              Waiting for opponent...
-            </p>
-          ) : (
-            <button
-              onClick={onRematch}
+            <div
               style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
                 padding: '10px 20px',
-                borderRadius: '8px',
-                border: 'none',
-                backgroundColor: '#4caf50',
-                color: '#fff',
-                cursor: 'pointer',
-                fontWeight: 'bold',
+                color: 'var(--text-secondary)',
+                fontSize: '14px',
               }}
             >
+              <div className="spinner spinner-sm" />
+              Waiting for opponent...
+            </div>
+          ) : (
+            <button className="btn btn-primary" onClick={onRematch}>
               Rematch
             </button>
           )}
 
-          <button
-            onClick={onBackToLobby}
-            style={{
-              padding: '10px 20px',
-              borderRadius: '8px',
-              border: 'none',
-              backgroundColor: '#555',
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-            }}
-          >
+          <button className="btn btn-ghost" onClick={onBackToLobby}>
             Back to Lobby
           </button>
         </div>

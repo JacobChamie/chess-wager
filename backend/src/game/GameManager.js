@@ -37,9 +37,10 @@ export class GameManager {
     const room = this.games.get(gameId);
     if (!room) return;
 
+    const baseTimeMs = (typeof room.timeControl === 'object' ? room.timeControl.time : room.timeControl) * 1000;
     const times = room.clock
       ? room.clock.getTimesMs()
-      : { whiteTime: room.timeControl * 1000, blackTime: room.timeControl * 1000 };
+      : { whiteTime: baseTimeMs, blackTime: baseTimeMs };
 
     try {
       await this.pool.query(
@@ -57,7 +58,7 @@ export class GameManager {
           room.black?.sessionId || null,
           room.white?.name || null,
           room.black?.name || null,
-          room.timeControl,
+          JSON.stringify(room.timeControl),
           room.chess.fen(),
           JSON.stringify(room.moveHistory),
           room._result || null,
