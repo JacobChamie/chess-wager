@@ -19,7 +19,7 @@ export class BotGameManager {
    * Create a new bot game.
    * @returns {{ room, gameId, humanColor, error? }}
    */
-  createBotGame(io, humanSessionId, humanSocketId, humanName, humanUserId, personalityId, timeControl, colorPref) {
+  createBotGame(io, humanSessionId, humanSocketId, humanName, humanUserId, personalityId, timeControl, colorPref, isPrivate = false) {
     const personality = getPersonality(personalityId);
     if (!personality) {
       return { error: 'Invalid bot personality' };
@@ -43,6 +43,7 @@ export class BotGameManager {
     // Mark as bot game
     room.isBotGame = true;
     room.botPersonality = personality;
+    room.isPrivate = isPrivate;
 
     // Add players
     room.addPlayer(humanSessionId, humanSocketId, humanName, humanColor, humanUserId);

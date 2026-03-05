@@ -122,7 +122,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     socket.emit('bot:personalities', botGameManager.getPersonalities());
   });
 
-  socket.on('bot:start_game', ({ personalityId, timeControl, playerName, colorPref }) => {
+  socket.on('bot:start_game', ({ personalityId, timeControl, playerName, colorPref, isPrivate }) => {
     if (!checkRate()) return;
     if (!botGameManager) {
       socket.emit('bot:error', { message: 'Bot games unavailable' });
@@ -137,7 +137,8 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       authUser?.id || null,
       personalityId,
       timeControl || { time: 300, increment: 0 },
-      colorPref || 'random'
+      colorPref || 'random',
+      !!isPrivate
     );
 
     if (result.error) {
@@ -161,6 +162,9 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
         rating: room.botPersonality.rating,
       },
     });
+
+    // Broadcast lobby update so bot game shows in Open Games (if not private)
+    broadcastLobbyState(io, lobbyManager);
   });
 
   // --- Game Events ---

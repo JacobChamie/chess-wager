@@ -219,6 +219,19 @@ const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
                 <div className="open-game-info">
                   <span className="open-game-name">
                     {game.whiteName} vs {game.blackName}
+                    {game.isBotGame && (
+                      <span style={{
+                        fontSize: '10px',
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        background: 'rgba(255,152,0,0.15)',
+                        color: '#ffa726',
+                        marginLeft: '6px',
+                        fontWeight: 600,
+                      }}>
+                        BOT
+                      </span>
+                    )}
                   </span>
                   <span className="open-game-tc">{formatTc(game.timeControl)}</span>
                 </div>

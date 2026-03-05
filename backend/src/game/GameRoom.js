@@ -28,6 +28,7 @@ export class GameRoom {
     // Bot game flags
     this.isBotGame = false;
     this.botPersonality = null;
+    this.isPrivate = false;
 
     // Spectators: sessionId -> { socketId, name }
     this.spectators = new Map();

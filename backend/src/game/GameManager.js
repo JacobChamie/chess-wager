@@ -28,7 +28,7 @@ export class GameManager {
   getActiveGames() {
     const active = [];
     for (const [gameId, room] of this.games) {
-      if (room.status === 'active' && !room.isBotGame) {
+      if (room.status === 'active' && !room.isPrivate) {
         active.push({
           gameId,
           whiteName: room.white?.name || 'Player 1',
@@ -36,6 +36,8 @@ export class GameManager {
           timeControl: room.timeControl,
           spectatorCount: room.getSpectatorCount(),
           moveCount: room.chess.history().length,
+          isBotGame: room.isBotGame || false,
+          botPersonality: room.botPersonality ? room.botPersonality.name : null,
         });
       }
     }

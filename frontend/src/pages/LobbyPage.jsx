@@ -64,6 +64,7 @@ const LobbyPage = () => {
   const [copied, setCopied] = useState(false);
   const [selectedBot, setSelectedBot] = useState(null);
   const [botPersonalities, setBotPersonalities] = useState(DEFAULT_BOT_PERSONALITIES);
+  const [botPrivate, setBotPrivate] = useState(false);
 
   const getName = useCallback(
     () => user?.username || playerName.trim() || 'Anonymous',
@@ -180,6 +181,7 @@ const LobbyPage = () => {
       timeControl,
       playerName: name,
       colorPref,
+      isPrivate: botPrivate,
     });
   };
 
@@ -687,6 +689,28 @@ const LobbyPage = () => {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Private game toggle */}
+              <div style={{ marginBottom: '24px' }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    color: 'var(--text-secondary)',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={botPrivate}
+                    onChange={(e) => setBotPrivate(e.target.checked)}
+                    style={{ accentColor: 'var(--accent)' }}
+                  />
+                  Private game (hidden from spectators)
+                </label>
               </div>
 
               {/* Error */}

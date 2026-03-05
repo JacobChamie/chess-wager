@@ -205,6 +205,7 @@ const GamePage = () => {
       const chess = chessRef.current;
       if (!chess) return;
       const piece = chess.get(square);
+      const isMyTurn = gs.turn === gs.myColor;
 
       if (selectedSquare) {
         // Already have a piece selected — try to move there
@@ -214,50 +215,63 @@ const GamePage = () => {
           return;
         }
 
-        // Check if this is a legal move from selectedSquare to square
-        const legalMoves = chess.moves({ square: selectedSquare, verbose: true });
-        const matchingMove = legalMoves.find(m => m.to === square);
-
-        if (matchingMove) {
-          // Check for promotion
-          const srcPiece = chess.get(selectedSquare);
-          const isPawn = srcPiece?.type === 'p';
-          const isPromoRank =
-            (gs.myColor === 'w' && square[1] === '8') ||
-            (gs.myColor === 'b' && square[1] === '1');
-
-          if (isPawn && isPromoRank) {
-            setPendingPromotion({ from: selectedSquare, to: square });
-            setSelectedSquare(null);
-            return;
-          }
-
-          // Make the move
-          const localMove = tryLocalMove(selectedSquare, square);
-          if (localMove) {
-            sendMove(selectedSquare, square);
-          }
-          setSelectedSquare(null);
-          return;
-        }
-
-        // Not a legal destination — if it's our own piece, re-select it
+        // If it's our own piece, re-select it
         if (piece && piece.color === gs.myColor) {
           setSelectedSquare(square);
           return;
         }
 
-        // Illegal square — deselect
-        setSelectedSquare(null);
-        return;
+        if (isMyTurn) {
+          // Check if this is a legal move from selectedSquare to square
+          const legalMoves = chess.moves({ square: selectedSquare, verbose: true });
+          const matchingMove = legalMoves.find(m => m.to === square);
+
+          if (matchingMove) {
+            // Check for promotion
+            const srcPiece = chess.get(selectedSquare);
+            const isPawn = srcPiece?.type === 'p';
+            const isPromoRank =
+              (gs.myColor === 'w' && square[1] === '8') ||
+              (gs.myColor === 'b' && square[1] === '1');
+
+            if (isPawn && isPromoRank) {
+              setPendingPromotion({ from: selectedSquare, to: square });
+              setSelectedSquare(null);
+              return;
+            }
+
+            // Make the move
+            const localMove = tryLocalMove(selectedSquare, square);
+            if (localMove) {
+              sendMove(selectedSquare, square);
+            }
+            setSelectedSquare(null);
+            return;
+          }
+
+          // Illegal square — deselect
+          setSelectedSquare(null);
+          return;
+        } else {
+          // Not our turn — queue as premove
+          const srcPiece = chess.get(selectedSquare);
+          const isPawn = srcPiece?.type === 'p';
+          const isPromoRank =
+            (gs.myColor === 'w' && square[1] === '8') ||
+            (gs.myColor === 'b' && square[1] === '1');
+          const promotion = isPawn && isPromoRank ? 'q' : undefined;
+          addPremove(selectedSquare, square, promotion);
+          setSelectedSquare(null);
+          return;
+        }
       }
 
-      // No selection yet — select if it's our piece and it's our turn
+      // No selection yet — select if it's our piece
       if (piece && piece.color === gs.myColor) {
         setSelectedSquare(square);
       }
     },
-    [selectedSquare, chessRef, tryLocalMove, sendMove]
+    [selectedSquare, chessRef, tryLocalMove, sendMove, addPremove]
   );
 
   // onSquareClick — fires when clicking empty squares (or squares without draggable pieces)
@@ -272,10 +286,10 @@ const GamePage = () => {
     [handleClickMove]
   );
 
-  // Clear selection when a move is made (fen changes) or game ends
+  // Clear selection only when game ends (not on every FEN change)
   useEffect(() => {
     setSelectedSquare(null);
-  }, [gameState?.fen, gameState?.status]);
+  }, [gameState?.status]);
 
   const handleSquareRightClick = useCallback(() => {
     setSelectedSquare(null);
