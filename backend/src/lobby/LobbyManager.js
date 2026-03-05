@@ -32,7 +32,7 @@ export class LobbyManager {
         (e) => e.socketId !== socketId && e.socketId !== match.socketId
       );
       return this._createMatch(
-        { sessionId, socketId, playerName, timeControl },
+        { sessionId, socketId, playerName, timeControl, userId },
         match
       );
     }
