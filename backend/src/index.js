@@ -9,7 +9,8 @@ import { LobbyManager } from './lobby/LobbyManager.js';
 import { registerHandlers } from './socket/handlers.js';
 import authRoutes from './auth/authRoutes.js';
 import leaderboardRoutes from './leaderboard/leaderboardRoutes.js';
-import adminRoutes from './admin/adminRoutes.js';
+import createAdminRoutes from './admin/adminRoutes.js';
+import { BotManager } from './admin/botManager.js';
 import { verifyToken } from './auth/authService.js';
 
 const allowedOrigins = process.env.CORS_ORIGIN
@@ -31,6 +32,7 @@ const io = new Server(httpServer, {
 
 const gameManager = new GameManager(pool);
 const lobbyManager = new LobbyManager(gameManager);
+const botManager = new BotManager();
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
@@ -38,7 +40,7 @@ app.get('/health', (_req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/admin', createAdminRoutes(io, botManager));
 
 let onlineCount = 0;
 

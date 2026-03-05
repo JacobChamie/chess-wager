@@ -1,7 +1,20 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+
+const TIME_CONTROLS = [
+  { label: '1+0 Bullet', value: { time: 60, increment: 0 } },
+  { label: '3+0 Blitz', value: { time: 180, increment: 0 } },
+  { label: '5+0 Blitz', value: { time: 300, increment: 0 } },
+  { label: '10+0 Rapid', value: { time: 600, increment: 0 } },
+];
+
+const DELAY_OPTIONS = [
+  { label: 'Fast (200ms)', value: 200 },
+  { label: 'Normal (500ms)', value: 500 },
+  { label: 'Slow (1000ms)', value: 1000 },
+];
 
 const AdminPage = () => {
   const { user } = useAuth();
@@ -9,6 +22,19 @@ const AdminPage = () => {
   const [loading, setLoading] = useState(true);
   const [deleteGameId, setDeleteGameId] = useState('');
   const [message, setMessage] = useState(null);
+
+  // Stress test state
+  const [stConfig, setStConfig] = useState({
+    botCount: 6,
+    timeControlIdx: 1, // 3+0 Blitz
+    movesBeforeEnd: 6,
+    endMethod: 'mixed',
+    rounds: 3,
+    delayIdx: 1, // Normal 500ms
+  });
+  const [stStatus, setStStatus] = useState({ running: false, log: [], gamesPlayed: 0, currentRound: 0, totalRounds: 0 });
+  const [stPolling, setStPolling] = useState(false);
+  const logRef = useRef(null);
 
   const token = localStorage.getItem('chess_token');
 
@@ -32,17 +58,47 @@ const AdminPage = () => {
     else setLoading(false);
   }, [user, fetchUsers]);
 
+  // Poll stress test status
+  useEffect(() => {
+    if (!stPolling) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/admin/stress-test/status`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setStStatus(data);
+          if (!data.running) setStPolling(false);
+        }
+      } catch {
+        // ignore
+      }
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [stPolling, token]);
+
+  // Auto-scroll log
+  useEffect(() => {
+    if (logRef.current) {
+      logRef.current.scrollTop = logRef.current.scrollHeight;
+    }
+  }, [stStatus.log]);
+
   const showMsg = (type, text) => {
     setMessage({ type, text });
     setTimeout(() => setMessage(null), 3000);
   };
 
-  const adminAction = async (url, method = 'PUT') => {
+  const adminAction = async (url, method = 'PUT', body = undefined) => {
     try {
-      const res = await fetch(url, {
-        method,
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const headers = { Authorization: `Bearer ${token}` };
+      const opts = { method, headers };
+      if (body) {
+        headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(body);
+      }
+      const res = await fetch(url, opts);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       return data;
@@ -87,6 +143,34 @@ const AdminPage = () => {
     }
   };
 
+  const handleStartStress = async () => {
+    const tc = TIME_CONTROLS[stConfig.timeControlIdx].value;
+    const delayMs = DELAY_OPTIONS[stConfig.delayIdx].value;
+    const body = {
+      botCount: stConfig.botCount,
+      timeControl: tc,
+      movesBeforeEnd: stConfig.movesBeforeEnd,
+      endMethod: stConfig.endMethod,
+      rounds: stConfig.rounds,
+      delayMs,
+    };
+    const data = await adminAction(`${API_URL}/api/admin/stress-test/start`, 'POST', body);
+    if (data) {
+      setStStatus(prev => ({ ...prev, running: true, log: [], gamesPlayed: 0, currentRound: 0 }));
+      setStPolling(true);
+      showMsg('success', 'Stress test started');
+    }
+  };
+
+  const handleStopStress = async () => {
+    const data = await adminAction(`${API_URL}/api/admin/stress-test/stop`, 'POST');
+    if (data) {
+      setStPolling(false);
+      setStStatus({ running: false, log: stStatus.log, gamesPlayed: stStatus.gamesPlayed, currentRound: 0, totalRounds: 0 });
+      showMsg('success', 'Stress test stopped');
+    }
+  };
+
   if (!user?.is_admin) {
     return (
       <div className="admin-container">
@@ -103,6 +187,15 @@ const AdminPage = () => {
       </div>
     );
   }
+
+  const selectStyle = {
+    background: 'var(--surface)',
+    color: 'var(--text-primary)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-sm)',
+    padding: '6px 10px',
+    fontSize: '13px',
+  };
 
   return (
     <div className="admin-container">
@@ -138,7 +231,7 @@ const AdminPage = () => {
       </div>
 
       {/* Users table */}
-      <div style={{ overflowX: 'auto' }}>
+      <div style={{ overflowX: 'auto', marginBottom: '32px' }}>
         <table className="leaderboard-table" style={{ minWidth: '600px' }}>
           <thead>
             <tr>
@@ -198,6 +291,147 @@ const AdminPage = () => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Stress Test Section */}
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: '24px' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '16px' }}>Stress Test</h3>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px', marginBottom: '16px' }}>
+          <div>
+            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Bots</label>
+            <select
+              value={stConfig.botCount}
+              onChange={(e) => setStConfig(c => ({ ...c, botCount: Number(e.target.value) }))}
+              disabled={stStatus.running}
+              style={selectStyle}
+            >
+              {[2, 4, 6, 8].map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Time Control</label>
+            <select
+              value={stConfig.timeControlIdx}
+              onChange={(e) => setStConfig(c => ({ ...c, timeControlIdx: Number(e.target.value) }))}
+              disabled={stStatus.running}
+              style={selectStyle}
+            >
+              {TIME_CONTROLS.map((tc, i) => <option key={i} value={i}>{tc.label}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Moves Before End</label>
+            <input
+              type="number"
+              min={3}
+              max={20}
+              value={stConfig.movesBeforeEnd}
+              onChange={(e) => setStConfig(c => ({ ...c, movesBeforeEnd: Math.max(3, Math.min(20, Number(e.target.value))) }))}
+              disabled={stStatus.running}
+              style={{ ...selectStyle, width: '70px' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>End Method</label>
+            <select
+              value={stConfig.endMethod}
+              onChange={(e) => setStConfig(c => ({ ...c, endMethod: e.target.value }))}
+              disabled={stStatus.running}
+              style={selectStyle}
+            >
+              <option value="mixed">Mixed</option>
+              <option value="resign">Resign</option>
+              <option value="draw">Draw</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Rounds</label>
+            <input
+              type="number"
+              min={1}
+              max={10}
+              value={stConfig.rounds}
+              onChange={(e) => setStConfig(c => ({ ...c, rounds: Math.max(1, Math.min(10, Number(e.target.value))) }))}
+              disabled={stStatus.running}
+              style={{ ...selectStyle, width: '70px' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Move Delay</label>
+            <select
+              value={stConfig.delayIdx}
+              onChange={(e) => setStConfig(c => ({ ...c, delayIdx: Number(e.target.value) }))}
+              disabled={stStatus.running}
+              style={selectStyle}
+            >
+              {DELAY_OPTIONS.map((d, i) => <option key={i} value={i}>{d.label}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={handleStartStress}
+            disabled={stStatus.running}
+            style={{ padding: '8px 20px', fontSize: '13px', fontWeight: 600 }}
+          >
+            Start Stress Test
+          </button>
+          <button
+            className="btn btn-danger btn-sm"
+            onClick={handleStopStress}
+            disabled={!stStatus.running}
+            style={{ padding: '8px 20px', fontSize: '13px', fontWeight: 600 }}
+          >
+            Stop Stress Test
+          </button>
+        </div>
+
+        {/* Status */}
+        <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+          <span>
+            Status: <strong style={{ color: stStatus.running ? 'var(--accent-text)' : 'var(--text-primary)' }}>
+              {stStatus.running ? 'Running' : 'Stopped'}
+            </strong>
+          </span>
+          {stStatus.running && (
+            <>
+              <span>Round: {stStatus.currentRound}/{stStatus.totalRounds}</span>
+              <span>Games played: {stStatus.gamesPlayed}</span>
+              <span>Bots: {stStatus.botCount}</span>
+            </>
+          )}
+        </div>
+
+        {/* Log */}
+        <div
+          ref={logRef}
+          style={{
+            background: 'var(--bg)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-sm)',
+            padding: '10px 12px',
+            maxHeight: '240px',
+            overflowY: 'auto',
+            fontFamily: 'monospace',
+            fontSize: '12px',
+            color: 'var(--text-secondary)',
+            lineHeight: '1.6',
+          }}
+        >
+          {stStatus.log?.length > 0 ? (
+            stStatus.log.map((line, i) => <div key={i}>{line}</div>)
+          ) : (
+            <span style={{ fontStyle: 'italic' }}>No activity yet</span>
+          )}
+        </div>
       </div>
     </div>
   );
