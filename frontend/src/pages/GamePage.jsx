@@ -334,6 +334,7 @@ const GamePage = () => {
               isSpectator={isSpectator}
               spectatorMessages={spectatorChatMessages}
               onSpectatorSend={sendSpectatorChat}
+              gameStatus={gameState.status}
             />
 
             {showDrawOffer && (
@@ -387,7 +388,7 @@ const GamePage = () => {
         )}
       </div>
 
-      {isCompleted && (
+      {isCompleted && !isSpectator && (
         <GameOverModal
           result={gameState.result}
           reason={gameState.reason}
@@ -398,6 +399,23 @@ const GamePage = () => {
           onRespondRematch={respondRematch}
           onBackToLobby={() => navigate('/')}
         />
+      )}
+
+      {isCompleted && isSpectator && (
+        <div style={{
+          marginTop: '16px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '8px',
+        }}>
+          <div style={{ fontSize: '15px', color: 'var(--text-secondary)' }}>
+            Game over — {gameState.result} ({gameState.reason?.replace(/_/g, ' ')})
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={() => navigate('/')}>
+            Back to Lobby
+          </button>
+        </div>
       )}
 
       {isActive && isFullscreen && (

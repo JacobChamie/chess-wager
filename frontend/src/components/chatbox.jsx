@@ -18,6 +18,7 @@ const formatTime = (timestamp) => {
 const ChatBox = ({
   messages = [], onSend, moves = [], myName = '',
   isSpectator = false, spectatorMessages = [], onSpectatorSend,
+  gameStatus = 'active',
 }) => {
   const [input, setInput] = useState('');
   const [activeTab, setActiveTab] = useState(isSpectator ? 'spectators' : 'chat');
@@ -90,7 +91,12 @@ const ChatBox = ({
           border: '1px solid var(--border)',
         }}
       >
-        {(isSpectator ? ['spectators', 'moves'] : ['chat', 'spectators', 'moves']).map((tab) => (
+        {(isSpectator
+          ? ['spectators', 'moves']
+          : gameStatus === 'completed'
+            ? ['chat', 'spectators', 'moves']
+            : ['chat', 'moves']
+        ).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}

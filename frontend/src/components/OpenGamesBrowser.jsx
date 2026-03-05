@@ -48,6 +48,11 @@ const OpenGamesBrowser = ({ onEditGame }) => {
     onEditGame?.();
   };
 
+  const handleMatchSeeker = (timeControl) => {
+    const playerName = user?.username || localStorage.getItem('chess_player_name') || 'Anonymous';
+    socket.emit('lobby:play', { timeControl, playerName });
+  };
+
   const hasContent = openGames.length > 0 || seekers.length > 0 || activeGames.length > 0;
 
   return (
@@ -122,12 +127,16 @@ const OpenGamesBrowser = ({ onEditGame }) => {
           </div>
           <div className="open-games-list">
             {seekers.map((seeker, i) => (
-              <div key={i} className="open-game-row">
+              <div
+                key={i}
+                className="open-game-row open-game-row--joinable"
+                onClick={() => handleMatchSeeker(seeker.timeControl)}
+              >
                 <div className="open-game-info">
                   <span className="open-game-name">{seeker.playerName}</span>
                   <span className="open-game-tc">{formatTc(seeker.timeControl)}</span>
                 </div>
-                <span className="seeking-badge">Seeking</span>
+                <span className="btn btn-primary btn-sm">Play</span>
               </div>
             ))}
           </div>
