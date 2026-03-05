@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import cors from 'cors';
 import { pool, initDb } from './config/db.js';
 import { GameManager } from './game/GameManager.js';
 import { LobbyManager } from './lobby/LobbyManager.js';
@@ -9,14 +10,19 @@ import { registerHandlers } from './socket/handlers.js';
 import authRoutes from './auth/authRoutes.js';
 import { verifyToken } from './auth/authService.js';
 
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+  : ['http://localhost:5173', 'http://localhost:4173'];
+
 const app = express();
 const httpServer = createServer(app);
 
 app.use(express.json());
+app.use(cors({ origin: allowedOrigins }));
 
 const io = new Server(httpServer, {
   cors: {
-    origin: (origin, callback) => callback(null, true),
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
   },
 });
