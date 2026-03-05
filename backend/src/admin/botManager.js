@@ -465,13 +465,13 @@ export class BotManager {
         rating: 1200,
       });
 
-      // Timeout: if game doesn't finish in 60s, force resign
+      // Timeout: if game doesn't finish in 15s, force resign
       const gameTimeout = setTimeout(() => {
         if (!gameFinished) {
           this._log(`Game timeout for ${name1} vs ${name2} — force resigning`);
           finishGame(bot1);
         }
-      }, 60000);
+      }, 15000);
 
       // Also handle abort signal
       const onAbort = () => {

@@ -387,6 +387,9 @@ const GamePage = () => {
           justifyContent: 'center',
           alignItems: 'stretch',
           gap: '20px',
+          flex: 1,
+          minHeight: 0,
+          overflow: 'hidden',
         }}
       >
         {/* Board column */}
