@@ -5,6 +5,15 @@ import { useAuth } from '../context/AuthContext.jsx';
 import OpenGamesBrowser from '../components/OpenGamesBrowser.jsx';
 import BotCard from '../components/BotCard.jsx';
 
+const DEFAULT_BOT_PERSONALITIES = [
+  { id: 'beginner', name: 'Woody', title: 'The Beginner', description: 'Just learning the pieces', rating: 400 },
+  { id: 'easy', name: 'Chip', title: 'The Casual', description: 'Knows the basics, makes mistakes', rating: 800 },
+  { id: 'medium', name: 'Sierra', title: 'The Club Player', description: 'Solid fundamentals, tactical awareness', rating: 1200 },
+  { id: 'hard', name: 'Magnus Jr.', title: 'The Competitor', description: 'Strong positional play, few blunders', rating: 1600 },
+  { id: 'expert', name: 'Athena', title: 'The Expert', description: 'Near-master level, very dangerous', rating: 2000 },
+  { id: 'master', name: 'Deep Mind', title: 'The Grandmaster', description: 'Maximum strength, no mercy', rating: 2500 },
+];
+
 const TIME_PRESETS = [
   { label: '1+0', time: 60, increment: 0, category: 'Bullet' },
   { label: '1+1', time: 60, increment: 1, category: 'Bullet' },
@@ -54,7 +63,7 @@ const LobbyPage = () => {
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
   const [selectedBot, setSelectedBot] = useState(null);
-  const [botPersonalities, setBotPersonalities] = useState([]);
+  const [botPersonalities, setBotPersonalities] = useState(DEFAULT_BOT_PERSONALITIES);
 
   const getName = useCallback(
     () => user?.username || playerName.trim() || 'Anonymous',
