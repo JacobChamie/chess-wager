@@ -40,7 +40,7 @@ router.get('/users', adminMiddleware, async (req, res) => {
 // Toggle ban
 router.put('/users/:id/ban', adminMiddleware, async (req, res) => {
   try {
-    const userId = parseInt(req.params.id, 10);
+    const userId = req.params.id;
     if (userId === req.user.id) {
       return res.status(400).json({ error: 'Cannot ban yourself' });
     }
@@ -61,7 +61,7 @@ router.put('/users/:id/ban', adminMiddleware, async (req, res) => {
 // Reset rating to 1200
 router.put('/users/:id/reset-rating', adminMiddleware, async (req, res) => {
   try {
-    const userId = parseInt(req.params.id, 10);
+    const userId = req.params.id;
     const result = await pool.query(
       'UPDATE users SET rating = 1200 WHERE id = $1 RETURNING id, username, rating',
       [userId]
@@ -79,7 +79,7 @@ router.put('/users/:id/reset-rating', adminMiddleware, async (req, res) => {
 // Delete user (nullify their references in games first)
 router.delete('/users/:id', adminMiddleware, async (req, res) => {
   try {
-    const userId = parseInt(req.params.id, 10);
+    const userId = req.params.id;
     if (userId === req.user.id) {
       return res.status(400).json({ error: 'Cannot delete yourself' });
     }
