@@ -57,12 +57,12 @@ export class StockfishEngine {
   /**
    * Get best move for a position.
    * @param {string} fen - FEN string
-   * @param {{ skillLevel: number, depth: number, moveTimeMs: number }} options
+   * @param {{ uciElo: number, moveTimeMs: number }} options
    * @returns {Promise<{ from: string, to: string, promotion: string|undefined }>}
    */
-  async getBestMove(fen, { skillLevel = 10, depth = 10, moveTimeMs = 1000 } = {}) {
+  async getBestMove(fen, { uciElo = 1400, moveTimeMs = 1000 } = {}) {
     return new Promise((resolve, reject) => {
-      this._queue.push({ fen, skillLevel, depth, moveTimeMs, resolve, reject });
+      this._queue.push({ fen, uciElo, moveTimeMs, resolve, reject });
       this._processQueue();
     });
   }
@@ -144,18 +144,20 @@ export class StockfishEngine {
     if (this._busy || this._queue.length === 0) return;
     this._busy = true;
 
-    const { fen, skillLevel, depth, moveTimeMs, resolve, reject } = this._queue.shift();
+    const { fen, uciElo, moveTimeMs, resolve, reject } = this._queue.shift();
     this._currentResolve = resolve;
 
     try {
-      // Configure skill level
-      this._send(`setoption name Skill Level value ${skillLevel}`);
+      // Use UCI_LimitStrength + UCI_Elo for accurate strength control
+      const clampedElo = Math.max(1320, Math.min(3190, uciElo));
+      this._send('setoption name UCI_LimitStrength value true');
+      this._send(`setoption name UCI_Elo value ${clampedElo}`);
       this._send('isready');
       await this._waitFor('readyok');
 
-      // Set position and search
+      // Set position and search (no depth cap — let UCI_Elo handle strength)
       this._send(`position fen ${fen}`);
-      this._send(`go depth ${depth} movetime ${moveTimeMs}`);
+      this._send(`go movetime ${moveTimeMs}`);
     } catch (err) {
       this._currentResolve = null;
       this._busy = false;

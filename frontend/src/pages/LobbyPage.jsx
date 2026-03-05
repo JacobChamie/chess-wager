@@ -6,12 +6,12 @@ import OpenGamesBrowser from '../components/OpenGamesBrowser.jsx';
 import BotCard from '../components/BotCard.jsx';
 
 const DEFAULT_BOT_PERSONALITIES = [
-  { id: 'beginner', name: 'Woody', title: 'The Beginner', description: 'Just learning the pieces', rating: 400 },
-  { id: 'easy', name: 'Chip', title: 'The Casual', description: 'Knows the basics, makes mistakes', rating: 800 },
-  { id: 'medium', name: 'Sierra', title: 'The Club Player', description: 'Solid fundamentals, tactical awareness', rating: 1200 },
-  { id: 'hard', name: 'Magnus Jr.', title: 'The Competitor', description: 'Strong positional play, few blunders', rating: 1600 },
-  { id: 'expert', name: 'Athena', title: 'The Expert', description: 'Near-master level, very dangerous', rating: 2000 },
-  { id: 'master', name: 'Deep Mind', title: 'The Grandmaster', description: 'Maximum strength, no mercy', rating: 2500 },
+  { id: 'beginner', name: 'Woody', title: 'The Beginner', description: 'Just learning the pieces', rating: 800 },
+  { id: 'easy', name: 'Chip', title: 'The Casual', description: 'Knows the basics, makes mistakes', rating: 1100 },
+  { id: 'medium', name: 'Sierra', title: 'The Club Player', description: 'Solid fundamentals, tactical awareness', rating: 1400 },
+  { id: 'hard', name: 'Magnus Jr.', title: 'The Competitor', description: 'Strong positional play, few blunders', rating: 1800 },
+  { id: 'expert', name: 'Athena', title: 'The Expert', description: 'Near-master level, very dangerous', rating: 2200 },
+  { id: 'master', name: 'Deep Mind', title: 'The Grandmaster', description: 'Maximum strength, no mercy', rating: 3000 },
 ];
 
 const TIME_PRESETS = [

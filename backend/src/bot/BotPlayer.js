@@ -1,3 +1,5 @@
+import { Chess } from 'chess.js';
+
 /**
  * Plays as a bot in a GameRoom.
  * Calls GameRoom.tryMove() directly — no Socket.IO connection needed.
@@ -51,7 +53,22 @@ export class BotPlayer {
 
     try {
       const fen = this.room.chess.fen();
-      const move = await this.engine.getBestMove(fen, this.personality.stockfish);
+      const blunderPct = this.personality.stockfish.randomBlunderPct || 0;
+      let move;
+
+      // For weak bots: occasionally play a random legal move instead of engine move
+      if (blunderPct > 0 && Math.random() * 100 < blunderPct) {
+        const tmpChess = new Chess(fen);
+        const legalMoves = tmpChess.moves({ verbose: true });
+        if (legalMoves.length > 0) {
+          const pick = legalMoves[Math.floor(Math.random() * legalMoves.length)];
+          move = { from: pick.from, to: pick.to, promotion: pick.promotion };
+        }
+      }
+
+      if (!move) {
+        move = await this.engine.getBestMove(fen, this.personality.stockfish);
+      }
 
       if (!move || this._destroyed || this.room.status !== 'active') return;
 
