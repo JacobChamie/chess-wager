@@ -66,15 +66,17 @@ export const AuthProvider = ({ children }) => {
     updateSocketAuth(null);
   }, []);
 
-  const updateProfile = useCallback(async (username) => {
+  const updateProfile = useCallback(async (username, avatar_id) => {
     const token = localStorage.getItem('chess_token');
+    const body = { username };
+    if (avatar_id) body.avatar_id = avatar_id;
     const res = await fetch(`${API_URL}/api/auth/profile`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ username }),
+      body: JSON.stringify(body),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Update failed');

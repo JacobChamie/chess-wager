@@ -51,6 +51,21 @@ export function useGameSocket(gameId) {
   useEffect(() => {
     if (!gameId) return;
 
+    // Reset all state when gameId changes (e.g. after rematch)
+    setGameState(null);
+    setConnected(false);
+    setDrawOffer(null);
+    setRematchOffer(null);
+    setRematchGameId(null);
+    setDisconnectTime(null);
+    setChatMessages([]);
+    setMoveError(null);
+    setBoardResetKey(0);
+    setPremoveSquares(EMPTY_SQUARES);
+    premoveQueueRef.current = [];
+    chessRef.current = new Chess();
+    myColorRef.current = null;
+
     const joinGame = () => {
       socket.emit('game:join', { gameId });
     };

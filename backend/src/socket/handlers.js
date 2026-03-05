@@ -34,7 +34,8 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       sessionId,
       socket.id,
       playerName || 'Anonymous',
-      timeControl || 300
+      timeControl || 300,
+      authUser?.id || null
     );
 
     if (match) {
@@ -64,7 +65,8 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       sessionId,
       socket.id,
       playerName || 'Anonymous',
-      timeControl || 300
+      timeControl || 300,
+      authUser?.id || null
     );
     socket.emit('lobby:game_created', { gameId });
     broadcastLobbyState(io, lobbyManager);
@@ -82,7 +84,8 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       gameId,
       sessionId,
       socket.id,
-      playerName || 'Anonymous'
+      playerName || 'Anonymous',
+      authUser?.id || null
     );
 
     if (result.error) {
@@ -237,8 +240,8 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       const oldWhite = room.white;
       const oldBlack = room.black;
 
-      newRoom.addPlayer(oldWhite.sessionId, oldWhite.socketId, oldWhite.name, 'b');
-      newRoom.addPlayer(oldBlack.sessionId, oldBlack.socketId, oldBlack.name, 'w');
+      newRoom.addPlayer(oldWhite.sessionId, oldWhite.socketId, oldWhite.name, 'b', oldWhite.userId);
+      newRoom.addPlayer(oldBlack.sessionId, oldBlack.socketId, oldBlack.name, 'w', oldBlack.userId);
       newRoom.startGame();
 
       gameManager.trackSession(oldWhite.sessionId, newGameId);

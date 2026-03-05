@@ -8,6 +8,7 @@ import { GameManager } from './game/GameManager.js';
 import { LobbyManager } from './lobby/LobbyManager.js';
 import { registerHandlers } from './socket/handlers.js';
 import authRoutes from './auth/authRoutes.js';
+import leaderboardRoutes from './leaderboard/leaderboardRoutes.js';
 import { verifyToken } from './auth/authService.js';
 
 const allowedOrigins = process.env.CORS_ORIGIN
@@ -35,6 +36,9 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
+
+let onlineCount = 0;
 
 io.on('connection', (socket) => {
   const sessionId = socket.handshake.auth?.sessionId;
@@ -50,8 +54,16 @@ io.on('connection', (socket) => {
     authUser = verifyToken(token);
   }
 
+  onlineCount++;
+  io.emit('online:count', { count: onlineCount });
+
   console.log(`Connected: socket=${socket.id} session=${sessionId}${authUser ? ` user=${authUser.username}` : ''}`);
   registerHandlers(io, socket, sessionId, gameManager, lobbyManager, authUser);
+
+  socket.on('disconnect', () => {
+    onlineCount = Math.max(0, onlineCount - 1);
+    io.emit('online:count', { count: onlineCount });
+  });
 });
 
 const PORT = process.env.PORT || 3001;

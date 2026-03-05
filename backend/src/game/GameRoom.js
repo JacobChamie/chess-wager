@@ -32,8 +32,8 @@ export class GameRoom {
     this.onClockUpdate = null;
   }
 
-  addPlayer(sessionId, socketId, name, color) {
-    const player = { sessionId, socketId, name };
+  addPlayer(sessionId, socketId, name, color, userId = null) {
+    const player = { sessionId, socketId, name, userId };
     if (color === 'w') {
       this.white = player;
     } else {

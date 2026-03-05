@@ -46,11 +46,13 @@ export class GameManager {
       await this.pool.query(
         `INSERT INTO games (id, status, white_player, black_player, white_name, black_name,
           time_control, fen, moves, result, result_reason,
-          white_time_remaining, black_time_remaining, started_at, ended_at)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+          white_time_remaining, black_time_remaining, started_at, ended_at,
+          white_user_id, black_user_id)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
         ON CONFLICT (id) DO UPDATE SET
           status = $2, fen = $8, moves = $9, result = $10, result_reason = $11,
-          white_time_remaining = $12, black_time_remaining = $13, ended_at = $15`,
+          white_time_remaining = $12, black_time_remaining = $13, ended_at = $15,
+          white_user_id = $16, black_user_id = $17`,
         [
           room.gameId,
           room.status,
@@ -67,10 +69,55 @@ export class GameManager {
           Math.round(times.blackTime),
           room.status !== 'waiting' ? new Date() : null,
           room.status === 'completed' ? new Date() : null,
+          room.white?.userId || null,
+          room.black?.userId || null,
         ]
       );
+
+      // Update ELO ratings if both players are registered users
+      if (room.status === 'completed' && room.white?.userId && room.black?.userId) {
+        await this._updateRatings(room);
+      }
     } catch (err) {
       console.error(`Failed to persist game ${gameId}:`, err.message);
+    }
+  }
+
+  async _updateRatings(room) {
+    const K = 32;
+    try {
+      const res = await this.pool.query(
+        'SELECT id, rating FROM users WHERE id = $1 OR id = $2',
+        [room.white.userId, room.black.userId]
+      );
+      const ratings = {};
+      for (const row of res.rows) {
+        ratings[row.id] = row.rating;
+      }
+      const whiteRating = ratings[room.white.userId];
+      const blackRating = ratings[room.black.userId];
+      if (whiteRating == null || blackRating == null) return;
+
+      // Determine actual scores
+      let whiteScore, blackScore;
+      if (room._result === '1-0') {
+        whiteScore = 1; blackScore = 0;
+      } else if (room._result === '0-1') {
+        whiteScore = 0; blackScore = 1;
+      } else {
+        whiteScore = 0.5; blackScore = 0.5;
+      }
+
+      const expectedWhite = 1 / (1 + Math.pow(10, (blackRating - whiteRating) / 400));
+      const expectedBlack = 1 / (1 + Math.pow(10, (whiteRating - blackRating) / 400));
+
+      const newWhiteRating = Math.round(whiteRating + K * (whiteScore - expectedWhite));
+      const newBlackRating = Math.round(blackRating + K * (blackScore - expectedBlack));
+
+      await this.pool.query('UPDATE users SET rating = $1 WHERE id = $2', [newWhiteRating, room.white.userId]);
+      await this.pool.query('UPDATE users SET rating = $1 WHERE id = $2', [newBlackRating, room.black.userId]);
+    } catch (err) {
+      console.error('Failed to update ratings:', err.message);
     }
   }
 

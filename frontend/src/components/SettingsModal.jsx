@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { AVATAR_MAP, AVATAR_OPTIONS, getAvatar } from '../utils/avatars.js';
 
 const SettingsModal = ({ onClose }) => {
   const { user, updateProfile } = useAuth();
   const [displayName, setDisplayName] = useState(
     user?.username || localStorage.getItem('chess_player_name') || ''
   );
+  const [selectedAvatar, setSelectedAvatar] = useState(user?.avatar_id || 'default');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -15,10 +17,9 @@ const SettingsModal = ({ onClose }) => {
     setSuccess(false);
 
     if (user) {
-      // Logged in — update via API
       setSaving(true);
       try {
-        await updateProfile(displayName);
+        await updateProfile(displayName, selectedAvatar);
         setSuccess(true);
       } catch (err) {
         setError(err.message);
@@ -26,7 +27,6 @@ const SettingsModal = ({ onClose }) => {
         setSaving(false);
       }
     } else {
-      // Guest — save to localStorage
       localStorage.setItem('chess_player_name', displayName);
       setSuccess(true);
     }
@@ -34,7 +34,7 @@ const SettingsModal = ({ onClose }) => {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ textAlign: 'left' }}>
+      <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ textAlign: 'left', maxWidth: '480px' }}>
         <h2 style={{ textAlign: 'center', marginBottom: '20px', fontSize: '20px', fontWeight: 700 }}>
           Settings
         </h2>
@@ -65,6 +65,25 @@ const SettingsModal = ({ onClose }) => {
             onChange={(e) => setDisplayName(e.target.value)}
           />
         </div>
+
+        {user && (
+          <div className="form-group">
+            <label className="form-label">Avatar</label>
+            <div className="avatar-grid">
+              {AVATAR_OPTIONS.map((id) => (
+                <button
+                  key={id}
+                  className={`avatar-option${selectedAvatar === id ? ' selected' : ''}`}
+                  onClick={() => setSelectedAvatar(id)}
+                  title={id.replace(/_/g, ' ')}
+                  type="button"
+                >
+                  {AVATAR_MAP[id]}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="form-group">
           <label className="form-label">Board Theme</label>

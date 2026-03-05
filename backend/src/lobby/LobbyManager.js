@@ -13,11 +13,11 @@ export class LobbyManager {
     this.pendingGames = new Map();
   }
 
-  addToQueue(sessionId, socketId, playerName, timeControl) {
+  addToQueue(sessionId, socketId, playerName, timeControl, userId = null) {
     // Remove this socket if already in queue
     this.queue = this.queue.filter((e) => e.socketId !== socketId);
 
-    this.queue.push({ sessionId, socketId, playerName, timeControl });
+    this.queue.push({ sessionId, socketId, playerName, timeControl, userId });
 
     // Try to find a match with same time control (different socket)
     const myKey = tcKey(timeControl);
@@ -48,18 +48,19 @@ export class LobbyManager {
     this.queue = this.queue.filter((e) => e.socketId !== socketId);
   }
 
-  createPendingGame(sessionId, socketId, playerName, timeControl) {
+  createPendingGame(sessionId, socketId, playerName, timeControl, userId = null) {
     const room = this.gameManager.createGame(timeControl);
     this.pendingGames.set(room.gameId, {
       sessionId,
       socketId,
       playerName,
       timeControl,
+      userId,
     });
     return room.gameId;
   }
 
-  joinPendingGame(gameId, sessionId, socketId, playerName) {
+  joinPendingGame(gameId, sessionId, socketId, playerName, userId = null) {
     const pending = this.pendingGames.get(gameId);
     if (!pending) return { error: 'Game not found or already started' };
 
@@ -76,11 +77,11 @@ export class LobbyManager {
     const creatorIsWhite = Math.random() < 0.5;
 
     if (creatorIsWhite) {
-      room.addPlayer(pending.sessionId, pending.socketId, pending.playerName, 'w');
-      room.addPlayer(sessionId, socketId, playerName, 'b');
+      room.addPlayer(pending.sessionId, pending.socketId, pending.playerName, 'w', pending.userId);
+      room.addPlayer(sessionId, socketId, playerName, 'b', userId);
     } else {
-      room.addPlayer(sessionId, socketId, playerName, 'w');
-      room.addPlayer(pending.sessionId, pending.socketId, pending.playerName, 'b');
+      room.addPlayer(sessionId, socketId, playerName, 'w', userId);
+      room.addPlayer(pending.sessionId, pending.socketId, pending.playerName, 'b', pending.userId);
     }
 
     room.startGame();
@@ -139,11 +140,11 @@ export class LobbyManager {
     const p1IsWhite = Math.random() < 0.5;
 
     if (p1IsWhite) {
-      room.addPlayer(player1.sessionId, player1.socketId, player1.playerName, 'w');
-      room.addPlayer(player2.sessionId, player2.socketId, player2.playerName, 'b');
+      room.addPlayer(player1.sessionId, player1.socketId, player1.playerName, 'w', player1.userId);
+      room.addPlayer(player2.sessionId, player2.socketId, player2.playerName, 'b', player2.userId);
     } else {
-      room.addPlayer(player2.sessionId, player2.socketId, player2.playerName, 'w');
-      room.addPlayer(player1.sessionId, player1.socketId, player1.playerName, 'b');
+      room.addPlayer(player2.sessionId, player2.socketId, player2.playerName, 'w', player2.userId);
+      room.addPlayer(player1.sessionId, player1.socketId, player1.playerName, 'b', player1.userId);
     }
 
     room.startGame();

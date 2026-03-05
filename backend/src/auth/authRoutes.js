@@ -33,7 +33,7 @@ router.post('/register', async (req, res) => {
 
     const hash = await hashPassword(password);
     const result = await pool.query(
-      'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, rating, created_at',
+      'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, rating, avatar_id, created_at',
       [username.trim(), email.trim().toLowerCase(), hash]
     );
     const user = result.rows[0];
@@ -57,7 +57,7 @@ router.post('/login', async (req, res) => {
     }
 
     const result = await pool.query(
-      'SELECT id, username, email, password_hash, rating, created_at FROM users WHERE email = $1',
+      'SELECT id, username, email, password_hash, rating, avatar_id, created_at FROM users WHERE email = $1',
       [email.trim().toLowerCase()]
     );
     const row = result.rows[0];
@@ -77,7 +77,7 @@ router.post('/login', async (req, res) => {
 router.get('/me', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, username, email, rating, created_at FROM users WHERE id = $1',
+      'SELECT id, username, email, rating, avatar_id, created_at FROM users WHERE id = $1',
       [req.user.id]
     );
     if (!result.rows[0]) {
@@ -90,16 +90,25 @@ router.get('/me', authMiddleware, async (req, res) => {
   }
 });
 
+const VALID_AVATARS = [
+  'default', 'pawn_w', 'pawn_b', 'knight_w', 'knight_b', 'bishop_w', 'bishop_b',
+  'rook_w', 'rook_b', 'queen_w', 'queen_b', 'king_w', 'king_b', 'flame', 'lightning', 'crown',
+];
+
 router.put('/profile', authMiddleware, async (req, res) => {
   try {
-    const { username } = req.body;
+    const { username, avatar_id } = req.body;
     if (!username || username.length < 3 || username.length > 32) {
       return res.status(400).json({ error: 'Username must be 3-32 characters' });
     }
+    if (avatar_id && !VALID_AVATARS.includes(avatar_id)) {
+      return res.status(400).json({ error: 'Invalid avatar' });
+    }
 
+    const avatarValue = avatar_id || 'default';
     const result = await pool.query(
-      'UPDATE users SET username = $1 WHERE id = $2 RETURNING id, username, email, rating, created_at',
-      [username.trim(), req.user.id]
+      'UPDATE users SET username = $1, avatar_id = $2 WHERE id = $3 RETURNING id, username, email, rating, avatar_id, created_at',
+      [username.trim(), avatarValue, req.user.id]
     );
     if (!result.rows[0]) {
       return res.status(404).json({ error: 'User not found' });
