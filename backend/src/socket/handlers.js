@@ -70,6 +70,12 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     broadcastLobbyState(io, lobbyManager);
   });
 
+  socket.on('lobby:cancel_game', () => {
+    if (!checkRate()) return;
+    lobbyManager.removePendingBySession(sessionId);
+    broadcastLobbyState(io, lobbyManager);
+  });
+
   socket.on('lobby:join_game', ({ gameId, playerName }) => {
     if (!checkRate()) return;
     const result = lobbyManager.joinPendingGame(

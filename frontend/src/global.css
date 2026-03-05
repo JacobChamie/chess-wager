@@ -543,6 +543,15 @@ body {
   background: var(--bg-hover);
 }
 
+.open-game-row--joinable {
+  cursor: pointer;
+}
+
+.open-game-row--joinable:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(124, 179, 66, 0.1);
+}
+
 .open-game-info {
   display: flex;
   flex-direction: column;

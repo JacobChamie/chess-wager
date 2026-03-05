@@ -279,6 +279,7 @@ export function useGameSocket(gameId) {
 
   const requestRematch = useCallback(() => {
     socket.emit('game:rematch', { gameId });
+    setRematchOffer(myColorRef.current);
   }, [gameId]);
 
   const respondRematch = useCallback(

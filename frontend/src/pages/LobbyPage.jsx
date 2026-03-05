@@ -117,6 +117,12 @@ const LobbyPage = () => {
     setStatus('creating');
   };
 
+  const handleCancelGame = () => {
+    socket.emit('lobby:cancel_game', {});
+    setPendingGameId(null);
+    setStatus('idle');
+  };
+
   const handleJoinGame = () => {
     if (!joinGameId.trim()) return;
     setError(null);
@@ -422,10 +428,19 @@ const LobbyPage = () => {
                     style={{
                       fontSize: '16px',
                       fontWeight: 600,
-                      marginBottom: '16px',
+                      marginBottom: '4px',
                     }}
                   >
                     Waiting for opponent...
+                  </p>
+                  <p
+                    style={{
+                      fontSize: '13px',
+                      color: 'var(--text-secondary)',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    {tcDisplay}
                   </p>
                   <div
                     style={{
@@ -442,12 +457,27 @@ const LobbyPage = () => {
                   >
                     {window.location.origin}/game/{pendingGameId}
                   </div>
-                  <button
-                    className="btn btn-primary"
-                    onClick={copyGameLink}
-                  >
-                    {copied ? 'Copied!' : 'Copy Link'}
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                    <button
+                      className="btn btn-primary"
+                      onClick={copyGameLink}
+                    >
+                      {copied ? 'Copied!' : 'Copy Link'}
+                    </button>
+                    <button
+                      className="btn btn-ghost"
+                      onClick={handleCancelGame}
+                      title="Edit time control"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-danger"
+                      onClick={handleCancelGame}
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               )}
 

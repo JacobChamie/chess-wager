@@ -55,14 +55,16 @@ const OpenGamesBrowser = () => {
       {openGames.length > 0 && (
         <div className="open-games-list">
           {openGames.map((game) => (
-            <div key={game.gameId} className="open-game-row">
+            <div
+              key={game.gameId}
+              className="open-game-row open-game-row--joinable"
+              onClick={() => handleJoin(game.gameId)}
+            >
               <div className="open-game-info">
                 <span className="open-game-name">{game.creatorName}</span>
                 <span className="open-game-tc">{formatTc(game.timeControl)}</span>
               </div>
-              <button className="btn btn-primary btn-sm" onClick={() => handleJoin(game.gameId)}>
-                Join
-              </button>
+              <span className="btn btn-primary btn-sm">Join</span>
             </div>
           ))}
         </div>

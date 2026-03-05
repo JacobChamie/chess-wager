@@ -61,7 +61,10 @@ const GamePage = () => {
 
   const [boardSize, setBoardSize] = useState(() => {
     if (typeof window === 'undefined') return 320;
-    return Math.min(480, Math.max(240, Math.floor(window.innerWidth * 0.9) - 40));
+    const maxByWidth = Math.floor(window.innerWidth * 0.9) - 40;
+    // Reserve ~200px for timers, buttons, padding, navbar
+    const maxByHeight = Math.floor(window.innerHeight - 52 - 200);
+    return Math.min(480, Math.max(240, Math.min(maxByWidth, maxByHeight)));
   });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenBoardSize, setFullscreenBoardSize] = useState(() => {
@@ -196,12 +199,13 @@ const GamePage = () => {
       style={{
         textAlign: 'center',
         background: 'var(--bg-base)',
-        minHeight: '100vh',
+        height: 'calc(100vh - 52px)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         paddingTop: '12px',
         position: 'relative',
+        overflow: 'hidden',
       }}
     >
       {disconnectTime && <DisconnectBanner disconnectTime={disconnectTime} />}
