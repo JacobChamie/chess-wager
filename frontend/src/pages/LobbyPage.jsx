@@ -607,7 +607,7 @@ const LobbyPage = () => {
                 >
                   Choose Opponent
                 </label>
-                <div className="tc-grid">
+                <div className="tc-grid bot-grid">
                   {botPersonalities.map((bot) => (
                     <BotCard
                       key={bot.id}

@@ -36,11 +36,11 @@ const Navbar = () => {
           </Link>
           <div className="online-indicator" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span className="online-dot" />
-            <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+            <span title="Players online" style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '13px', color: 'var(--text-secondary)', cursor: 'default' }}>
               <span>{'\uD83D\uDC64'}</span>
               <span>{onlineCount}</span>
             </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+            <span title="Active games" style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '13px', color: 'var(--text-secondary)', cursor: 'default' }}>
               <span>{'\u265F'}</span>
               <span>{activeGames}</span>
             </span>
