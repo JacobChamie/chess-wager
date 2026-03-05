@@ -104,6 +104,7 @@ export class StockfishEngine {
 
       // Parse bestmove response
       if (trimmed.startsWith('bestmove') && this._currentResolve) {
+        clearTimeout(this._bestmoveTimeout);
         const parts = trimmed.split(/\s+/);
         const moveStr = parts[1];
         if (!moveStr || moveStr === '(none)') {
@@ -147,6 +148,20 @@ export class StockfishEngine {
     const { fen, uciElo, moveTimeMs, resolve, reject } = this._queue.shift();
     this._currentResolve = resolve;
 
+    // Safety timeout: if no bestmove comes back, unblock the queue
+    const timeoutMs = moveTimeMs + 15000; // movetime + 15s grace
+    this._bestmoveTimeout = setTimeout(() => {
+      if (this._currentResolve === resolve) {
+        console.warn(`[StockfishEngine] Bestmove timeout after ${timeoutMs}ms, unblocking queue`);
+        this._currentResolve = null;
+        this._busy = false;
+        // Try to stop any ongoing search
+        try { this._send('stop'); } catch {}
+        resolve(null);
+        this._processQueue();
+      }
+    }, timeoutMs);
+
     try {
       // Use UCI_LimitStrength + UCI_Elo for accurate strength control
       const clampedElo = Math.max(1320, Math.min(3190, uciElo));
@@ -159,6 +174,7 @@ export class StockfishEngine {
       this._send(`position fen ${fen}`);
       this._send(`go movetime ${moveTimeMs}`);
     } catch (err) {
+      clearTimeout(this._bestmoveTimeout);
       this._currentResolve = null;
       this._busy = false;
       reject(err);

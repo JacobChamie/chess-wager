@@ -70,15 +70,35 @@ export class BotPlayer {
         move = await this.engine.getBestMove(fen, this.personality.stockfish);
       }
 
-      if (!move || this._destroyed || this.room.status !== 'active') return;
+      if (this._destroyed || this.room.status !== 'active') return;
+
+      // Engine returned null (timeout or no legal moves) — fall back to random
+      if (!move) {
+        const tmpChess = new Chess(fen);
+        const legalMoves = tmpChess.moves({ verbose: true });
+        if (legalMoves.length > 0) {
+          const pick = legalMoves[Math.floor(Math.random() * legalMoves.length)];
+          move = { from: pick.from, to: pick.to, promotion: pick.promotion };
+        } else {
+          return; // No legal moves (game should be over)
+        }
+      }
 
       const result = this.room.tryMove(this.botSessionId, move);
 
       if (result.valid && this._onMoveCallback) {
         this._onMoveCallback(result);
+      } else if (!result.valid) {
+        // Move was invalid — retry after short delay
+        console.warn(`[BotPlayer] Invalid move ${move.from}${move.to}, retrying`);
+        setTimeout(() => this._makeMove(), 500);
       }
     } catch (err) {
       console.error(`[BotPlayer] Error making move:`, err.message);
+      // Retry after delay instead of giving up
+      if (!this._destroyed && this.room.status === 'active') {
+        setTimeout(() => this._makeMove(), 2000);
+      }
     }
   }
 
