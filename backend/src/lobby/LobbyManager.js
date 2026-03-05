@@ -4,6 +4,15 @@ function tcKey(tc) {
   return `${tc}+0`;
 }
 
+// Determine if player1 should be white based on color preferences
+function resolveColors(pref1, pref2) {
+  if (pref1 === 'white' && pref2 !== 'white') return true;
+  if (pref1 === 'black' && pref2 !== 'black') return false;
+  if (pref2 === 'white' && pref1 !== 'white') return false;
+  if (pref2 === 'black' && pref1 !== 'black') return true;
+  return Math.random() < 0.5;
+}
+
 export class LobbyManager {
   constructor(gameManager) {
     this.gameManager = gameManager;
@@ -13,11 +22,11 @@ export class LobbyManager {
     this.pendingGames = new Map();
   }
 
-  addToQueue(sessionId, socketId, playerName, timeControl, userId = null) {
+  addToQueue(sessionId, socketId, playerName, timeControl, userId = null, rating = null, colorPref = 'random') {
     // Remove this socket if already in queue
     this.queue = this.queue.filter((e) => e.socketId !== socketId);
 
-    this.queue.push({ sessionId, socketId, playerName, timeControl, userId });
+    this.queue.push({ sessionId, socketId, playerName, timeControl, userId, rating, colorPref });
 
     // Try to find a match with same time control (different socket)
     const myKey = tcKey(timeControl);
@@ -32,7 +41,7 @@ export class LobbyManager {
         (e) => e.socketId !== socketId && e.socketId !== match.socketId
       );
       return this._createMatch(
-        { sessionId, socketId, playerName, timeControl, userId },
+        { sessionId, socketId, playerName, timeControl, userId, colorPref },
         match
       );
     }
@@ -48,7 +57,7 @@ export class LobbyManager {
     this.queue = this.queue.filter((e) => e.socketId !== socketId);
   }
 
-  createPendingGame(sessionId, socketId, playerName, timeControl, userId = null) {
+  createPendingGame(sessionId, socketId, playerName, timeControl, userId = null, rating = null, colorPref = 'random') {
     const room = this.gameManager.createGame(timeControl);
     this.pendingGames.set(room.gameId, {
       sessionId,
@@ -56,6 +65,8 @@ export class LobbyManager {
       playerName,
       timeControl,
       userId,
+      rating,
+      colorPref,
     });
     return room.gameId;
   }
@@ -73,8 +84,8 @@ export class LobbyManager {
     const room = this.gameManager.getGame(gameId);
     if (!room) return { error: 'Game not found' };
 
-    // Randomly assign colors
-    const creatorIsWhite = Math.random() < 0.5;
+    // Assign colors based on creator's preference
+    const creatorIsWhite = resolveColors(pending.colorPref || 'random', 'random');
 
     if (creatorIsWhite) {
       room.addPlayer(pending.sessionId, pending.socketId, pending.playerName, 'w', pending.userId);
@@ -121,6 +132,8 @@ export class LobbyManager {
         creatorName: pending.playerName,
         creatorSessionId: pending.sessionId,
         timeControl: pending.timeControl,
+        rating: pending.rating,
+        colorPref: pending.colorPref,
       });
     }
     return games;
@@ -135,6 +148,8 @@ export class LobbyManager {
       sessionId: entry.sessionId,
       playerName: entry.playerName,
       timeControl: entry.timeControl,
+      rating: entry.rating,
+      colorPref: entry.colorPref,
     }));
   }
 
@@ -142,8 +157,8 @@ export class LobbyManager {
     const room = this.gameManager.createGame(player1.timeControl);
     const gameId = room.gameId;
 
-    // Random color assignment
-    const p1IsWhite = Math.random() < 0.5;
+    // Color assignment based on preferences
+    const p1IsWhite = resolveColors(player1.colorPref || 'random', player2.colorPref || 'random');
 
     if (p1IsWhite) {
       room.addPlayer(player1.sessionId, player1.socketId, player1.playerName, 'w', player1.userId);

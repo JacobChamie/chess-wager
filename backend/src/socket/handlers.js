@@ -35,14 +35,16 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     });
   });
 
-  socket.on('lobby:play', ({ timeControl, playerName }) => {
+  socket.on('lobby:play', ({ timeControl, playerName, colorPref, rating }) => {
     if (!checkRate()) return;
     const match = lobbyManager.addToQueue(
       sessionId,
       socket.id,
       playerName || 'Anonymous',
       timeControl || 300,
-      authUser?.id || null
+      authUser?.id || null,
+      rating || null,
+      colorPref || 'random'
     );
 
     if (match) {
@@ -66,14 +68,16 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     broadcastLobbyState(io, lobbyManager);
   });
 
-  socket.on('lobby:create_game', ({ timeControl, playerName }) => {
+  socket.on('lobby:create_game', ({ timeControl, playerName, colorPref, rating }) => {
     if (!checkRate()) return;
     const gameId = lobbyManager.createPendingGame(
       sessionId,
       socket.id,
       playerName || 'Anonymous',
       timeControl || 300,
-      authUser?.id || null
+      authUser?.id || null,
+      rating || null,
+      colorPref || 'random'
     );
     socket.emit('lobby:game_created', { gameId });
     broadcastLobbyState(io, lobbyManager);

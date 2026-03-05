@@ -12,7 +12,13 @@ const formatTc = (tc) => {
   return `${Math.round(tc / 60)} min`;
 };
 
-const OpenGamesBrowser = ({ onEditGame }) => {
+const colorPrefIcon = (pref) => {
+  if (pref === 'white') return '\u2654';
+  if (pref === 'black') return '\u265A';
+  return '\uD83C\uDFB2';
+};
+
+const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [openGames, setOpenGames] = useState([]);
@@ -41,6 +47,7 @@ const OpenGamesBrowser = ({ onEditGame }) => {
 
   const handleDelete = () => {
     socket.emit('lobby:cancel_game', {});
+    onCancelSeeking?.();
   };
 
   const handleEdit = () => {
@@ -50,6 +57,12 @@ const OpenGamesBrowser = ({ onEditGame }) => {
 
   const handleCancelSeeking = () => {
     socket.emit('lobby:cancel_play', {});
+    onCancelSeeking?.();
+  };
+
+  const handleEditSeeking = (seeker) => {
+    socket.emit('lobby:cancel_play', {});
+    onEditSeeking?.(seeker.timeControl);
   };
 
   const handleMatchSeeker = (timeControl) => {
@@ -85,9 +98,12 @@ const OpenGamesBrowser = ({ onEditGame }) => {
                 <div className="open-game-info">
                   <span className="open-game-name">
                     {game.creatorName}
+                    {game.rating && <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginLeft: '4px' }}>({game.rating})</span>}
                     {isMine && <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginLeft: '6px' }}>(you)</span>}
                   </span>
-                  <span className="open-game-tc">{formatTc(game.timeControl)}</span>
+                  <span className="open-game-tc">
+                    {colorPrefIcon(game.colorPref)} {formatTc(game.timeControl)}
+                  </span>
                 </div>
                 {isMine ? (
                   <div style={{ display: 'flex', gap: '6px' }}>
@@ -141,18 +157,32 @@ const OpenGamesBrowser = ({ onEditGame }) => {
                   <div className="open-game-info">
                     <span className="open-game-name">
                       {seeker.playerName}
+                      {seeker.rating && <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginLeft: '4px' }}>({seeker.rating})</span>}
                       {isMine && <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginLeft: '6px' }}>(you)</span>}
                     </span>
-                    <span className="open-game-tc">{formatTc(seeker.timeControl)}</span>
+                    <span className="open-game-tc">
+                      {colorPrefIcon(seeker.colorPref)} {formatTc(seeker.timeControl)}
+                    </span>
                   </div>
                   {isMine ? (
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={(e) => { e.stopPropagation(); handleCancelSeeking(); }}
-                      style={{ fontSize: '12px' }}
-                    >
-                      Cancel
-                    </button>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button
+                        className="navbar-icon-btn"
+                        onClick={(e) => { e.stopPropagation(); handleEditSeeking(seeker); }}
+                        title="Edit time control"
+                        style={{ width: '32px', height: '32px', fontSize: '14px' }}
+                      >
+                        {'\u270F\uFE0F'}
+                      </button>
+                      <button
+                        className="navbar-icon-btn"
+                        onClick={(e) => { e.stopPropagation(); handleCancelSeeking(); }}
+                        title="Cancel seeking"
+                        style={{ width: '32px', height: '32px', fontSize: '14px', borderColor: 'rgba(229,57,53,0.3)' }}
+                      >
+                        {'\uD83D\uDDD1\uFE0F'}
+                      </button>
+                    </div>
                   ) : (
                     <span className="btn btn-primary btn-sm">Play</span>
                   )}

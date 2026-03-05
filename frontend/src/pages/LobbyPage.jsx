@@ -43,6 +43,7 @@ const LobbyPage = () => {
     () => localStorage.getItem('chess_player_name') || ''
   );
   const [timeControl, setTimeControl] = useState({ time: 300, increment: 0 });
+  const [colorPref, setColorPref] = useState('random');
   const [showCustom, setShowCustom] = useState(false);
   const [customMinutes, setCustomMinutes] = useState('5');
   const [customIncrement, setCustomIncrement] = useState('0');
@@ -100,7 +101,7 @@ const LobbyPage = () => {
     setError(null);
     const name = getName();
     if (!user) localStorage.setItem('chess_player_name', name);
-    socket.emit('lobby:play', { timeControl, playerName: name });
+    socket.emit('lobby:play', { timeControl, playerName: name, colorPref, rating: user?.rating || null });
     setStatus('queued');
   };
 
@@ -113,7 +114,7 @@ const LobbyPage = () => {
     setError(null);
     const name = getName();
     if (!user) localStorage.setItem('chess_player_name', name);
-    socket.emit('lobby:create_game', { timeControl, playerName: name });
+    socket.emit('lobby:create_game', { timeControl, playerName: name, colorPref, rating: user?.rating || null });
     setStatus('creating');
   };
 
@@ -333,6 +334,39 @@ const LobbyPage = () => {
                 )}
               </div>
 
+              {/* Color preference */}
+              <div style={{ marginBottom: '24px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: 'var(--text-secondary)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.8px',
+                    marginBottom: '8px',
+                  }}
+                >
+                  Play As
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {[
+                    { value: 'white', label: '\u2654 White' },
+                    { value: 'random', label: '\uD83C\uDFB2 Random' },
+                    { value: 'black', label: '\u265A Black' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      className={`btn btn-sm${colorPref === opt.value ? ' btn-primary' : ' btn-ghost'}`}
+                      onClick={() => setColorPref(opt.value)}
+                      style={{ flex: 1 }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Error */}
               {error && (
                 <div
@@ -497,6 +531,16 @@ const LobbyPage = () => {
               onEditGame={() => {
                 setPendingGameId(null);
                 setStatus('idle');
+                setTab('quick');
+              }}
+              onCancelSeeking={() => {
+                setStatus('idle');
+              }}
+              onEditSeeking={(tc) => {
+                setStatus('idle');
+                if (tc && typeof tc === 'object') {
+                  setTimeControl({ time: tc.time, increment: tc.increment || 0 });
+                }
                 setTab('quick');
               }}
             />
