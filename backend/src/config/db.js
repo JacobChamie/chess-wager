@@ -7,8 +7,12 @@ const { Pool } = pg;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+const isProduction = process.env.NODE_ENV === 'production' ||
+  (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('localhost'));
+
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/chess_wager',
+  ...(isProduction && { ssl: { rejectUnauthorized: false } }),
 });
 
 export async function initDb() {
