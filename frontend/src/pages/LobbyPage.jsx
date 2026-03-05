@@ -198,14 +198,13 @@ const LobbyPage = () => {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
         padding: '24px 16px',
       }}
     >
       {/* Main card */}
       <div
         className="card"
-        style={{ width: '100%', maxWidth: '480px', padding: '0' }}
+        style={{ width: '100%', maxWidth: '480px', padding: '0', margin: 'auto 0' }}
       >
         {/* Tab bar */}
         <div className="tab-bar">

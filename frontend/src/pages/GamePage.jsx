@@ -212,6 +212,12 @@ const GamePage = () => {
       if (!gs || gs.status !== 'active') return;
       if (gs.myColor === null) return; // spectator
 
+      // Cancel premoves on any board click
+      if (Object.keys(premoveSquares).length > 0) {
+        clearPremoves();
+        return;
+      }
+
       const chess = chessRef.current;
       if (!chess) return;
       const piece = chess.get(square);
@@ -281,7 +287,7 @@ const GamePage = () => {
         setSelectedSquare(square);
       }
     },
-    [selectedSquare, chessRef, tryLocalMove, sendMove, addPremove]
+    [selectedSquare, chessRef, tryLocalMove, sendMove, addPremove, premoveSquares, clearPremoves]
   );
 
   // Keep ref in sync for handlePieceDrop same-square-drop routing

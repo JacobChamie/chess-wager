@@ -1083,9 +1083,6 @@ body {
     min-width: 32px;
   }
 
-  .online-indicator .online-count {
-    display: none;
-  }
 }
 
 @media (max-width: 420px) {

@@ -10,11 +10,20 @@ const Navbar = () => {
   const [showAuth, setShowAuth] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [onlineCount, setOnlineCount] = useState(0);
+  const [activeGames, setActiveGames] = useState(0);
 
   useEffect(() => {
-    const onCount = ({ count }) => setOnlineCount(count);
+    const onCount = ({ count, games }) => {
+      setOnlineCount(count);
+      if (games !== undefined) setActiveGames(games);
+    };
+    const onGames = ({ games }) => setActiveGames(games);
     socket.on('online:count', onCount);
-    return () => socket.off('online:count', onCount);
+    socket.on('online:games', onGames);
+    return () => {
+      socket.off('online:count', onCount);
+      socket.off('online:games', onGames);
+    };
   }, []);
 
   return (
@@ -25,9 +34,16 @@ const Navbar = () => {
             <span style={{ fontSize: '20px' }}>{'\u265A'}</span>
             <span className="navbar-logo-text">ELO Stakes</span>
           </Link>
-          <div className="online-indicator">
+          <div className="online-indicator" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span className="online-dot" />
-            <span className="online-count">{onlineCount}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+              <span>{'\uD83D\uDC64'}</span>
+              <span>{onlineCount}</span>
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+              <span>{'\u265F'}</span>
+              <span>{activeGames}</span>
+            </span>
           </div>
         </div>
 
