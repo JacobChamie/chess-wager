@@ -372,6 +372,24 @@ body {
   animation: pulse 1s ease infinite;
 }
 
+.timer--win {
+  background: rgba(76, 175, 80, 0.15);
+  border-color: #4caf50;
+  color: #66bb6a;
+}
+
+.timer--loss {
+  background: rgba(229, 57, 53, 0.1);
+  border-color: rgba(229, 57, 53, 0.4);
+  color: #ef5350;
+}
+
+.timer--draw {
+  background: rgba(255, 193, 7, 0.1);
+  border-color: rgba(255, 193, 7, 0.4);
+  color: #ffc107;
+}
+
 /* ── Badge ────────────────────────────────────────────── */
 
 .badge {

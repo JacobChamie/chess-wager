@@ -254,6 +254,9 @@ export function useGameSocket(gameId) {
     socket.on('game:cheer_received', onCheerReceived);
 
     return () => {
+      // Leave the game room so spectator count updates
+      socket.emit('game:leave', { gameId });
+
       socket.off('lobby:game_start', onLobbyGameStart);
       socket.off('connect', onReconnect);
       socket.off('game:state', onState);

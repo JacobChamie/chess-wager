@@ -10,6 +10,7 @@ const ChessboardComponent = memo(({
   boardOrientation = 'white',
   premoveSquares,
   onSquareRightClick,
+  onSquareClick,
 }) => {
   const minSize = 240;
   const maxSize = 640;
@@ -71,6 +72,7 @@ const ChessboardComponent = memo(({
           boxShadow: '0 0 25px rgba(0, 0, 0, 0.7)',
         }}
         customSquareStyles={premoveSquares}
+        onSquareClick={onSquareClick}
         onSquareRightClick={onSquareRightClick}
       />
 

@@ -1,6 +1,7 @@
 import { memo, useEffect, useState, useRef } from 'react';
 
-const Timer = memo(({ timeMs, player, active }) => {
+// resultIcon: 'win' | 'loss' | 'draw' | null
+const Timer = memo(({ timeMs, player, active, resultIcon }) => {
   const [displayTime, setDisplayTime] = useState(timeMs);
   const lastSyncRef = useRef(Date.now());
 
@@ -34,11 +35,21 @@ const Timer = memo(({ timeMs, player, active }) => {
     timeDisplay = `${minutes}:${seconds < 10 ? `0${seconds}` : seconds}`;
   }
 
-  const timerClass = active
-    ? isLowTime
-      ? 'timer timer--low'
-      : 'timer timer--active'
-    : 'timer timer--inactive';
+  let timerClass;
+  if (resultIcon === 'win') {
+    timerClass = 'timer timer--win';
+  } else if (resultIcon === 'loss') {
+    timerClass = 'timer timer--loss';
+  } else if (resultIcon === 'draw') {
+    timerClass = 'timer timer--draw';
+  } else if (active) {
+    timerClass = isLowTime ? 'timer timer--low' : 'timer timer--active';
+  } else {
+    timerClass = 'timer timer--inactive';
+  }
+
+  const iconMap = { win: '\u{1F451}', loss: '\u2717', draw: '\u00BD' };
+  const icon = resultIcon ? iconMap[resultIcon] : null;
 
   return (
     <div className={timerClass} style={{ margin: '6px 0' }}>
@@ -50,14 +61,19 @@ const Timer = memo(({ timeMs, player, active }) => {
           marginBottom: '2px',
           textTransform: 'uppercase',
           letterSpacing: '0.5px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '5px',
         }}
       >
+        {icon && <span style={{ fontSize: '14px' }}>{icon}</span>}
         {player}
       </div>
       <div
         style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: isLowTime ? '24px' : '20px',
+          fontSize: isLowTime && !resultIcon ? '24px' : '20px',
           fontWeight: 700,
           lineHeight: 1.2,
         }}

@@ -64,6 +64,7 @@ const GamePage = () => {
     cheerReceived,
     cheerCooldown,
     sendCheer,
+    chessRef,
   } = useGameSocket(gameId);
 
   const [boardSize, setBoardSize] = useState(() => {
@@ -81,6 +82,7 @@ const GamePage = () => {
   });
 
   const [pendingPromotion, setPendingPromotion] = useState(null);
+  const [selectedSquare, setSelectedSquare] = useState(null);
 
   const gameStateRef = useRef(gameState);
   useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
@@ -142,6 +144,7 @@ const GamePage = () => {
       if (!localMove) return false;
 
       sendMove(sourceSquare, targetSquare);
+      setSelectedSquare(null);
       return true;
     },
     [tryLocalMove, sendMove, addPremove]
@@ -163,7 +166,76 @@ const GamePage = () => {
     setPendingPromotion(null);
   }, []);
 
+  const handleSquareClick = useCallback(
+    (square) => {
+      const gs = gameStateRef.current;
+      if (!gs || gs.status !== 'active') return;
+      if (gs.myColor === null) return; // spectator
+
+      const chess = chessRef.current;
+      const piece = chess.get(square);
+
+      if (selectedSquare) {
+        // Already have a piece selected — try to move there
+        if (square === selectedSquare) {
+          // Clicked same square — deselect
+          setSelectedSquare(null);
+          return;
+        }
+
+        // Check if this is a legal move from selectedSquare to square
+        const legalMoves = chess.moves({ square: selectedSquare, verbose: true });
+        const matchingMove = legalMoves.find(m => m.to === square);
+
+        if (matchingMove) {
+          // Check for promotion
+          const srcPiece = chess.get(selectedSquare);
+          const isPawn = srcPiece?.type === 'p';
+          const isPromoRank =
+            (gs.myColor === 'w' && square[1] === '8') ||
+            (gs.myColor === 'b' && square[1] === '1');
+
+          if (isPawn && isPromoRank) {
+            setPendingPromotion({ from: selectedSquare, to: square });
+            setSelectedSquare(null);
+            return;
+          }
+
+          // Make the move
+          const localMove = tryLocalMove(selectedSquare, square);
+          if (localMove) {
+            sendMove(selectedSquare, square);
+          }
+          setSelectedSquare(null);
+          return;
+        }
+
+        // Not a legal destination — if it's our own piece, re-select it
+        if (piece && piece.color === gs.myColor) {
+          setSelectedSquare(square);
+          return;
+        }
+
+        // Illegal square — deselect
+        setSelectedSquare(null);
+        return;
+      }
+
+      // No selection yet — select if it's our piece
+      if (piece && piece.color === gs.myColor) {
+        setSelectedSquare(square);
+      }
+    },
+    [selectedSquare, chessRef, tryLocalMove, sendMove]
+  );
+
+  // Clear selection when a move is made (fen changes) or game ends
+  useEffect(() => {
+    setSelectedSquare(null);
+  }, [gameState?.fen, gameState?.status]);
+
   const handleSquareRightClick = useCallback(() => {
+    setSelectedSquare(null);
     clearPremoves();
   }, [clearPremoves]);
 
@@ -212,7 +284,48 @@ const GamePage = () => {
   const myTurnActive = bottomTurnActive;
   const opponentTurnActive = topTurnActive;
 
+  // Compute result icons for timers
+  let topResultIcon = null;
+  let bottomResultIcon = null;
+  if (isCompleted) {
+    const winner = gameState.winner;
+    if (winner === null) {
+      // Draw
+      topResultIcon = 'draw';
+      bottomResultIcon = 'draw';
+    } else {
+      topResultIcon = winner === topColor ? 'win' : 'loss';
+      bottomResultIcon = winner === bottomColor ? 'win' : 'loss';
+    }
+  }
+
   const showDrawOffer = !isSpectator && drawOffer && drawOffer !== myColor;
+
+  // Merge premove + click-to-move highlights
+  const mergedSquareStyles = { ...premoveSquares };
+  if (selectedSquare && chessRef.current) {
+    mergedSquareStyles[selectedSquare] = {
+      backgroundColor: 'rgba(255, 255, 0, 0.4)',
+      ...(mergedSquareStyles[selectedSquare] || {}),
+    };
+    const legalMoves = chessRef.current.moves({ square: selectedSquare, verbose: true });
+    for (const m of legalMoves) {
+      const existing = mergedSquareStyles[m.to] || {};
+      // Capture vs empty square — different dot styles
+      if (m.captured) {
+        mergedSquareStyles[m.to] = {
+          background: 'radial-gradient(circle, transparent 55%, rgba(0,0,0,0.25) 56%)',
+          borderRadius: '50%',
+          ...existing,
+        };
+      } else {
+        mergedSquareStyles[m.to] = {
+          background: 'radial-gradient(circle, rgba(0,0,0,0.2) 20%, transparent 21%)',
+          ...existing,
+        };
+      }
+    }
+  }
 
   return (
     <div
@@ -271,6 +384,7 @@ const GamePage = () => {
               timeMs={opponentTime}
               player={opponentName}
               active={opponentTurnActive}
+              resultIcon={topResultIcon}
             />
 
             <ChessboardComponent
@@ -280,7 +394,8 @@ const GamePage = () => {
               boardSize={boardSize}
               onBoardSizeChange={setBoardSize}
               boardOrientation={orientation}
-              premoveSquares={premoveSquares}
+              premoveSquares={mergedSquareStyles}
+              onSquareClick={handleSquareClick}
               onSquareRightClick={handleSquareRightClick}
             />
 
@@ -304,6 +419,7 @@ const GamePage = () => {
               timeMs={myTime}
               player={myName}
               active={myTurnActive}
+              resultIcon={bottomResultIcon}
             />
           </div>
         )}
@@ -436,6 +552,7 @@ const GamePage = () => {
               timeMs={opponentTime}
               player={opponentName}
               active={opponentTurnActive}
+              resultIcon={topResultIcon}
             />
           </div>
 
@@ -444,6 +561,7 @@ const GamePage = () => {
               timeMs={myTime}
               player={myName}
               active={myTurnActive}
+              resultIcon={bottomResultIcon}
             />
           </div>
 
@@ -453,7 +571,8 @@ const GamePage = () => {
             onPieceDrop={handlePieceDrop}
             boardSize={fullscreenBoardSize}
             boardOrientation={orientation}
-            premoveSquares={premoveSquares}
+            premoveSquares={mergedSquareStyles}
+            onSquareClick={handleSquareClick}
             onSquareRightClick={handleSquareRightClick}
           />
 

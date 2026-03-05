@@ -55,7 +55,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       _emitGameStart(io, room, player1, player2);
 
       // Set up game callbacks
-      _setupGameCallbacks(io, room, gameManager);
+      _setupGameCallbacks(io, room, gameManager, lobbyManager);
     } else {
       socket.emit('lobby:queued', {});
     }
@@ -107,7 +107,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     const { room, creator, joiner } = result;
 
     _emitGameStart(io, room, creator, joiner);
-    _setupGameCallbacks(io, room, gameManager);
+    _setupGameCallbacks(io, room, gameManager, lobbyManager);
     broadcastLobbyState(io, lobbyManager);
   });
 
@@ -178,6 +178,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     if (result.gameOver) {
       io.to(gameId).emit('game:over', result.gameOver);
       gameManager.persistGame(gameId);
+      broadcastLobbyState(io, lobbyManager);
     }
   });
 
@@ -190,6 +191,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     if (result) {
       io.to(gameId).emit('game:over', result);
       gameManager.persistGame(gameId);
+      broadcastLobbyState(io, lobbyManager);
     }
   });
 
@@ -220,6 +222,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     if (result.result) {
       io.to(gameId).emit('game:over', result);
       gameManager.persistGame(gameId);
+      broadcastLobbyState(io, lobbyManager);
     } else if (result.declined) {
       io.to(gameId).emit('game:draw_declined', {});
     }
@@ -283,6 +286,21 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       gameManager.cleanupGame(gameId);
     } else if (result.declined) {
       io.to(gameId).emit('game:rematch_declined', {});
+    }
+  });
+
+  // --- Game Leave (spectator navigating away without disconnect) ---
+
+  socket.on('game:leave', ({ gameId }) => {
+    if (!checkRate()) return;
+    const room = gameManager.getGame(gameId);
+    if (!room) return;
+
+    if (room.isSpectator(sessionId)) {
+      room.removeSpectator(sessionId);
+      socket.leave(gameId);
+      io.to(gameId).emit('game:spectators_update', { count: room.getSpectatorCount() });
+      broadcastLobbyState(io, lobbyManager);
     }
   });
 
@@ -404,7 +422,7 @@ function _emitGameStart(io, room, playerA, playerB) {
   }
 }
 
-function _setupGameCallbacks(io, room, gameManager) {
+function _setupGameCallbacks(io, room, gameManager, lobbyManager) {
   const gameId = room.gameId;
 
   room.onClockUpdate = (times) => {
@@ -414,5 +432,6 @@ function _setupGameCallbacks(io, room, gameManager) {
   room.onGameOver = (result) => {
     io.to(gameId).emit('game:over', result);
     gameManager.persistGame(gameId);
+    broadcastLobbyState(io, lobbyManager);
   };
 }
