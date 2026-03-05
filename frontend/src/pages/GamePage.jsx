@@ -83,9 +83,14 @@ const GamePage = () => {
 
   const [pendingPromotion, setPendingPromotion] = useState(null);
   const [selectedSquare, setSelectedSquare] = useState(null);
+  const [modalDismissed, setModalDismissed] = useState(false);
 
   const gameStateRef = useRef(gameState);
   useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
+
+  useEffect(() => {
+    setModalDismissed(false);
+  }, [gameId]);
 
   useEffect(() => {
     if (rematchGameId) {
@@ -519,7 +524,7 @@ const GamePage = () => {
         )}
       </div>
 
-      {isCompleted && !isSpectator && (
+      {isCompleted && !isSpectator && !modalDismissed && (
         <GameOverModal
           result={gameState.result}
           reason={gameState.reason}
@@ -529,6 +534,7 @@ const GamePage = () => {
           onRematch={requestRematch}
           onRespondRematch={respondRematch}
           onBackToLobby={() => navigate('/')}
+          onDismiss={() => setModalDismissed(true)}
         />
       )}
 

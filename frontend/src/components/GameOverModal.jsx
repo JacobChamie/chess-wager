@@ -20,6 +20,7 @@ const GameOverModal = ({
   onRematch,
   onRespondRematch,
   onBackToLobby,
+  onDismiss,
 }) => {
   const resultText = RESULT_LABELS[reason] || 'Game Over';
 
@@ -39,8 +40,28 @@ const GameOverModal = ({
   const waitingForRematch = rematchOffer === myColor;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-card">
+    <div className="modal-overlay" onClick={onDismiss}>
+      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+        {onDismiss && (
+          <button
+            onClick={onDismiss}
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-muted)',
+              fontSize: '20px',
+              cursor: 'pointer',
+              padding: '4px 8px',
+              lineHeight: 1,
+            }}
+            title="Close and analyze"
+          >
+            {'\u2715'}
+          </button>
+        )}
         <div
           style={{
             fontSize: '48px',

@@ -116,15 +116,43 @@ export class BotManager {
       this.abortController = null;
     }
 
-    // Collect all bot gameIds and sessionIds before disconnecting
-    const botGameIds = new Set();
+    // Collect all bot sessionIds
     const botSessionIds = new Set();
     for (const [name, bot] of this.bots) {
-      if (bot.gameId) botGameIds.add(bot.gameId);
       if (bot.sessionId) botSessionIds.add(bot.sessionId);
     }
 
-    // Disconnect all bot sockets
+    // Find ALL games involving bot sessions BEFORE disconnecting sockets
+    const botGameIds = new Set();
+    if (this._gameManager) {
+      for (const [gameId, room] of this._gameManager.games) {
+        const whiteIsBot = botSessionIds.has(room.white?.sessionId);
+        const blackIsBot = botSessionIds.has(room.black?.sessionId);
+        if (whiteIsBot || blackIsBot) {
+          botGameIds.add(gameId);
+          // Force-end active games so they don't linger
+          if (room.status === 'active') {
+            room._endGame('1/2-1/2', 'abandoned', null);
+            // Notify any spectators
+            if (this._io) {
+              this._io.to(gameId).emit('game:over', {
+                result: '1/2-1/2',
+                reason: 'abandoned',
+                winner: null,
+              });
+            }
+          }
+        }
+      }
+
+      // Now clean up all bot games from memory
+      for (const gameId of botGameIds) {
+        this._gameManager.cleanupGame(gameId);
+      }
+      this._log(`Cleaned up ${botGameIds.size} games from memory`);
+    }
+
+    // Disconnect all bot sockets AFTER game cleanup
     for (const [name, bot] of this.bots) {
       try {
         if (bot.socket?.connected) {
@@ -133,22 +161,6 @@ export class BotManager {
       } catch (err) {
         // Ignore disconnect errors
       }
-    }
-
-    // Clean up in-memory games from GameManager
-    if (this._gameManager) {
-      // Find ALL games involving bot sessions and clean them up
-      for (const [gameId, room] of this._gameManager.games) {
-        const whiteIsBot = botSessionIds.has(room.white?.sessionId);
-        const blackIsBot = botSessionIds.has(room.black?.sessionId);
-        if (whiteIsBot || blackIsBot) {
-          botGameIds.add(gameId);
-        }
-      }
-      for (const gameId of botGameIds) {
-        this._gameManager.cleanupGame(gameId);
-      }
-      this._log(`Cleaned up ${botGameIds.size} games from memory`);
     }
 
     // Clean up DB
