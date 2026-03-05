@@ -132,6 +132,7 @@ export class LobbyManager {
 
   getSeekers() {
     return this.queue.map((entry) => ({
+      sessionId: entry.sessionId,
       playerName: entry.playerName,
       timeControl: entry.timeControl,
     }));

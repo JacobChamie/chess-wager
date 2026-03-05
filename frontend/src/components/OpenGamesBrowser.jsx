@@ -48,6 +48,10 @@ const OpenGamesBrowser = ({ onEditGame }) => {
     onEditGame?.();
   };
 
+  const handleCancelSeeking = () => {
+    socket.emit('lobby:cancel_play', {});
+  };
+
   const handleMatchSeeker = (timeControl) => {
     const playerName = user?.username || localStorage.getItem('chess_player_name') || 'Anonymous';
     socket.emit('lobby:play', { timeControl, playerName });
@@ -126,19 +130,35 @@ const OpenGamesBrowser = ({ onEditGame }) => {
             Players Seeking
           </div>
           <div className="open-games-list">
-            {seekers.map((seeker, i) => (
-              <div
-                key={i}
-                className="open-game-row open-game-row--joinable"
-                onClick={() => handleMatchSeeker(seeker.timeControl)}
-              >
-                <div className="open-game-info">
-                  <span className="open-game-name">{seeker.playerName}</span>
-                  <span className="open-game-tc">{formatTc(seeker.timeControl)}</span>
+            {seekers.map((seeker, i) => {
+              const isMine = seeker.sessionId === sessionId;
+              return (
+                <div
+                  key={i}
+                  className={`open-game-row${isMine ? '' : ' open-game-row--joinable'}`}
+                  onClick={isMine ? undefined : () => handleMatchSeeker(seeker.timeControl)}
+                >
+                  <div className="open-game-info">
+                    <span className="open-game-name">
+                      {seeker.playerName}
+                      {isMine && <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginLeft: '6px' }}>(you)</span>}
+                    </span>
+                    <span className="open-game-tc">{formatTc(seeker.timeControl)}</span>
+                  </div>
+                  {isMine ? (
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={(e) => { e.stopPropagation(); handleCancelSeeking(); }}
+                      style={{ fontSize: '12px' }}
+                    >
+                      Cancel
+                    </button>
+                  ) : (
+                    <span className="btn btn-primary btn-sm">Play</span>
+                  )}
                 </div>
-                <span className="btn btn-primary btn-sm">Play</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
