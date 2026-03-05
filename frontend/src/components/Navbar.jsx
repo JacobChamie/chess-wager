@@ -23,7 +23,7 @@ const Navbar = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <Link to="/" className="navbar-logo">
             <span style={{ fontSize: '20px' }}>{'\u265A'}</span>
-            ELO Stakes
+            <span className="navbar-logo-text">ELO Stakes</span>
           </Link>
           <div className="online-indicator">
             <span className="online-dot" />
@@ -49,11 +49,11 @@ const Navbar = () => {
           </button>
 
           {user ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Link to={`/leaderboard/${user.username}`} className="navbar-user" style={{ textDecoration: 'none' }}>
                 {user.username}
               </Link>
-              <button className="btn btn-ghost btn-sm" onClick={logout}>
+              <button className="btn btn-ghost btn-sm navbar-signout" onClick={logout}>
                 Sign Out
               </button>
             </div>

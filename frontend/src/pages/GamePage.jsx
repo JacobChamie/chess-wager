@@ -65,6 +65,7 @@ const GamePage = () => {
     cheerCooldown,
     sendCheer,
     chessRef,
+    lastMove,
   } = useGameSocket(gameId);
 
   const [isMobile, setIsMobile] = useState(() =>
@@ -95,6 +96,7 @@ const GamePage = () => {
   const [pendingPromotion, setPendingPromotion] = useState(null);
   const [selectedSquare, setSelectedSquare] = useState(null);
   const [modalDismissed, setModalDismissed] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Track viewport changes for responsive layout
   useEffect(() => {
@@ -111,6 +113,8 @@ const GamePage = () => {
 
   const gameStateRef = useRef(gameState);
   useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
+
+  const handleClickMoveRef = useRef(null);
 
   useEffect(() => {
     setModalDismissed(false);
@@ -145,6 +149,12 @@ const GamePage = () => {
 
   const handlePieceDrop = useCallback(
     (sourceSquare, targetSquare, piece) => {
+      // Same-square drop = tap/click on mobile touch
+      if (sourceSquare === targetSquare) {
+        handleClickMoveRef.current?.(sourceSquare);
+        return false;
+      }
+
       const gs = gameStateRef.current;
       if (!gs || gs.status !== 'active') return false;
       if (gs.myColor === null) return false; // spectator
@@ -274,6 +284,9 @@ const GamePage = () => {
     [selectedSquare, chessRef, tryLocalMove, sendMove, addPremove]
   );
 
+  // Keep ref in sync for handlePieceDrop same-square-drop routing
+  handleClickMoveRef.current = handleClickMove;
+
   // onSquareClick — fires when clicking empty squares (or squares without draggable pieces)
   const handleSquareClick = useCallback(
     (square) => handleClickMove(square),
@@ -358,8 +371,18 @@ const GamePage = () => {
 
   const showDrawOffer = !isSpectator && drawOffer && drawOffer !== myColor;
 
-  // Merge premove + click-to-move highlights
+  // Merge last-move + premove + click-to-move highlights
   const mergedSquareStyles = { ...premoveSquares };
+  if (lastMove) {
+    mergedSquareStyles[lastMove.from] = {
+      backgroundColor: 'rgba(255, 255, 0, 0.2)',
+      ...(mergedSquareStyles[lastMove.from] || {}),
+    };
+    mergedSquareStyles[lastMove.to] = {
+      backgroundColor: 'rgba(255, 255, 0, 0.25)',
+      ...(mergedSquareStyles[lastMove.to] || {}),
+    };
+  }
   if (selectedSquare && chessRef.current) {
     mergedSquareStyles[selectedSquare] = {
       backgroundColor: 'rgba(255, 255, 0, 0.4)',
@@ -389,13 +412,14 @@ const GamePage = () => {
       style={{
         textAlign: 'center',
         background: 'var(--bg-base)',
-        height: 'calc(100vh - 52px)',
+        minHeight: 'calc(100vh - 52px)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         paddingTop: '12px',
         position: 'relative',
-        overflow: 'hidden',
+        overflowY: 'auto',
+        overflowX: 'hidden',
       }}
     >
       {cheerReceived && <ConfettiOverlay targetColor={cheerReceived.targetColor} />}
@@ -427,7 +451,7 @@ const GamePage = () => {
           gap: isMobile ? '4px' : '20px',
           flex: 1,
           minHeight: 0,
-          overflow: isMobile ? 'auto' : 'hidden',
+          overflow: 'visible',
           width: isMobile ? '100%' : undefined,
         }}
       >
@@ -550,8 +574,20 @@ const GamePage = () => {
           </div>
         )}
 
+        {/* Desktop sidebar toggle when hidden */}
+        {!isFullscreen && !isMobile && !sidebarOpen && (
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => setSidebarOpen(true)}
+            style={{ alignSelf: 'flex-start', marginTop: '8px', fontSize: '12px' }}
+            title="Show panel"
+          >
+            {'\u25C0'} Panel
+          </button>
+        )}
+
         {/* Desktop chat + actions */}
-        {!isFullscreen && !isMobile && (
+        {!isFullscreen && !isMobile && sidebarOpen && (
           <div
             style={{
               display: 'flex',
@@ -563,11 +599,21 @@ const GamePage = () => {
               overflow: 'hidden',
             }}
           >
-            {spectatorCount > 0 && (
-              <div className="spectator-badge" style={{ alignSelf: 'flex-start', marginBottom: '4px' }}>
-                {'\uD83D\uDC41'} {spectatorCount} watching
-              </div>
-            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+              {spectatorCount > 0 ? (
+                <div className="spectator-badge">
+                  {'\uD83D\uDC41'} {spectatorCount} watching
+                </div>
+              ) : <div />}
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => setSidebarOpen(false)}
+                style={{ fontSize: '11px', padding: '4px 8px' }}
+                title="Hide panel"
+              >
+                {'\u2715'}
+              </button>
+            </div>
 
             <ChatBox
               messages={chatMessages}

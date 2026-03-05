@@ -19,6 +19,7 @@ export function useGameSocket(gameId) {
   const [spectatorChatMessages, setSpectatorChatMessages] = useState([]);
   const [cheerReceived, setCheerReceived] = useState(null);
   const [cheerCooldown, setCheerCooldown] = useState(0);
+  const [lastMove, setLastMove] = useState(null);
 
   // Local chess instance for move validation
   const chessRef = useRef(new Chess());
@@ -70,6 +71,7 @@ export function useGameSocket(gameId) {
     setSpectatorChatMessages([]);
     setCheerReceived(null);
     setCheerCooldown(0);
+    setLastMove(null);
     premoveQueueRef.current = [];
     chessRef.current = new Chess();
     myColorRef.current = null;
@@ -119,6 +121,7 @@ export function useGameSocket(gameId) {
     const onMoveMade = (move) => {
       chessRef.current.load(move.fen);
       setMoveError(null);
+      setLastMove(move.from && move.to ? { from: move.from, to: move.to } : null);
 
       setGameState((prev) => {
         if (!prev) return prev;
@@ -402,5 +405,6 @@ export function useGameSocket(gameId) {
     cheerReceived,
     cheerCooldown,
     sendCheer,
+    lastMove,
   };
 }
