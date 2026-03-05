@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { socket } from '../socket.js';
+import { socket, sessionId } from '../socket.js';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const formatTc = (tc) => {
@@ -12,8 +11,7 @@ const formatTc = (tc) => {
   return `${Math.round(tc / 60)} min`;
 };
 
-const OpenGamesBrowser = () => {
-  const navigate = useNavigate();
+const OpenGamesBrowser = ({ onEditGame }) => {
   const { user } = useAuth();
   const [openGames, setOpenGames] = useState([]);
   const [seekers, setSeekers] = useState([]);
@@ -37,6 +35,15 @@ const OpenGamesBrowser = () => {
     socket.emit('lobby:join_game', { gameId, playerName });
   };
 
+  const handleDelete = () => {
+    socket.emit('lobby:cancel_game', {});
+  };
+
+  const handleEdit = () => {
+    socket.emit('lobby:cancel_game', {});
+    onEditGame?.();
+  };
+
   const hasContent = openGames.length > 0 || seekers.length > 0;
 
   return (
@@ -54,19 +61,46 @@ const OpenGamesBrowser = () => {
 
       {openGames.length > 0 && (
         <div className="open-games-list">
-          {openGames.map((game) => (
-            <div
-              key={game.gameId}
-              className="open-game-row open-game-row--joinable"
-              onClick={() => handleJoin(game.gameId)}
-            >
-              <div className="open-game-info">
-                <span className="open-game-name">{game.creatorName}</span>
-                <span className="open-game-tc">{formatTc(game.timeControl)}</span>
+          {openGames.map((game) => {
+            const isMine = game.creatorSessionId === sessionId;
+            return (
+              <div
+                key={game.gameId}
+                className={`open-game-row${isMine ? '' : ' open-game-row--joinable'}`}
+                onClick={isMine ? undefined : () => handleJoin(game.gameId)}
+              >
+                <div className="open-game-info">
+                  <span className="open-game-name">
+                    {game.creatorName}
+                    {isMine && <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginLeft: '6px' }}>(you)</span>}
+                  </span>
+                  <span className="open-game-tc">{formatTc(game.timeControl)}</span>
+                </div>
+                {isMine ? (
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      className="navbar-icon-btn"
+                      onClick={(e) => { e.stopPropagation(); handleEdit(); }}
+                      title="Edit time control"
+                      style={{ width: '32px', height: '32px', fontSize: '14px' }}
+                    >
+                      {'\u270F\uFE0F'}
+                    </button>
+                    <button
+                      className="navbar-icon-btn"
+                      onClick={(e) => { e.stopPropagation(); handleDelete(); }}
+                      title="Delete game"
+                      style={{ width: '32px', height: '32px', fontSize: '14px', borderColor: 'rgba(229,57,53,0.3)' }}
+                    >
+                      {'\uD83D\uDDD1\uFE0F'}
+                    </button>
+                  </div>
+                ) : (
+                  <span className="btn btn-primary btn-sm">Join</span>
+                )}
               </div>
-              <span className="btn btn-primary btn-sm">Join</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

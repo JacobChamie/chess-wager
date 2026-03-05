@@ -492,7 +492,15 @@ const LobbyPage = () => {
             </>
           )}
 
-          {tab === 'open' && <OpenGamesBrowser />}
+          {tab === 'open' && (
+            <OpenGamesBrowser
+              onEditGame={() => {
+                setPendingGameId(null);
+                setStatus('idle');
+                setTab('quick');
+              }}
+            />
+          )}
         </div>
       </div>
 
@@ -504,7 +512,7 @@ const LobbyPage = () => {
           color: 'var(--text-muted)',
         }}
       >
-        Chess Wager v1.0
+        ELO Stakes v1.0
       </p>
     </div>
   );

@@ -180,9 +180,17 @@ export function useGameSocket(gameId) {
         blackTime,
         lastSync: Date.now(),
       };
-      setGameState((prev) =>
-        prev ? { ...prev, whiteTime, blackTime } : prev
-      );
+      // Only sync gameState if times drift >2s from current value
+      // to avoid glitchy Timer resets every second
+      setGameState((prev) => {
+        if (!prev) return prev;
+        const wDrift = Math.abs(prev.whiteTime - whiteTime);
+        const bDrift = Math.abs(prev.blackTime - blackTime);
+        if (wDrift > 2000 || bDrift > 2000) {
+          return { ...prev, whiteTime, blackTime };
+        }
+        return prev;
+      });
     };
 
     const onGameOver = (result) => {

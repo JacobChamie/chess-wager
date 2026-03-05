@@ -119,6 +119,7 @@ export class LobbyManager {
       games.push({
         gameId,
         creatorName: pending.playerName,
+        creatorSessionId: pending.sessionId,
         timeControl: pending.timeControl,
       });
     }
