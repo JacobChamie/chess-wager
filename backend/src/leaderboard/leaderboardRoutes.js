@@ -21,7 +21,7 @@ router.get('/', async (_req, res) => {
         COUNT(g.id) FILTER (WHERE g.result = '1/2-1/2') AS draws
       FROM users u
       LEFT JOIN games g ON (g.white_user_id = u.id OR g.black_user_id = u.id)
-        AND g.status = 'completed'
+        AND g.status = 'completed' AND (g.is_bot_game IS NOT TRUE)
       GROUP BY u.id
       ORDER BY u.rating DESC
       LIMIT 50
@@ -74,7 +74,7 @@ router.get('/players/:username', async (req, res) => {
         COUNT(g.id) FILTER (WHERE g.result = '1/2-1/2') AS draws
       FROM games g
       WHERE (g.white_user_id = $1 OR g.black_user_id = $1)
-        AND g.status = 'completed'
+        AND g.status = 'completed' AND (g.is_bot_game IS NOT TRUE)
     `, [user.id]);
 
     const stats = statsResult.rows[0];
@@ -83,7 +83,8 @@ router.get('/players/:username', async (req, res) => {
     const recentResult = await pool.query(`
       SELECT
         g.id, g.result, g.result_reason, g.time_control, g.ended_at,
-        g.white_user_id, g.black_user_id, g.white_name, g.black_name
+        g.white_user_id, g.black_user_id, g.white_name, g.black_name,
+        g.is_bot_game, g.bot_personality
       FROM games g
       WHERE (g.white_user_id = $1 OR g.black_user_id = $1)
         AND g.status = 'completed'
@@ -112,6 +113,8 @@ router.get('/players/:username', async (req, res) => {
         reason: g.result_reason,
         timeControl: g.time_control,
         endedAt: g.ended_at,
+        isBotGame: g.is_bot_game || false,
+        botPersonality: g.bot_personality || null,
       };
     });
 

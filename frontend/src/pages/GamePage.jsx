@@ -67,13 +67,24 @@ const GamePage = () => {
     chessRef,
   } = useGameSocket(gameId);
 
-  const [boardSize, setBoardSize] = useState(() => {
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' && window.innerWidth < 640
+  );
+  const [chatExpanded, setChatExpanded] = useState(false);
+
+  const computeBoardSize = useCallback(() => {
     if (typeof window === 'undefined') return 320;
+    const mobile = window.innerWidth < 640;
+    if (mobile) {
+      // Fill width minus padding
+      return Math.min(window.innerWidth - 16, window.innerHeight - 280);
+    }
     const maxByWidth = Math.floor(window.innerWidth * 0.9) - 40;
-    // Reserve ~200px for timers, buttons, padding, navbar
     const maxByHeight = Math.floor(window.innerHeight - 52 - 200);
     return Math.min(480, Math.max(240, Math.min(maxByWidth, maxByHeight)));
-  });
+  }, []);
+
+  const [boardSize, setBoardSize] = useState(computeBoardSize);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenBoardSize, setFullscreenBoardSize] = useState(() => {
     if (typeof window === 'undefined') return 480;
@@ -84,6 +95,19 @@ const GamePage = () => {
   const [pendingPromotion, setPendingPromotion] = useState(null);
   const [selectedSquare, setSelectedSquare] = useState(null);
   const [modalDismissed, setModalDismissed] = useState(false);
+
+  // Track viewport changes for responsive layout
+  useEffect(() => {
+    const onResize = () => {
+      const mobile = window.innerWidth < 640;
+      setIsMobile(mobile);
+      setBoardSize(computeBoardSize());
+      const shorter = Math.min(window.innerWidth, window.innerHeight);
+      setFullscreenBoardSize(Math.max(320, Math.floor(shorter * 0.8)));
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [computeBoardSize]);
 
   const gameStateRef = useRef(gameState);
   useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
@@ -362,7 +386,7 @@ const GamePage = () => {
     >
       {cheerReceived && <ConfettiOverlay targetColor={cheerReceived.targetColor} />}
 
-      {disconnectTime && <DisconnectBanner disconnectTime={disconnectTime} />}
+      {disconnectTime && !gameState?.isBotGame && <DisconnectBanner disconnectTime={disconnectTime} />}
 
       {moveError && (
         <div
@@ -383,13 +407,14 @@ const GamePage = () => {
       <div
         style={{
           display: 'flex',
-          flexDirection: 'row',
+          flexDirection: isMobile ? 'column' : 'row',
           justifyContent: 'center',
-          alignItems: 'stretch',
-          gap: '20px',
+          alignItems: isMobile ? 'center' : 'stretch',
+          gap: isMobile ? '4px' : '20px',
           flex: 1,
           minHeight: 0,
-          overflow: 'hidden',
+          overflow: isMobile ? 'auto' : 'hidden',
+          width: isMobile ? '100%' : undefined,
         }}
       >
         {/* Board column */}
@@ -414,7 +439,7 @@ const GamePage = () => {
               position={gameState.fen}
               onPieceDrop={handlePieceDrop}
               boardSize={boardSize}
-              onBoardSizeChange={setBoardSize}
+              onBoardSizeChange={isMobile ? undefined : setBoardSize}
               boardOrientation={orientation}
               premoveSquares={mergedSquareStyles}
               onSquareClick={handleSquareClick}
@@ -430,13 +455,15 @@ const GamePage = () => {
               />
             )}
 
-            <button
-              className="btn btn-ghost btn-sm"
-              onClick={() => setIsFullscreen(true)}
-              style={{ marginTop: '8px', fontSize: '12px' }}
-            >
-              Full board
-            </button>
+            {!isMobile && (
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => setIsFullscreen(true)}
+                style={{ marginTop: '8px', fontSize: '12px' }}
+              >
+                Full board
+              </button>
+            )}
 
             <Timer
               timeMs={myTime}
@@ -444,11 +471,73 @@ const GamePage = () => {
               active={myTurnActive}
               resultIcon={bottomResultIcon}
             />
+
+            {/* Mobile action buttons inline */}
+            {isMobile && isActive && !isSpectator && (
+              <div style={{ display: 'flex', gap: '8px', width: '100%', padding: '0 8px', marginTop: '4px' }}>
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={resign}
+                  style={{ flex: 1 }}
+                >
+                  Resign
+                </button>
+                {!gameState?.isBotGame && (
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={offerDraw}
+                    disabled={!!drawOffer}
+                    style={{ flex: 1 }}
+                  >
+                    {drawOffer === myColor ? 'Draw Offered' : 'Offer Draw'}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 
-        {/* Chat + actions column */}
-        {!isFullscreen && (
+        {/* Chat + actions column — collapsible on mobile */}
+        {!isFullscreen && isMobile && (
+          <div style={{ width: '100%', padding: '0 8px' }}>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => setChatExpanded((v) => !v)}
+              style={{
+                width: '100%',
+                fontSize: '12px',
+                padding: '6px',
+                marginTop: '4px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              {chatExpanded ? '\u25B2 Hide' : '\u25BC Chat & Moves'}
+              {spectatorCount > 0 && ` \u00B7 ${spectatorCount} watching`}
+            </button>
+            {chatExpanded && (
+              <div style={{ marginTop: '4px' }}>
+                <ChatBox
+                  messages={chatMessages}
+                  onSend={sendChat}
+                  moves={gameState.moves}
+                  myName={myName}
+                  isSpectator={isSpectator}
+                  spectatorMessages={spectatorChatMessages}
+                  onSpectatorSend={sendSpectatorChat}
+                  gameStatus={gameState.status}
+                  gameResult={gameState.result}
+                  gameReason={gameState.reason}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Desktop chat + actions */}
+        {!isFullscreen && !isMobile && (
           <div
             style={{
               display: 'flex',
@@ -495,14 +584,16 @@ const GamePage = () => {
                 >
                   Resign
                 </button>
-                <button
-                  className={`btn btn-ghost${drawOffer ? '' : ''}`}
-                  onClick={offerDraw}
-                  disabled={!!drawOffer}
-                  style={{ flex: 1 }}
-                >
-                  {drawOffer === myColor ? 'Draw Offered' : 'Offer Draw'}
-                </button>
+                {!gameState?.isBotGame && (
+                  <button
+                    className={`btn btn-ghost${drawOffer ? '' : ''}`}
+                    onClick={offerDraw}
+                    disabled={!!drawOffer}
+                    style={{ flex: 1 }}
+                  >
+                    {drawOffer === myColor ? 'Draw Offered' : 'Offer Draw'}
+                  </button>
+                )}
               </div>
             )}
 
@@ -541,6 +632,8 @@ const GamePage = () => {
           onRespondRematch={respondRematch}
           onBackToLobby={() => navigate('/')}
           onDismiss={() => setModalDismissed(true)}
+          isBotGame={gameState.isBotGame}
+          botPersonality={gameState.botPersonality}
         />
       )}
 
@@ -628,9 +721,11 @@ const GamePage = () => {
             <button className="btn btn-danger" onClick={resign}>
               Resign
             </button>
-            <button className="btn btn-ghost" onClick={offerDraw}>
-              Offer Draw
-            </button>
+            {!gameState?.isBotGame && (
+              <button className="btn btn-ghost" onClick={offerDraw}>
+                Offer Draw
+              </button>
+            )}
           </div>
 
           <div style={{ position: 'absolute', top: 24, right: 24 }}>

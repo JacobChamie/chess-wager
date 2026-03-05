@@ -12,6 +12,8 @@ import leaderboardRoutes from './leaderboard/leaderboardRoutes.js';
 import createAdminRoutes from './admin/adminRoutes.js';
 import { BotManager } from './admin/botManager.js';
 import { verifyToken } from './auth/authService.js';
+import { StockfishEngine } from './bot/StockfishEngine.js';
+import { BotGameManager } from './bot/BotGameManager.js';
 
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
@@ -33,6 +35,8 @@ const io = new Server(httpServer, {
 const gameManager = new GameManager(pool);
 const lobbyManager = new LobbyManager(gameManager);
 const botManager = new BotManager();
+const stockfishEngine = new StockfishEngine();
+let botGameManager;
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
@@ -76,7 +80,7 @@ io.on('connection', async (socket) => {
   io.emit('online:count', { count: onlineCount });
 
   console.log(`Connected: socket=${socket.id} session=${sessionId}${authUser ? ` user=${authUser.username}` : ''}`);
-  registerHandlers(io, socket, sessionId, gameManager, lobbyManager, authUser);
+  registerHandlers(io, socket, sessionId, gameManager, lobbyManager, authUser, botGameManager);
 
   socket.on('disconnect', () => {
     onlineCount = Math.max(0, onlineCount - 1);
@@ -88,6 +92,16 @@ const PORT = process.env.PORT || 3001;
 
 async function start() {
   await initDb();
+
+  try {
+    await stockfishEngine.init();
+    botGameManager = new BotGameManager(gameManager, stockfishEngine);
+    console.log('Stockfish engine ready for bot games');
+  } catch (err) {
+    console.error('Failed to initialize Stockfish:', err.message);
+    console.warn('Bot games will be unavailable');
+  }
+
   httpServer.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
   });

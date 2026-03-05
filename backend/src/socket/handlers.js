@@ -15,7 +15,7 @@ function broadcastLobbyState(io, lobbyManager) {
   });
 }
 
-export function registerHandlers(io, socket, sessionId, gameManager, lobbyManager, authUser) {
+export function registerHandlers(io, socket, sessionId, gameManager, lobbyManager, authUser, botGameManager) {
   const checkRate = () => {
     if (!rateLimiter(socket.id)) {
       console.warn(`[RateLimit] Socket ${socket.id} exceeded rate limit`);
@@ -111,6 +111,58 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     broadcastLobbyState(io, lobbyManager);
   });
 
+  // --- Bot Events ---
+
+  socket.on('bot:get_personalities', () => {
+    if (!checkRate()) return;
+    if (!botGameManager) {
+      socket.emit('bot:error', { message: 'Bot games unavailable' });
+      return;
+    }
+    socket.emit('bot:personalities', botGameManager.getPersonalities());
+  });
+
+  socket.on('bot:start_game', ({ personalityId, timeControl, playerName, colorPref }) => {
+    if (!checkRate()) return;
+    if (!botGameManager) {
+      socket.emit('bot:error', { message: 'Bot games unavailable' });
+      return;
+    }
+
+    const result = botGameManager.createBotGame(
+      io,
+      sessionId,
+      socket.id,
+      playerName || authUser?.username || 'Anonymous',
+      authUser?.id || null,
+      personalityId,
+      timeControl || { time: 300, increment: 0 },
+      colorPref || 'random'
+    );
+
+    if (result.error) {
+      socket.emit('bot:error', { message: result.error });
+      return;
+    }
+
+    const { room, gameId, humanColor } = result;
+
+    socket.join(gameId);
+    socket.emit('bot:game_start', {
+      gameId,
+      color: humanColor,
+      opponentName: room.botPersonality.name,
+      timeControl: room.timeControl,
+      fen: room.chess.fen(),
+      personality: {
+        id: room.botPersonality.id,
+        name: room.botPersonality.name,
+        title: room.botPersonality.title,
+        rating: room.botPersonality.rating,
+      },
+    });
+  });
+
   // --- Game Events ---
 
   socket.on('game:join', ({ gameId }) => {
@@ -180,6 +232,11 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       gameManager.persistGame(gameId);
       broadcastLobbyState(io, lobbyManager);
     }
+
+    // Notify bot player if this is a bot game
+    if (!result.gameOver && botGameManager?.isBotGame(gameId)) {
+      botGameManager.onHumanMove(gameId, result);
+    }
   });
 
   socket.on('game:resign', ({ gameId }) => {
@@ -202,6 +259,12 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
 
     const result = room.offerDraw(socket.id);
     if (result) {
+      // Auto-decline draw offers in bot games
+      if (room.isBotGame) {
+        room.drawOffer = null;
+        socket.emit('game:draw_declined', {});
+        return;
+      }
       const opponent = room.getOpponentOf(socket.id);
       if (opponent) {
         io.to(opponent.socketId).emit('game:draw_offered', {
@@ -379,7 +442,8 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     if (activeGame && activeGame.status === 'active') {
       activeGame.handleDisconnect(sessionId);
       const opponent = activeGame.getOpponentOf(sessionId);
-      if (opponent) {
+      // Don't notify bot opponent (socketId is null)
+      if (opponent?.socketId) {
         io.to(opponent.socketId).emit('game:opponent_disconnected', {
           timeout: 60,
         });

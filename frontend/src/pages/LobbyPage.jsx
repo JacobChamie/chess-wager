@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { socket } from '../socket.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import OpenGamesBrowser from '../components/OpenGamesBrowser.jsx';
+import BotCard from '../components/BotCard.jsx';
 
 const TIME_PRESETS = [
   { label: '1+0', time: 60, increment: 0, category: 'Bullet' },
@@ -52,6 +53,8 @@ const LobbyPage = () => {
   const [joinGameId, setJoinGameId] = useState('');
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [selectedBot, setSelectedBot] = useState(null);
+  const [botPersonalities, setBotPersonalities] = useState([]);
 
   const getName = useCallback(
     () => user?.username || playerName.trim() || 'Anonymous',
@@ -71,17 +74,32 @@ const LobbyPage = () => {
       setError(message);
       setStatus('idle');
     };
+    const onBotGameStart = ({ gameId }) => navigate(`/game/${gameId}`);
+    const onBotPersonalities = (personalities) => setBotPersonalities(personalities);
+    const onBotError = ({ message }) => {
+      setError(message);
+      setStatus('idle');
+    };
 
     socket.on('lobby:queued', onQueued);
     socket.on('lobby:game_created', onGameCreated);
     socket.on('lobby:game_start', onGameStart);
     socket.on('lobby:error', onError);
+    socket.on('bot:game_start', onBotGameStart);
+    socket.on('bot:personalities', onBotPersonalities);
+    socket.on('bot:error', onBotError);
+
+    // Request bot personalities
+    socket.emit('bot:get_personalities');
 
     return () => {
       socket.off('lobby:queued', onQueued);
       socket.off('lobby:game_created', onGameCreated);
       socket.off('lobby:game_start', onGameStart);
       socket.off('lobby:error', onError);
+      socket.off('bot:game_start', onBotGameStart);
+      socket.off('bot:personalities', onBotPersonalities);
+      socket.off('bot:error', onBotError);
     };
   }, [navigate]);
 
@@ -143,6 +161,19 @@ const LobbyPage = () => {
     }).catch(() => {});
   };
 
+  const handlePlayBot = () => {
+    if (!selectedBot) return;
+    setError(null);
+    const name = getName();
+    if (!user) localStorage.setItem('chess_player_name', name);
+    socket.emit('bot:start_game', {
+      personalityId: selectedBot.id,
+      timeControl,
+      playerName: name,
+      colorPref,
+    });
+  };
+
   const selectedKey = tcKey(timeControl);
   const tcDisplay = timeControl.increment > 0
     ? `${Math.round(timeControl.time / 60)}+${timeControl.increment}`
@@ -172,6 +203,9 @@ const LobbyPage = () => {
           </button>
           <button className={tab === 'open' ? 'active' : ''} onClick={() => setTab('open')}>
             Open Games
+          </button>
+          <button className={tab === 'bot' ? 'active' : ''} onClick={() => setTab('bot')}>
+            vs Bot
           </button>
         </div>
 
@@ -544,6 +578,135 @@ const LobbyPage = () => {
                 setTab('quick');
               }}
             />
+          )}
+
+          {tab === 'bot' && (
+            <>
+              {/* Bot selection */}
+              <div style={{ marginBottom: '24px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: 'var(--text-secondary)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.8px',
+                    marginBottom: '12px',
+                  }}
+                >
+                  Choose Opponent
+                </label>
+                <div className="tc-grid">
+                  {botPersonalities.map((bot) => (
+                    <BotCard
+                      key={bot.id}
+                      bot={bot}
+                      selected={selectedBot?.id === bot.id}
+                      onClick={() => setSelectedBot(bot)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Time control grid (reused from quick play) */}
+              <div style={{ marginBottom: '24px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: 'var(--text-secondary)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.8px',
+                    marginBottom: '12px',
+                  }}
+                >
+                  Time Control
+                </label>
+                <div className="tc-grid">
+                  {TIME_PRESETS.map((p) => {
+                    const key = tcKey(p);
+                    const isSelected = selectedKey === key;
+                    return (
+                      <div
+                        key={key}
+                        className={`tc-tile${isSelected ? ' selected' : ''}`}
+                        onClick={() => handleSelectPreset(p)}
+                      >
+                        <span className="tc-label">{p.label}</span>
+                        <span
+                          className="tc-category"
+                          style={{ color: CAT_COLORS[p.category] }}
+                        >
+                          {CAT_ICONS[p.category]} {p.category}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Color preference */}
+              <div style={{ marginBottom: '24px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: 'var(--text-secondary)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.8px',
+                    marginBottom: '8px',
+                  }}
+                >
+                  Play As
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {[
+                    { value: 'white', label: '\u2654 White' },
+                    { value: 'random', label: '\uD83C\uDFB2 Random' },
+                    { value: 'black', label: '\u265A Black' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      className={`btn btn-sm${colorPref === opt.value ? ' btn-primary' : ' btn-ghost'}`}
+                      onClick={() => setColorPref(opt.value)}
+                      style={{ flex: 1 }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div
+                  style={{
+                    marginBottom: '16px',
+                    padding: '10px 16px',
+                    background: 'rgba(229, 57, 53, 0.12)',
+                    border: '1px solid rgba(229, 57, 53, 0.3)',
+                    borderRadius: 'var(--radius-sm)',
+                    color: '#ef5350',
+                    fontSize: '14px',
+                  }}
+                >
+                  {error}
+                </div>
+              )}
+
+              {/* Play button */}
+              <button
+                className="btn btn-primary btn-lg"
+                onClick={handlePlayBot}
+                disabled={!selectedBot}
+                style={{ width: '100%' }}
+              >
+                {selectedBot ? `Play vs ${selectedBot.name}` : 'Select a Bot'}
+              </button>
+            </>
           )}
         </div>
       </div>

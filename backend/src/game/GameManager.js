@@ -28,7 +28,7 @@ export class GameManager {
   getActiveGames() {
     const active = [];
     for (const [gameId, room] of this.games) {
-      if (room.status === 'active') {
+      if (room.status === 'active' && !room.isBotGame) {
         active.push({
           gameId,
           whiteName: room.white?.name || 'Player 1',
@@ -64,12 +64,12 @@ export class GameManager {
         `INSERT INTO games (id, status, white_player, black_player, white_name, black_name,
           time_control, fen, moves, result, result_reason,
           white_time_remaining, black_time_remaining, started_at, ended_at,
-          white_user_id, black_user_id)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+          white_user_id, black_user_id, is_bot_game, bot_personality)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
         ON CONFLICT (id) DO UPDATE SET
           status = $2, fen = $8, moves = $9, result = $10, result_reason = $11,
           white_time_remaining = $12, black_time_remaining = $13, ended_at = $15,
-          white_user_id = $16, black_user_id = $17`,
+          white_user_id = $16, black_user_id = $17, is_bot_game = $18, bot_personality = $19`,
         [
           room.gameId,
           room.status,
@@ -88,11 +88,13 @@ export class GameManager {
           room.status === 'completed' ? new Date() : null,
           room.white?.userId || null,
           room.black?.userId || null,
+          room.isBotGame || false,
+          room.botPersonality?.id || null,
         ]
       );
 
-      // Update ELO ratings if both players are registered users
-      if (room.status === 'completed' && room.white?.userId && room.black?.userId) {
+      // Update ELO ratings if both players are registered users (skip bot games)
+      if (room.status === 'completed' && !room.isBotGame && room.white?.userId && room.black?.userId) {
         await this._updateRatings(room);
       }
 

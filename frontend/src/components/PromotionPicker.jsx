@@ -48,9 +48,9 @@ const PromotionPicker = ({ color, onSelect, onCancel }) => {
             title={label}
             className="btn"
             style={{
-              width: '60px',
-              height: '60px',
-              fontSize: '36px',
+              width: 'min(60px, 14vw)',
+              height: 'min(60px, 14vw)',
+              fontSize: 'min(36px, 8vw)',
               padding: 0,
               display: 'flex',
               justifyContent: 'center',

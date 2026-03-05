@@ -21,6 +21,8 @@ const GameOverModal = ({
   onRespondRematch,
   onBackToLobby,
   onDismiss,
+  isBotGame,
+  botPersonality,
 }) => {
   const resultText = RESULT_LABELS[reason] || 'Game Over';
 
@@ -113,7 +115,11 @@ const GameOverModal = ({
             flexWrap: 'wrap',
           }}
         >
-          {showRespondRematch ? (
+          {isBotGame ? (
+            <button className="btn btn-primary" onClick={onBackToLobby}>
+              Play Again
+            </button>
+          ) : showRespondRematch ? (
             <>
               <button
                 className="btn btn-primary"

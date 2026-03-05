@@ -25,6 +25,10 @@ export class GameRoom {
     this.spectatorChatMessages = [];
     this.moveHistory = []; // [{ moveNumber, white, black }]
 
+    // Bot game flags
+    this.isBotGame = false;
+    this.botPersonality = null;
+
     // Spectators: sessionId -> { socketId, name }
     this.spectators = new Map();
 
@@ -321,6 +325,13 @@ export class GameRoom {
       chatMessages: isSpec ? [] : this.chatMessages,
       spectatorChatMessages: this.spectatorChatMessages,
       spectatorCount: this.getSpectatorCount(),
+      isBotGame: this.isBotGame,
+      botPersonality: this.botPersonality ? {
+        id: this.botPersonality.id,
+        name: this.botPersonality.name,
+        title: this.botPersonality.title,
+        rating: this.botPersonality.rating,
+      } : null,
     };
   }
 
