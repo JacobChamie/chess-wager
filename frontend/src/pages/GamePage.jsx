@@ -166,13 +166,15 @@ const GamePage = () => {
     setPendingPromotion(null);
   }, []);
 
-  const handleSquareClick = useCallback(
+  // Core click-to-move logic — used by both onSquareClick and onPieceClick
+  const handleClickMove = useCallback(
     (square) => {
       const gs = gameStateRef.current;
       if (!gs || gs.status !== 'active') return;
       if (gs.myColor === null) return; // spectator
 
       const chess = chessRef.current;
+      if (!chess) return;
       const piece = chess.get(square);
 
       if (selectedSquare) {
@@ -221,12 +223,24 @@ const GamePage = () => {
         return;
       }
 
-      // No selection yet — select if it's our piece
+      // No selection yet — select if it's our piece and it's our turn
       if (piece && piece.color === gs.myColor) {
         setSelectedSquare(square);
       }
     },
     [selectedSquare, chessRef, tryLocalMove, sendMove]
+  );
+
+  // onSquareClick — fires when clicking empty squares (or squares without draggable pieces)
+  const handleSquareClick = useCallback(
+    (square) => handleClickMove(square),
+    [handleClickMove]
+  );
+
+  // onPieceClick — fires when clicking on a piece (react-chessboard calls this separately from onSquareClick)
+  const handlePieceClick = useCallback(
+    (piece, square) => handleClickMove(square),
+    [handleClickMove]
   );
 
   // Clear selection when a move is made (fen changes) or game ends
@@ -396,6 +410,7 @@ const GamePage = () => {
               boardOrientation={orientation}
               premoveSquares={mergedSquareStyles}
               onSquareClick={handleSquareClick}
+              onPieceClick={handlePieceClick}
               onSquareRightClick={handleSquareRightClick}
             />
 
@@ -573,6 +588,7 @@ const GamePage = () => {
             boardOrientation={orientation}
             premoveSquares={mergedSquareStyles}
             onSquareClick={handleSquareClick}
+            onPieceClick={handlePieceClick}
             onSquareRightClick={handleSquareRightClick}
           />
 

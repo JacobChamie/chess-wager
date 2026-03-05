@@ -95,6 +95,11 @@ export class GameManager {
       if (room.status === 'completed' && room.white?.userId && room.black?.userId) {
         await this._updateRatings(room);
       }
+
+      // Schedule cleanup of completed games after 5 minutes
+      if (room.status === 'completed') {
+        setTimeout(() => this.cleanupGame(gameId), 5 * 60 * 1000);
+      }
     } catch (err) {
       console.error(`Failed to persist game ${gameId}:`, err.message);
     }

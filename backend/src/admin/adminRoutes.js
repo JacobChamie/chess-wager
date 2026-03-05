@@ -19,7 +19,7 @@ function adminMiddleware(req, res, next) {
   next();
 }
 
-export default function createAdminRoutes(io, botManager) {
+export default function createAdminRoutes(io, botManager, gameManager) {
   const router = Router();
 
   // List all users with game count and ban status
@@ -119,7 +119,7 @@ export default function createAdminRoutes(io, botManager) {
     try {
       const config = req.body || {};
       // Don't await — let it run in the background
-      botManager.start(io, config).catch(err => {
+      botManager.start(io, config, gameManager).catch(err => {
         console.error('[BotManager] Unhandled error:', err);
       });
       res.json({ success: true });

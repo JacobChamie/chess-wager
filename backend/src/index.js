@@ -40,7 +40,7 @@ app.get('/health', (_req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
-app.use('/api/admin', createAdminRoutes(io, botManager));
+app.use('/api/admin', createAdminRoutes(io, botManager, gameManager));
 
 let onlineCount = 0;
 

@@ -51,10 +51,12 @@ export class BotManager {
     };
   }
 
-  async start(io, config) {
+  async start(io, config, gameManager) {
     if (this.running) throw new Error('Stress test already running');
 
     this.running = true;
+    this._gameManager = gameManager;
+    this._io = io;
     this.log = [];
     this.gamesPlayed = 0;
     this.currentRound = 0;
@@ -114,18 +116,39 @@ export class BotManager {
       this.abortController = null;
     }
 
-    // Resign active games and disconnect sockets
+    // Collect all bot gameIds and sessionIds before disconnecting
+    const botGameIds = new Set();
+    const botSessionIds = new Set();
+    for (const [name, bot] of this.bots) {
+      if (bot.gameId) botGameIds.add(bot.gameId);
+      if (bot.sessionId) botSessionIds.add(bot.sessionId);
+    }
+
+    // Disconnect all bot sockets
     for (const [name, bot] of this.bots) {
       try {
         if (bot.socket?.connected) {
-          if (bot.gameId) {
-            bot.socket.emit('game:resign', { gameId: bot.gameId });
-          }
           bot.socket.disconnect();
         }
       } catch (err) {
         // Ignore disconnect errors
       }
+    }
+
+    // Clean up in-memory games from GameManager
+    if (this._gameManager) {
+      // Find ALL games involving bot sessions and clean them up
+      for (const [gameId, room] of this._gameManager.games) {
+        const whiteIsBot = botSessionIds.has(room.white?.sessionId);
+        const blackIsBot = botSessionIds.has(room.black?.sessionId);
+        if (whiteIsBot || blackIsBot) {
+          botGameIds.add(gameId);
+        }
+      }
+      for (const gameId of botGameIds) {
+        this._gameManager.cleanupGame(gameId);
+      }
+      this._log(`Cleaned up ${botGameIds.size} games from memory`);
     }
 
     // Clean up DB
@@ -140,7 +163,18 @@ export class BotManager {
       }
     }
 
+    // Broadcast fresh lobby state to all connected clients
+    if (this._io) {
+      this._io.emit('lobby:state_update', {
+        openGames: [],
+        seekers: [],
+        activeGames: this._gameManager?.getActiveGames() || [],
+      });
+    }
+
     this.bots.clear();
+    this._gameManager = null;
+    this._io = null;
     this._log('Stress test stopped and cleaned up');
   }
 
