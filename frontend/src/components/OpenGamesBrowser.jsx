@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { socket, sessionId } from '../socket.js';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -13,15 +14,18 @@ const formatTc = (tc) => {
 
 const OpenGamesBrowser = ({ onEditGame }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [openGames, setOpenGames] = useState([]);
   const [seekers, setSeekers] = useState([]);
+  const [activeGames, setActiveGames] = useState([]);
 
   useEffect(() => {
     socket.emit('lobby:get_state');
 
-    const onStateUpdate = ({ openGames: games, seekers: s }) => {
+    const onStateUpdate = ({ openGames: games, seekers: s, activeGames: ag }) => {
       setOpenGames(games || []);
       setSeekers(s || []);
+      setActiveGames(ag || []);
     };
 
     socket.on('lobby:state_update', onStateUpdate);
@@ -44,7 +48,7 @@ const OpenGamesBrowser = ({ onEditGame }) => {
     onEditGame?.();
   };
 
-  const hasContent = openGames.length > 0 || seekers.length > 0;
+  const hasContent = openGames.length > 0 || seekers.length > 0 || activeGames.length > 0;
 
   return (
     <div>
@@ -124,6 +128,46 @@ const OpenGamesBrowser = ({ onEditGame }) => {
                   <span className="open-game-tc">{formatTc(seeker.timeControl)}</span>
                 </div>
                 <span className="seeking-badge">Seeking</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeGames.length > 0 && (
+        <div style={{ marginTop: (openGames.length > 0 || seekers.length > 0) ? '16px' : '0' }}>
+          <div style={{
+            fontSize: '12px',
+            fontWeight: 600,
+            color: 'var(--text-secondary)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.8px',
+            marginBottom: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}>
+            <span className="live-badge" />
+            Live Games
+          </div>
+          <div className="open-games-list">
+            {activeGames.map((game) => (
+              <div
+                key={game.gameId}
+                className="open-game-row open-game-row--joinable"
+                onClick={() => navigate(`/game/${game.gameId}`)}
+              >
+                <div className="open-game-info">
+                  <span className="open-game-name">
+                    {game.whiteName} vs {game.blackName}
+                  </span>
+                  <span className="open-game-tc">{formatTc(game.timeControl)}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="spectator-badge">
+                    {'\uD83D\uDC41'} {game.spectatorCount}
+                  </span>
+                </div>
               </div>
             ))}
           </div>

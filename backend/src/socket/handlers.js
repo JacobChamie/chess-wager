@@ -2,10 +2,16 @@ import { createRateLimiter } from '../utils/rateLimiter.js';
 
 const rateLimiter = createRateLimiter(15, 1000); // 15 events per second
 
+// Cheer cooldowns
+const cheerCooldowns = new Map(); // sessionId -> timestamp
+const CHEER_COOLDOWN_MS = 15000;
+const LOW_TIME_MS = 30000;
+
 function broadcastLobbyState(io, lobbyManager) {
   io.emit('lobby:state_update', {
     openGames: lobbyManager.getOpenGames(),
     seekers: lobbyManager.getSeekers(),
+    activeGames: lobbyManager.getActiveGames(),
   });
 }
 
@@ -25,6 +31,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     socket.emit('lobby:state_update', {
       openGames: lobbyManager.getOpenGames(),
       seekers: lobbyManager.getSeekers(),
+      activeGames: lobbyManager.getActiveGames(),
     });
   });
 
@@ -121,7 +128,12 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     }
 
     if (!color) {
-      socket.emit('lobby:error', { message: 'Not a player in this game' });
+      // Auto-join as spectator
+      const playerName = authUser?.username || 'Spectator';
+      room.addSpectator(sessionId, socket.id, playerName);
+      socket.join(gameId);
+      socket.emit('game:state', room.getFullState(sessionId));
+      io.to(gameId).emit('game:spectators_update', { count: room.getSpectatorCount() });
       return;
     }
 
@@ -283,6 +295,45 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     }
   });
 
+  // --- Cheers/Jeers ---
+
+  socket.on('game:cheer', ({ gameId, targetColor }) => {
+    if (!checkRate()) return;
+    const room = gameManager.getGame(gameId);
+    if (!room || !room.isSpectator(sessionId)) return;
+    if (targetColor !== 'w' && targetColor !== 'b') return;
+
+    // Check cooldown
+    const lastCheer = cheerCooldowns.get(sessionId) || 0;
+    if (Date.now() - lastCheer < CHEER_COOLDOWN_MS) return;
+
+    // Check clocks — both must be > 30s
+    if (room.clock) {
+      const times = room.clock.getTimesMs();
+      if (times.whiteTime < LOW_TIME_MS || times.blackTime < LOW_TIME_MS) return;
+    }
+
+    cheerCooldowns.set(sessionId, Date.now());
+    const spec = room.spectators.get(sessionId);
+    io.to(gameId).emit('game:cheer_received', {
+      targetColor,
+      senderName: spec?.name || 'Spectator',
+    });
+  });
+
+  // --- Spectator Chat ---
+
+  socket.on('spectator:chat:send', ({ gameId, message }) => {
+    if (!checkRate()) return;
+    const room = gameManager.getGame(gameId);
+    if (!room || !room.isSpectator(sessionId) || !message?.trim()) return;
+
+    const msg = room.addSpectatorChatMessage(sessionId, message);
+    if (msg) {
+      io.to(gameId).emit('spectator:chat:message', msg);
+    }
+  });
+
   // --- Disconnect ---
 
   socket.on('disconnect', () => {
@@ -291,6 +342,15 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     lobbyManager.removeFromQueue(sessionId);
     lobbyManager.removePendingBySession(sessionId);
     broadcastLobbyState(io, lobbyManager);
+
+    // Clean up spectator from any game
+    for (const [gId, room] of gameManager.games) {
+      if (room.isSpectator(sessionId)) {
+        room.removeSpectator(sessionId);
+        io.to(gId).emit('game:spectators_update', { count: room.getSpectatorCount() });
+        break;
+      }
+    }
 
     // Find any active game and handle disconnect
     const activeGame = gameManager.getActiveGameForSession(sessionId);

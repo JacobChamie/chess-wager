@@ -126,6 +126,10 @@ export class LobbyManager {
     return games;
   }
 
+  getActiveGames() {
+    return this.gameManager.getActiveGames();
+  }
+
   getSeekers() {
     return this.queue.map((entry) => ({
       playerName: entry.playerName,

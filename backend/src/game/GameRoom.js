@@ -22,7 +22,11 @@ export class GameRoom {
     this.rematchOffer = null; // 'w' | 'b' | null
 
     this.chatMessages = [];
+    this.spectatorChatMessages = [];
     this.moveHistory = []; // [{ moveNumber, white, black }]
+
+    // Spectators: sessionId -> { socketId, name }
+    this.spectators = new Map();
 
     // Disconnect handling
     this.disconnectTimers = {}; // sessionId -> timeout handle
@@ -232,6 +236,37 @@ export class GameRoom {
     return msg;
   }
 
+  addSpectator(sessionId, socketId, name) {
+    this.spectators.set(sessionId, { socketId, name });
+  }
+
+  removeSpectator(sessionId) {
+    this.spectators.delete(sessionId);
+  }
+
+  isSpectator(sessionId) {
+    return this.spectators.has(sessionId);
+  }
+
+  getSpectatorCount() {
+    return this.spectators.size;
+  }
+
+  addSpectatorChatMessage(sessionId, message) {
+    const spec = this.spectators.get(sessionId);
+    if (!spec) return null;
+
+    const sanitized = message.slice(0, 500).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const msg = {
+      sender: sessionId,
+      senderName: spec.name,
+      message: sanitized,
+      timestamp: Date.now(),
+    };
+    this.spectatorChatMessages.push(msg);
+    return msg;
+  }
+
   handleDisconnect(sessionId) {
     if (this.status !== 'active') return;
 
@@ -260,6 +295,7 @@ export class GameRoom {
 
   getFullState(sessionId) {
     const color = this.getPlayerColor(sessionId);
+    const isSpec = this.isSpectator(sessionId);
     const baseTimeMs = this.timeControl.time * 1000;
     const times = this.clock ? this.clock.getTimesMs() : {
       whiteTime: baseTimeMs,
@@ -271,7 +307,7 @@ export class GameRoom {
       status: this.status,
       fen: this.chess.fen(),
       turn: this.chess.turn(),
-      myColor: color,
+      myColor: color, // null for spectators
       whiteName: this.white?.name || 'Player 1',
       blackName: this.black?.name || 'Player 2',
       timeControl: this.timeControl,
@@ -282,7 +318,9 @@ export class GameRoom {
       resultReason: this._resultReason,
       winner: this._winner,
       drawOffer: this.drawOffer,
-      chatMessages: this.chatMessages,
+      chatMessages: isSpec ? [] : this.chatMessages,
+      spectatorChatMessages: this.spectatorChatMessages,
+      spectatorCount: this.getSpectatorCount(),
     };
   }
 

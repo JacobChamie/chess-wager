@@ -936,6 +936,52 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* ── Confetti ─────────────────────────────────────────── */
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+/* ── Spectator Badge ─────────────────────────────────── */
+
+.spectator-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(171, 71, 188, 0.12);
+  color: #ce93d8;
+}
+
+/* ── Live Badge ──────────────────────────────────────── */
+
+.live-badge {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef5350;
+  box-shadow: 0 0 6px rgba(239, 83, 80, 0.6);
+  animation: pulse-dot 2s ease infinite;
+}
+
+/* ── Admin Container ─────────────────────────────────── */
+
+.admin-container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 20px;
+}
+
 /* ── Mobile ───────────────────────────────────────────── */
 
 @media (max-width: 640px) {

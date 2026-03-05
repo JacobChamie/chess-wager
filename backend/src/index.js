@@ -9,6 +9,7 @@ import { LobbyManager } from './lobby/LobbyManager.js';
 import { registerHandlers } from './socket/handlers.js';
 import authRoutes from './auth/authRoutes.js';
 import leaderboardRoutes from './leaderboard/leaderboardRoutes.js';
+import adminRoutes from './admin/adminRoutes.js';
 import { verifyToken } from './auth/authService.js';
 
 const allowedOrigins = process.env.CORS_ORIGIN
@@ -37,10 +38,11 @@ app.get('/health', (_req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/admin', adminRoutes);
 
 let onlineCount = 0;
 
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
   const sessionId = socket.handshake.auth?.sessionId;
   if (!sessionId) {
     socket.disconnect(true);
@@ -52,6 +54,20 @@ io.on('connection', (socket) => {
   let authUser = null;
   if (token) {
     authUser = verifyToken(token);
+  }
+
+  // Check if user is banned
+  if (authUser?.id) {
+    try {
+      const banCheck = await pool.query('SELECT is_banned FROM users WHERE id = $1', [authUser.id]);
+      if (banCheck.rows[0]?.is_banned) {
+        socket.emit('auth:banned');
+        socket.disconnect(true);
+        return;
+      }
+    } catch (err) {
+      console.error('Ban check error:', err.message);
+    }
   }
 
   onlineCount++;

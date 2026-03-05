@@ -15,6 +15,10 @@ export function useGameSocket(gameId) {
   const [moveError, setMoveError] = useState(null);
   const [boardResetKey, setBoardResetKey] = useState(0);
   const [premoveSquares, setPremoveSquares] = useState(EMPTY_SQUARES);
+  const [spectatorCount, setSpectatorCount] = useState(0);
+  const [spectatorChatMessages, setSpectatorChatMessages] = useState([]);
+  const [cheerReceived, setCheerReceived] = useState(null);
+  const [cheerCooldown, setCheerCooldown] = useState(0);
 
   // Local chess instance for move validation
   const chessRef = useRef(new Chess());
@@ -62,20 +66,16 @@ export function useGameSocket(gameId) {
     setMoveError(null);
     setBoardResetKey(0);
     setPremoveSquares(EMPTY_SQUARES);
+    setSpectatorCount(0);
+    setSpectatorChatMessages([]);
+    setCheerReceived(null);
+    setCheerCooldown(0);
     premoveQueueRef.current = [];
     chessRef.current = new Chess();
     myColorRef.current = null;
 
     const joinGame = () => {
       socket.emit('game:join', { gameId });
-    };
-
-    const onLobbyError = (data) => {
-      if (data.message === 'Not a player in this game') {
-        const playerName =
-          localStorage.getItem('chess_player_name') || 'Anonymous';
-        socket.emit('lobby:join_game', { gameId, playerName });
-      }
     };
 
     const onLobbyGameStart = (data) => {
@@ -89,7 +89,6 @@ export function useGameSocket(gameId) {
       joinGame();
     };
 
-    socket.on('lobby:error', onLobbyError);
     socket.on('lobby:game_start', onLobbyGameStart);
     socket.on('connect', onReconnect);
 
@@ -105,6 +104,8 @@ export function useGameSocket(gameId) {
 
       setGameState(state);
       setChatMessages(state.chatMessages || []);
+      setSpectatorChatMessages(state.spectatorChatMessages || []);
+      setSpectatorCount(state.spectatorCount || 0);
       setDrawOffer(state.drawOffer || null);
       setConnected(true);
       clockRef.current = {
@@ -228,6 +229,12 @@ export function useGameSocket(gameId) {
     };
     const onOpponentReconnected = () => setDisconnectTime(null);
     const onChatMessage = (msg) => setChatMessages((prev) => [...prev, msg]);
+    const onSpectatorsUpdate = ({ count }) => setSpectatorCount(count);
+    const onSpectatorChatMessage = (msg) => setSpectatorChatMessages((prev) => [...prev, msg]);
+    const onCheerReceived = (data) => {
+      setCheerReceived(data);
+      setTimeout(() => setCheerReceived(null), 2500);
+    };
 
     socket.on('game:state', onState);
     socket.on('game:move_made', onMoveMade);
@@ -242,9 +249,11 @@ export function useGameSocket(gameId) {
     socket.on('game:opponent_disconnected', onOpponentDisconnected);
     socket.on('game:opponent_reconnected', onOpponentReconnected);
     socket.on('chat:message', onChatMessage);
+    socket.on('game:spectators_update', onSpectatorsUpdate);
+    socket.on('spectator:chat:message', onSpectatorChatMessage);
+    socket.on('game:cheer_received', onCheerReceived);
 
     return () => {
-      socket.off('lobby:error', onLobbyError);
       socket.off('lobby:game_start', onLobbyGameStart);
       socket.off('connect', onReconnect);
       socket.off('game:state', onState);
@@ -260,6 +269,9 @@ export function useGameSocket(gameId) {
       socket.off('game:opponent_disconnected', onOpponentDisconnected);
       socket.off('game:opponent_reconnected', onOpponentReconnected);
       socket.off('chat:message', onChatMessage);
+      socket.off('game:spectators_update', onSpectatorsUpdate);
+      socket.off('spectator:chat:message', onSpectatorChatMessage);
+      socket.off('game:cheer_received', onCheerReceived);
     };
   }, [gameId, _updatePremoveHighlights]);
 
@@ -319,6 +331,31 @@ export function useGameSocket(gameId) {
     [gameId]
   );
 
+  const sendSpectatorChat = useCallback(
+    (message) => {
+      socket.emit('spectator:chat:send', { gameId, message });
+    },
+    [gameId]
+  );
+
+  const sendCheer = useCallback(
+    (targetColor) => {
+      if (cheerCooldown > 0) return;
+      socket.emit('game:cheer', { gameId, targetColor });
+      setCheerCooldown(15);
+      const interval = setInterval(() => {
+        setCheerCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    },
+    [gameId, cheerCooldown]
+  );
+
   // Premove: queue a move to execute when it becomes our turn
   const addPremove = useCallback(
     (from, to, promotion) => {
@@ -354,7 +391,13 @@ export function useGameSocket(gameId) {
     requestRematch,
     respondRematch,
     sendChat,
+    sendSpectatorChat,
     addPremove,
     clearPremoves,
+    spectatorCount,
+    spectatorChatMessages,
+    cheerReceived,
+    cheerCooldown,
+    sendCheer,
   };
 }

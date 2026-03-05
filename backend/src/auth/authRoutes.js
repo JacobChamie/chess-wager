@@ -33,7 +33,7 @@ router.post('/register', async (req, res) => {
 
     const hash = await hashPassword(password);
     const result = await pool.query(
-      'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, rating, avatar_id, created_at',
+      'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, rating, avatar_id, is_admin, created_at',
       [username.trim(), email.trim().toLowerCase(), hash]
     );
     const user = result.rows[0];
@@ -51,21 +51,25 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required' });
     }
 
     const result = await pool.query(
-      'SELECT id, username, email, password_hash, rating, avatar_id, created_at FROM users WHERE email = $1',
-      [email.trim().toLowerCase()]
+      'SELECT id, username, email, password_hash, rating, avatar_id, is_admin, is_banned, created_at FROM users WHERE username = $1',
+      [username.trim()]
     );
     const row = result.rows[0];
     if (!row || !(await verifyPassword(password, row.password_hash))) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: 'Invalid username or password' });
     }
 
-    const { password_hash, ...user } = row;
+    if (row.is_banned) {
+      return res.status(403).json({ error: 'Account is banned' });
+    }
+
+    const { password_hash, is_banned, ...user } = row;
     const token = createToken(user);
     res.json({ user, token });
   } catch (err) {
@@ -77,7 +81,7 @@ router.post('/login', async (req, res) => {
 router.get('/me', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, username, email, rating, avatar_id, created_at FROM users WHERE id = $1',
+      'SELECT id, username, email, rating, avatar_id, is_admin, created_at FROM users WHERE id = $1',
       [req.user.id]
     );
     if (!result.rows[0]) {

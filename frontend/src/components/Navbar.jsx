@@ -32,6 +32,11 @@ const Navbar = () => {
         </div>
 
         <div className="navbar-actions">
+          {user?.is_admin && (
+            <Link to="/admin" className="navbar-icon-btn" title="Admin">
+              {'\uD83D\uDEE1\uFE0F'}
+            </Link>
+          )}
           <Link to="/leaderboard" className="navbar-icon-btn" title="Leaderboard">
             {'\uD83C\uDFC6'}
           </Link>

@@ -5,6 +5,7 @@ import LobbyPage from './pages/LobbyPage.jsx';
 import GamePage from './pages/GamePage.jsx';
 import LeaderboardPage from './pages/LeaderboardPage.jsx';
 import PlayerProfilePage from './pages/PlayerProfilePage.jsx';
+import AdminPage from './pages/AdminPage.jsx';
 
 const App = () => {
   return (
@@ -15,6 +16,7 @@ const App = () => {
         <Route path="/game/:gameId" element={<GamePage />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/leaderboard/:username" element={<PlayerProfilePage />} />
+        <Route path="/admin" element={<AdminPage />} />
       </Routes>
     </>
   );

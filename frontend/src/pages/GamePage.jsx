@@ -7,6 +7,7 @@ import Timer from '../components/timer.jsx';
 import GameOverModal from '../components/GameOverModal.jsx';
 import DrawOfferBar from '../components/DrawOfferBar.jsx';
 import PromotionPicker from '../components/PromotionPicker.jsx';
+import ConfettiOverlay from '../components/ConfettiOverlay.jsx';
 
 // Live countdown banner for opponent disconnect
 const DisconnectBanner = ({ disconnectTime }) => {
@@ -55,8 +56,14 @@ const GamePage = () => {
     requestRematch,
     respondRematch,
     sendChat,
+    sendSpectatorChat,
     addPremove,
     clearPremoves,
+    spectatorCount,
+    spectatorChatMessages,
+    cheerReceived,
+    cheerCooldown,
+    sendCheer,
   } = useGameSocket(gameId);
 
   const [boardSize, setBoardSize] = useState(() => {
@@ -109,6 +116,7 @@ const GamePage = () => {
     (sourceSquare, targetSquare, piece) => {
       const gs = gameStateRef.current;
       if (!gs || gs.status !== 'active') return false;
+      if (gs.myColor === null) return false; // spectator
 
       if (gs.turn !== gs.myColor) {
         const isPawn = piece?.[1] === 'P' || piece?.[1] === 'p';
@@ -183,16 +191,28 @@ const GamePage = () => {
   const isActive = gameState.status === 'active';
   const isCompleted = gameState.status === 'completed';
   const myColor = gameState.myColor;
-  const orientation = myColor === 'b' ? 'black' : 'white';
+  const isSpectator = myColor === null;
+  const orientation = myColor === 'b' ? 'black' : 'white'; // spectators see white at bottom
 
-  const myName = myColor === 'w' ? gameState.whiteName : gameState.blackName;
-  const opponentName = myColor === 'w' ? gameState.blackName : gameState.whiteName;
-  const myTime = myColor === 'w' ? gameState.whiteTime : gameState.blackTime;
-  const opponentTime = myColor === 'w' ? gameState.blackTime : gameState.whiteTime;
-  const myTurnActive = gameState.turn === myColor && isActive;
-  const opponentTurnActive = gameState.turn !== myColor && isActive;
+  // For spectators: top = black, bottom = white
+  const topName = isSpectator ? gameState.blackName : (myColor === 'w' ? gameState.blackName : gameState.whiteName);
+  const bottomName = isSpectator ? gameState.whiteName : (myColor === 'w' ? gameState.whiteName : gameState.blackName);
+  const topTime = isSpectator ? gameState.blackTime : (myColor === 'w' ? gameState.blackTime : gameState.whiteTime);
+  const bottomTime = isSpectator ? gameState.whiteTime : (myColor === 'w' ? gameState.whiteTime : gameState.blackTime);
+  const topColor = isSpectator ? 'b' : (myColor === 'w' ? 'b' : 'w');
+  const bottomColor = isSpectator ? 'w' : myColor;
+  const topTurnActive = gameState.turn === topColor && isActive;
+  const bottomTurnActive = gameState.turn === bottomColor && isActive;
 
-  const showDrawOffer = drawOffer && drawOffer !== myColor;
+  // Backwards compat aliases
+  const myName = bottomName;
+  const opponentName = topName;
+  const myTime = bottomTime;
+  const opponentTime = topTime;
+  const myTurnActive = bottomTurnActive;
+  const opponentTurnActive = topTurnActive;
+
+  const showDrawOffer = !isSpectator && drawOffer && drawOffer !== myColor;
 
   return (
     <div
@@ -208,6 +228,8 @@ const GamePage = () => {
         overflow: 'hidden',
       }}
     >
+      {cheerReceived && <ConfettiOverlay targetColor={cheerReceived.targetColor} />}
+
       {disconnectTime && <DisconnectBanner disconnectTime={disconnectTime} />}
 
       {moveError && (
@@ -298,11 +320,20 @@ const GamePage = () => {
               flexShrink: 0,
             }}
           >
+            {spectatorCount > 0 && (
+              <div className="spectator-badge" style={{ alignSelf: 'flex-start', marginBottom: '4px' }}>
+                {'\uD83D\uDC41'} {spectatorCount} watching
+              </div>
+            )}
+
             <ChatBox
               messages={chatMessages}
               onSend={sendChat}
               moves={gameState.moves}
               myName={myName}
+              isSpectator={isSpectator}
+              spectatorMessages={spectatorChatMessages}
+              onSpectatorSend={sendSpectatorChat}
             />
 
             {showDrawOffer && (
@@ -312,7 +343,7 @@ const GamePage = () => {
               />
             )}
 
-            {isActive && (
+            {isActive && !isSpectator && (
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   className="btn btn-danger"
@@ -328,6 +359,27 @@ const GamePage = () => {
                   style={{ flex: 1 }}
                 >
                   {drawOffer === myColor ? 'Draw Offered' : 'Offer Draw'}
+                </button>
+              </div>
+            )}
+
+            {isActive && isSpectator && (
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  className="btn btn-sm"
+                  style={{ flex: 1, background: '#1565c0', color: '#fff', borderColor: '#1565c0' }}
+                  onClick={() => sendCheer('w')}
+                  disabled={cheerCooldown > 0 || gameState.whiteTime < 30000 || gameState.blackTime < 30000}
+                >
+                  {cheerCooldown > 0 ? `${cheerCooldown}s` : 'Cheer White'}
+                </button>
+                <button
+                  className="btn btn-sm"
+                  style={{ flex: 1, background: '#c62828', color: '#fff', borderColor: '#c62828' }}
+                  onClick={() => sendCheer('b')}
+                  disabled={cheerCooldown > 0 || gameState.whiteTime < 30000 || gameState.blackTime < 30000}
+                >
+                  {cheerCooldown > 0 ? `${cheerCooldown}s` : 'Cheer Black'}
                 </button>
               </div>
             )}

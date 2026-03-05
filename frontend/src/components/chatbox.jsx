@@ -15,23 +15,34 @@ const formatTime = (timestamp) => {
   return `${h}:${m}`;
 };
 
-const ChatBox = ({ messages = [], onSend, moves = [], myName = '' }) => {
+const ChatBox = ({
+  messages = [], onSend, moves = [], myName = '',
+  isSpectator = false, spectatorMessages = [], onSpectatorSend,
+}) => {
   const [input, setInput] = useState('');
-  const [activeTab, setActiveTab] = useState('chat');
+  const [activeTab, setActiveTab] = useState(isSpectator ? 'spectators' : 'chat');
   const [showEmojis, setShowEmojis] = useState(false);
   const chatEndRef = useRef(null);
+  const spectatorEndRef = useRef(null);
   const inputRef = useRef(null);
 
   useEffect(() => {
     if (activeTab === 'chat' && chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, activeTab]);
+    if (activeTab === 'spectators' && spectatorEndRef.current) {
+      spectatorEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, spectatorMessages, activeTab]);
 
   const handleSend = () => {
     const trimmed = input.trim();
-    if (!trimmed || !onSend) return;
-    onSend(trimmed);
+    if (!trimmed) return;
+    if (activeTab === 'spectators' && onSpectatorSend) {
+      onSpectatorSend(trimmed);
+    } else if (activeTab === 'chat' && onSend) {
+      onSend(trimmed);
+    }
     setInput('');
     setShowEmojis(false);
   };
@@ -79,7 +90,7 @@ const ChatBox = ({ messages = [], onSend, moves = [], myName = '' }) => {
           border: '1px solid var(--border)',
         }}
       >
-        {['chat', 'moves'].map((tab) => (
+        {(isSpectator ? ['spectators', 'moves'] : ['chat', 'spectators', 'moves']).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -102,7 +113,7 @@ const ChatBox = ({ messages = [], onSend, moves = [], myName = '' }) => {
         ))}
       </div>
 
-      {activeTab === 'chat' ? (
+      {activeTab === 'chat' && !isSpectator && (
         <>
           {/* Messages area */}
           <div
@@ -228,7 +239,66 @@ const ChatBox = ({ messages = [], onSend, moves = [], myName = '' }) => {
             </button>
           </div>
         </>
-      ) : (
+      )}
+
+      {activeTab === 'spectators' && (
+        <>
+          <div
+            style={{
+              flex: 1,
+              minHeight: '120px',
+              overflowY: 'auto',
+              marginBottom: isSpectator ? '12px' : '0',
+              background: 'var(--bg-base)',
+              padding: '10px',
+              borderRadius: 'var(--radius)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            {spectatorMessages.length === 0 && (
+              <div style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '20px 0' }}>
+                No spectator messages yet
+              </div>
+            )}
+            {spectatorMessages.map((msg, idx) => (
+              <div key={idx} style={{ marginBottom: '8px', textAlign: 'left' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                  <span style={{ color: '#ab47bc', fontWeight: 600, fontSize: '13px' }}>
+                    {msg.senderName}
+                  </span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>
+                    {formatTime(msg.timestamp)}
+                  </span>
+                </div>
+                <div style={{ fontSize: '14px', marginTop: '2px', color: 'var(--text-primary)', wordBreak: 'break-word', lineHeight: 1.4 }}>
+                  {msg.message}
+                </div>
+              </div>
+            ))}
+            <div ref={spectatorEndRef} />
+          </div>
+
+          {isSpectator && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <input
+                ref={inputRef}
+                className="input input-sm"
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Spectator chat"
+                style={{ flex: 1 }}
+              />
+              <button className="btn btn-primary btn-sm" onClick={handleSend}>
+                Send
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {activeTab === 'moves' && (
         <div
           style={{
             flex: 1,

@@ -16,7 +16,7 @@ const AuthModal = ({ onClose }) => {
     setLoading(true);
     try {
       if (mode === 'login') {
-        await login(email, password);
+        await login(username, password);
       } else {
         await register(username, email, password);
       }
@@ -47,33 +47,33 @@ const AuthModal = ({ onClose }) => {
         {error && <div className="form-error">{error}</div>}
 
         <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label className="form-label">Username</label>
+            <input
+              className="input"
+              type="text"
+              placeholder={mode === 'login' ? 'Enter your username' : 'Choose a username'}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              minLength={3}
+              maxLength={32}
+            />
+          </div>
+
           {mode === 'register' && (
             <div className="form-group">
-              <label className="form-label">Username</label>
+              <label className="form-label">Email</label>
               <input
                 className="input"
-                type="text"
-                placeholder="Choose a username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
-                minLength={3}
-                maxLength={32}
               />
             </div>
           )}
-
-          <div className="form-group">
-            <label className="form-label">Email</label>
-            <input
-              className="input"
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
 
           <div className="form-group">
             <label className="form-label">Password</label>
@@ -87,6 +87,14 @@ const AuthModal = ({ onClose }) => {
               minLength={6}
             />
           </div>
+
+          {mode === 'login' && (
+            <div style={{ textAlign: 'right', marginBottom: '8px' }}>
+              <span style={{ fontSize: '13px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                Forgot password?
+              </span>
+            </div>
+          )}
 
           <button
             className="btn btn-primary btn-lg"

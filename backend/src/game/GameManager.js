@@ -25,6 +25,23 @@ export class GameManager {
     return this.games.get(gameId) || null;
   }
 
+  getActiveGames() {
+    const active = [];
+    for (const [gameId, room] of this.games) {
+      if (room.status === 'active') {
+        active.push({
+          gameId,
+          whiteName: room.white?.name || 'Player 1',
+          blackName: room.black?.name || 'Player 2',
+          timeControl: room.timeControl,
+          spectatorCount: room.getSpectatorCount(),
+          moveCount: room.chess.history().length,
+        });
+      }
+    }
+    return active;
+  }
+
   trackSession(sessionId, gameId) {
     this.sessionToGame.set(sessionId, gameId);
   }
