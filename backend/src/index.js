@@ -14,6 +14,7 @@ import { BotManager } from './admin/botManager.js';
 import { verifyToken } from './auth/authService.js';
 import { StockfishEngine } from './bot/StockfishEngine.js';
 import { BotGameManager } from './bot/BotGameManager.js';
+import { initEmailTransporter } from './email/emailService.js';
 
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
@@ -94,6 +95,7 @@ const PORT = process.env.PORT || 3001;
 
 async function start() {
   await initDb();
+  initEmailTransporter();
 
   try {
     await stockfishEngine.init();

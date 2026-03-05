@@ -20,6 +20,7 @@ export function useGameSocket(gameId) {
   const [cheerReceived, setCheerReceived] = useState(null);
   const [cheerCooldown, setCheerCooldown] = useState(0);
   const [lastMove, setLastMove] = useState(null);
+  const [viewMoveIndex, setViewMoveIndex] = useState(null); // null = live, -1 = start pos, 0+ = half-move
 
   // Local chess instance for move validation
   const chessRef = useRef(new Chess());
@@ -29,6 +30,9 @@ export function useGameSocket(gameId) {
 
   // Track myColor via ref for use in socket handlers
   const myColorRef = useRef(null);
+
+  // Track moves via ref for navigation functions
+  const movesRef = useRef([]);
 
   // For smooth clock interpolation
   const clockRef = useRef({
@@ -72,9 +76,11 @@ export function useGameSocket(gameId) {
     setCheerReceived(null);
     setCheerCooldown(0);
     setLastMove(null);
+    setViewMoveIndex(null);
     premoveQueueRef.current = [];
     chessRef.current = new Chess();
     myColorRef.current = null;
+    movesRef.current = [];
 
     const joinGame = () => {
       socket.emit('game:join', { gameId });
@@ -100,9 +106,54 @@ export function useGameSocket(gameId) {
       socket.connect();
     }
 
+    // REST fallback for completed games (e.g. viewing from profile)
+    const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+    const restFallbackTimer = setTimeout(() => {
+      // If we still haven't received state via socket, try REST
+      fetch(`${API_URL}/api/leaderboard/game/${encodeURIComponent(gameId)}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (!data?.game) return;
+          // Only apply if we still don't have state
+          if (chessRef.current.fen() === 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1' || !myColorRef.current) {
+            const g = data.game;
+            if (g.status === 'completed') {
+              const restState = {
+                gameId: g.id,
+                status: g.status,
+                fen: g.fen,
+                turn: 'w',
+                myColor: null, // viewer mode
+                whiteName: g.whiteName,
+                blackName: g.blackName,
+                timeControl: g.timeControl,
+                whiteTime: g.whiteTime || 0,
+                blackTime: g.blackTime || 0,
+                moves: g.moves || [],
+                result: g.result,
+                reason: g.reason,
+                winner: g.result === '1-0' ? 'w' : g.result === '0-1' ? 'b' : null,
+                chatMessages: [],
+                spectatorChatMessages: [],
+                spectatorCount: 0,
+                isBotGame: g.isBotGame,
+                botPersonality: g.botPersonality,
+              };
+              chessRef.current.load(g.fen);
+              movesRef.current = g.moves || [];
+              setGameState(restState);
+              setConnected(true);
+            }
+          }
+        })
+        .catch(() => {});
+    }, 3000);
+
     const onState = (state) => {
+      clearTimeout(restFallbackTimer);
       chessRef.current.load(state.fen);
       myColorRef.current = state.myColor;
+      movesRef.current = state.moves || [];
 
       setGameState(state);
       setChatMessages(state.chatMessages || []);
@@ -122,6 +173,10 @@ export function useGameSocket(gameId) {
       chessRef.current.load(move.fen);
       setMoveError(null);
       setLastMove(move.from && move.to ? { from: move.from, to: move.to } : null);
+
+      if (move.moves) {
+        movesRef.current = move.moves;
+      }
 
       setGameState((prev) => {
         if (!prev) return prev;
@@ -257,6 +312,7 @@ export function useGameSocket(gameId) {
     socket.on('game:cheer_received', onCheerReceived);
 
     return () => {
+      clearTimeout(restFallbackTimer);
       // Leave the game room so spectator count updates
       socket.emit('game:leave', { gameId });
 
@@ -376,6 +432,102 @@ export function useGameSocket(gameId) {
     setPremoveSquares(EMPTY_SQUARES);
   }, []);
 
+  // --- Move navigation ---
+
+  // Helper: get total half-move count from moves array
+  const getTotalHalfMoves = useCallback(() => {
+    const moves = movesRef.current;
+    if (!moves || moves.length === 0) return 0;
+    const lastRow = moves[moves.length - 1];
+    const lastBlack = lastRow.black;
+    const hasBlack = lastBlack && (typeof lastBlack === 'string' ? lastBlack : lastBlack?.san);
+    return (moves.length - 1) * 2 + (hasBlack ? 2 : 1);
+  }, []);
+
+  // Helper: get FEN at a given half-move index from moves array
+  const getFenAtIndex = useCallback((idx) => {
+    if (idx < 0) return 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+    const moves = movesRef.current;
+    if (!moves || moves.length === 0) return null;
+    const rowIdx = Math.floor(idx / 2);
+    const isBlack = idx % 2 === 1;
+    const row = moves[rowIdx];
+    if (!row) return null;
+    const moveData = isBlack ? row.black : row.white;
+    if (!moveData) return null;
+    // New format: object with fen
+    if (typeof moveData === 'object' && moveData.fen) return moveData.fen;
+    // Old format (string): reconstruct via chess.js
+    return null; // fallback handled below
+  }, []);
+
+  const navigateToMove = useCallback((idx) => {
+    const total = getTotalHalfMoves();
+    if (idx === null || idx >= total) {
+      setViewMoveIndex(null);
+    } else if (idx < 0) {
+      setViewMoveIndex(-1);
+    } else {
+      setViewMoveIndex(idx);
+    }
+  }, [getTotalHalfMoves]);
+
+  const navigateFirst = useCallback(() => setViewMoveIndex(-1), []);
+
+  const navigateLast = useCallback(() => setViewMoveIndex(null), []);
+
+  const navigatePrev = useCallback(() => {
+    setViewMoveIndex((prev) => {
+      if (prev === null) {
+        // Currently live — go to last move
+        const total = getTotalHalfMoves();
+        return total > 0 ? total - 2 : -1;
+      }
+      return Math.max(-1, prev - 1);
+    });
+  }, [getTotalHalfMoves]);
+
+  const navigateNext = useCallback(() => {
+    setViewMoveIndex((prev) => {
+      if (prev === null) return null; // already live
+      const total = getTotalHalfMoves();
+      const next = prev + 1;
+      if (next >= total - 1) return null; // back to live
+      return next;
+    });
+  }, [getTotalHalfMoves]);
+
+  // Compute display FEN based on viewMoveIndex
+  const displayFen = (() => {
+    if (viewMoveIndex === null) return gameState?.fen || 'start';
+    if (viewMoveIndex === -1) return 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+    const fen = getFenAtIndex(viewMoveIndex);
+    if (fen) return fen;
+    // Fallback for old format: replay through chess.js
+    try {
+      const replay = new Chess();
+      const moves = movesRef.current;
+      let count = 0;
+      for (const row of moves) {
+        const wSan = typeof row.white === 'string' ? row.white : row.white?.san;
+        if (wSan) {
+          replay.move(wSan);
+          if (count === viewMoveIndex) return replay.fen();
+          count++;
+        }
+        const bSan = typeof row.black === 'string' ? row.black : row.black?.san;
+        if (bSan) {
+          replay.move(bSan);
+          if (count === viewMoveIndex) return replay.fen();
+          count++;
+        }
+      }
+    } catch { /* ignore */ }
+    return gameState?.fen || 'start';
+  })();
+
+  const isViewingHistory = viewMoveIndex !== null;
+
   return {
     gameState,
     connected,
@@ -406,5 +558,13 @@ export function useGameSocket(gameId) {
     cheerCooldown,
     sendCheer,
     lastMove,
+    viewMoveIndex,
+    displayFen,
+    isViewingHistory,
+    navigateToMove,
+    navigateFirst,
+    navigateLast,
+    navigatePrev,
+    navigateNext,
   };
 }

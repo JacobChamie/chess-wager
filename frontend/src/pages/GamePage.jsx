@@ -66,6 +66,14 @@ const GamePage = () => {
     sendCheer,
     chessRef,
     lastMove,
+    viewMoveIndex,
+    displayFen,
+    isViewingHistory,
+    navigateToMove,
+    navigateFirst,
+    navigateLast,
+    navigatePrev,
+    navigateNext,
   } = useGameSocket(gameId);
 
   const [isMobile, setIsMobile] = useState(() =>
@@ -142,10 +150,31 @@ const GamePage = () => {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') clearPremoves();
+      // Skip arrow nav if user is typing
+      const tag = e.target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          navigatePrev();
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          navigateNext();
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          navigateFirst();
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          navigateLast();
+          break;
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [clearPremoves]);
+  }, [clearPremoves, navigatePrev, navigateNext, navigateFirst, navigateLast]);
 
   const handlePieceDrop = useCallback(
     (sourceSquare, targetSquare, piece) => {
@@ -154,6 +183,9 @@ const GamePage = () => {
         handleClickMoveRef.current?.(sourceSquare);
         return false;
       }
+
+      // Block interaction when viewing history
+      if (isViewingHistory) return false;
 
       const gs = gameStateRef.current;
       if (!gs || gs.status !== 'active') return false;
@@ -186,7 +218,7 @@ const GamePage = () => {
       setSelectedSquare(null);
       return true;
     },
-    [tryLocalMove, sendMove, addPremove]
+    [tryLocalMove, sendMove, addPremove, isViewingHistory]
   );
 
   const handlePromotionChoice = useCallback(
@@ -480,14 +512,14 @@ const GamePage = () => {
 
             <ChessboardComponent
               key={boardResetKey}
-              position={gameState.fen}
+              position={displayFen}
               onPieceDrop={handlePieceDrop}
               boardSize={boardSize}
               onBoardSizeChange={isMobile ? undefined : setBoardSize}
               boardOrientation={orientation}
-              premoveSquares={mergedSquareStyles}
-              onSquareClick={handleSquareClick}
-              onPieceClick={handlePieceClick}
+              premoveSquares={isViewingHistory ? {} : mergedSquareStyles}
+              onSquareClick={isViewingHistory ? undefined : handleSquareClick}
+              onPieceClick={isViewingHistory ? undefined : handlePieceClick}
               onSquareRightClick={handleSquareRightClick}
             />
 
@@ -499,11 +531,40 @@ const GamePage = () => {
               />
             )}
 
-            {!isMobile && (
+            {/* Move navigation buttons */}
+            <div style={{ display: 'flex', gap: '4px', marginTop: '6px', justifyContent: 'center', alignItems: 'center' }}>
+              <button className="btn btn-ghost btn-sm" onClick={navigateFirst} title="First move" style={{ padding: '4px 8px', fontSize: '14px', minWidth: '36px' }}>
+                {'|<'}
+              </button>
+              <button className="btn btn-ghost btn-sm" onClick={navigatePrev} title="Previous move" style={{ padding: '4px 8px', fontSize: '14px', minWidth: '36px' }}>
+                {'<'}
+              </button>
+              <button className="btn btn-ghost btn-sm" onClick={navigateNext} title="Next move" style={{ padding: '4px 8px', fontSize: '14px', minWidth: '36px' }}>
+                {'>'}
+              </button>
+              <button className="btn btn-ghost btn-sm" onClick={navigateLast} title="Last move (live)" style={{ padding: '4px 8px', fontSize: '14px', minWidth: '36px' }}>
+                {'>|'}
+              </button>
+            </div>
+
+            {isViewingHistory && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px',
+                padding: '4px 12px', background: 'rgba(255,152,0,0.12)', borderRadius: 'var(--radius-sm)',
+                fontSize: '13px', color: '#ffa726',
+              }}>
+                <span>Viewing move {viewMoveIndex === -1 ? 'start' : viewMoveIndex + 1}</span>
+                <button className="btn btn-ghost btn-sm" onClick={navigateLast} style={{ fontSize: '12px', padding: '2px 8px' }}>
+                  Return to live
+                </button>
+              </div>
+            )}
+
+            {!isMobile && !isViewingHistory && (
               <button
                 className="btn btn-ghost btn-sm"
                 onClick={() => setIsFullscreen(true)}
-                style={{ marginTop: '8px', fontSize: '12px' }}
+                style={{ marginTop: '4px', fontSize: '12px' }}
               >
                 Full board
               </button>
@@ -574,6 +635,8 @@ const GamePage = () => {
                   gameStatus={gameState.status}
                   gameResult={gameState.result}
                   gameReason={gameState.reason}
+                  onMoveClick={navigateToMove}
+                  viewMoveIndex={viewMoveIndex}
                 />
               </div>
             )}
@@ -632,6 +695,8 @@ const GamePage = () => {
               gameStatus={gameState.status}
               gameResult={gameState.result}
               gameReason={gameState.reason}
+              onMoveClick={navigateToMove}
+              viewMoveIndex={viewMoveIndex}
             />
 
             {showDrawOffer && (
@@ -753,13 +818,13 @@ const GamePage = () => {
 
           <ChessboardComponent
             key={`fs-${boardResetKey}`}
-            position={gameState.fen}
+            position={displayFen}
             onPieceDrop={handlePieceDrop}
             boardSize={fullscreenBoardSize}
             boardOrientation={orientation}
-            premoveSquares={mergedSquareStyles}
-            onSquareClick={handleSquareClick}
-            onPieceClick={handlePieceClick}
+            premoveSquares={isViewingHistory ? {} : mergedSquareStyles}
+            onSquareClick={isViewingHistory ? undefined : handleSquareClick}
+            onPieceClick={isViewingHistory ? undefined : handlePieceClick}
             onSquareRightClick={handleSquareRightClick}
           />
 

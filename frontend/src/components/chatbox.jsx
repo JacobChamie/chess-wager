@@ -28,10 +28,17 @@ const REASON_LABELS = {
   game_over: 'Game Over',
 };
 
+const getMoveText = (move) => {
+  if (!move) return '';
+  if (typeof move === 'string') return move;
+  return move.san || '';
+};
+
 const ChatBox = ({
   messages = [], onSend, moves = [], myName = '',
   isSpectator = false, spectatorMessages = [], onSpectatorSend,
   gameStatus = 'active', gameResult = null, gameReason = null,
+  onMoveClick, viewMoveIndex,
 }) => {
   const [input, setInput] = useState('');
   const [activeTab, setActiveTab] = useState(isSpectator ? 'spectators' : 'chat');
@@ -350,15 +357,39 @@ const ChatBox = ({
                 </tr>
               </thead>
               <tbody>
-                {moves.map((row) => (
-                  <tr key={row.moveNumber}>
-                    <td style={{ padding: '4px 4px 4px 0', color: 'var(--text-muted)', width: '10%' }}>
-                      {row.moveNumber}.
-                    </td>
-                    <td style={{ padding: '4px', width: '45%' }}>{row.white}</td>
-                    <td style={{ padding: '4px', width: '45%' }}>{row.black}</td>
-                  </tr>
-                ))}
+                {moves.map((row) => {
+                  const whiteIdx = (row.moveNumber - 1) * 2;
+                  const blackIdx = whiteIdx + 1;
+                  const whiteText = getMoveText(row.white);
+                  const blackText = getMoveText(row.black);
+                  const moveCellStyle = (idx, hasMove) => ({
+                    padding: '4px',
+                    width: '45%',
+                    cursor: hasMove && onMoveClick ? 'pointer' : 'default',
+                    borderRadius: '3px',
+                    background: viewMoveIndex === idx ? 'var(--accent-muted, rgba(99, 102, 241, 0.25))' : 'transparent',
+                    fontWeight: viewMoveIndex === idx ? 700 : 400,
+                  });
+                  return (
+                    <tr key={row.moveNumber}>
+                      <td style={{ padding: '4px 4px 4px 0', color: 'var(--text-muted)', width: '10%' }}>
+                        {row.moveNumber}.
+                      </td>
+                      <td
+                        style={moveCellStyle(whiteIdx, !!whiteText)}
+                        onClick={() => whiteText && onMoveClick?.(whiteIdx)}
+                      >
+                        {whiteText}
+                      </td>
+                      <td
+                        style={moveCellStyle(blackIdx, !!blackText)}
+                        onClick={() => blackText && onMoveClick?.(blackIdx)}
+                      >
+                        {blackText}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}

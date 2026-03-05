@@ -23,7 +23,8 @@ export class GameRoom {
 
     this.chatMessages = [];
     this.spectatorChatMessages = [];
-    this.moveHistory = []; // [{ moveNumber, white, black }]
+    this.moveHistory = []; // [{ moveNumber, white: {san,fen,timeMs}, black: {san,fen,timeMs}|null }]
+    this._lastMoveTimestamp = null;
 
     // Bot game flags
     this.isBotGame = false;
@@ -58,6 +59,7 @@ export class GameRoom {
     if (!this.isFull()) return false;
 
     this.status = 'active';
+    this._lastMoveTimestamp = Date.now();
     this.clock = new ClockManager(this.timeControl, (flaggedSide) => {
       this._handleTimeout(flaggedSide);
     });
@@ -129,8 +131,13 @@ export class GameRoom {
     // Clear any pending draw offer (a move implicitly declines)
     this.drawOffer = null;
 
-    // Update move history
-    this._updateMoveHistory(move);
+    // Calculate time taken for this move
+    const now = Date.now();
+    const timeMs = this._lastMoveTimestamp ? now - this._lastMoveTimestamp : 0;
+    this._lastMoveTimestamp = now;
+
+    // Update move history with FEN after the move + time taken
+    this._updateMoveHistory(move, this.chess.fen(), timeMs);
 
     const times = this.clock.getTimesMs();
 
@@ -344,17 +351,26 @@ export class GameRoom {
 
   // --- Private ---
 
-  _updateMoveHistory(move) {
-    const history = this.chess.history({ verbose: true });
-    const rows = [];
-    for (let i = 0; i < history.length; i += 2) {
-      rows.push({
-        moveNumber: i / 2 + 1,
-        white: history[i]?.san || '',
-        black: history[i + 1]?.san || '',
+  _updateMoveHistory(move, fen, timeMs) {
+    const moveData = { san: move.san, fen, timeMs };
+    // White moves (chess.js color 'w' means white just moved if it's now black's turn)
+    // After chess.move(), turn has already switched, so the color that just moved is the opposite
+    const movedColor = move.color; // chess.js stores color on the move object
+
+    if (movedColor === 'w') {
+      // White move — push new row
+      this.moveHistory.push({
+        moveNumber: this.moveHistory.length + 1,
+        white: moveData,
+        black: null,
       });
+    } else {
+      // Black move — fill black on last row
+      const lastRow = this.moveHistory[this.moveHistory.length - 1];
+      if (lastRow) {
+        lastRow.black = moveData;
+      }
     }
-    this.moveHistory = rows;
   }
 
   _checkGameOver() {

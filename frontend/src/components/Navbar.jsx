@@ -5,12 +5,16 @@ import { socket } from '../socket.js';
 import AuthModal from './AuthModal.jsx';
 import SettingsModal from './SettingsModal.jsx';
 
+const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+
 const Navbar = () => {
   const { user, logout } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [onlineCount, setOnlineCount] = useState(0);
   const [activeGames, setActiveGames] = useState(0);
+  const [resendingEmail, setResendingEmail] = useState(false);
+  const [resendMsg, setResendMsg] = useState(null);
 
   useEffect(() => {
     const onCount = ({ count, games }) => {
@@ -80,6 +84,52 @@ const Navbar = () => {
           )}
         </div>
       </nav>
+
+      {user && user.email_verified === false && (
+        <div style={{
+          background: 'rgba(255, 152, 0, 0.12)',
+          borderBottom: '1px solid rgba(255, 152, 0, 0.3)',
+          padding: '6px 16px',
+          fontSize: '13px',
+          color: '#ffa726',
+          textAlign: 'center',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '8px',
+        }}>
+          <span>Verify your email to secure your account.</span>
+          {resendMsg ? (
+            <span style={{ color: '#66bb6a' }}>{resendMsg}</span>
+          ) : (
+            <button
+              className="btn btn-ghost btn-sm"
+              disabled={resendingEmail}
+              onClick={async () => {
+                setResendingEmail(true);
+                try {
+                  const token = localStorage.getItem('chess_token');
+                  const res = await fetch(`${API_URL}/api/auth/resend-verification`, {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${token}` },
+                  });
+                  const data = await res.json();
+                  setResendMsg(data.message || data.error || 'Sent!');
+                  setTimeout(() => setResendMsg(null), 5000);
+                } catch {
+                  setResendMsg('Failed to send');
+                  setTimeout(() => setResendMsg(null), 3000);
+                } finally {
+                  setResendingEmail(false);
+                }
+              }}
+              style={{ fontSize: '12px', padding: '2px 8px', color: '#ffa726' }}
+            >
+              {resendingEmail ? 'Sending...' : 'Resend'}
+            </button>
+          )}
+        </div>
+      )}
 
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}

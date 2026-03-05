@@ -131,6 +131,13 @@ const PlayerProfilePage = () => {
                 <span className="profile-game-date">
                   {g.endedAt ? new Date(g.endedAt).toLocaleDateString() : ''}
                 </span>
+                <Link
+                  to={`/game/${g.id}`}
+                  className="btn btn-ghost btn-sm"
+                  style={{ fontSize: '11px', padding: '2px 8px', marginLeft: 'auto' }}
+                >
+                  View
+                </Link>
               </div>
             ))}
           </div>

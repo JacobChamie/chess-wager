@@ -49,6 +49,48 @@ router.get('/', async (_req, res) => {
   }
 });
 
+// GET /api/leaderboard/game/:gameId — Full game data for review
+router.get('/game/:gameId', async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const result = await pool.query(
+      `SELECT id, status, fen, moves, result, result_reason,
+              white_name, black_name, white_user_id, black_user_id,
+              time_control, white_time_remaining, black_time_remaining,
+              is_bot_game, bot_personality,
+              created_at, started_at, ended_at
+       FROM games WHERE id = $1`,
+      [gameId]
+    );
+    const game = result.rows[0];
+    if (!game) return res.status(404).json({ error: 'Game not found' });
+
+    res.json({
+      game: {
+        id: game.id,
+        status: game.status,
+        fen: game.fen,
+        moves: game.moves || [],
+        result: game.result,
+        reason: game.result_reason,
+        whiteName: game.white_name,
+        blackName: game.black_name,
+        timeControl: game.time_control,
+        whiteTime: game.white_time_remaining,
+        blackTime: game.black_time_remaining,
+        isBotGame: game.is_bot_game || false,
+        botPersonality: game.bot_personality || null,
+        createdAt: game.created_at,
+        startedAt: game.started_at,
+        endedAt: game.ended_at,
+      },
+    });
+  } catch (err) {
+    console.error('Game fetch error:', err);
+    res.status(500).json({ error: 'Failed to fetch game' });
+  }
+});
+
 // GET /api/leaderboard/players/:username — Player profile
 router.get('/players/:username', async (req, res) => {
   try {
