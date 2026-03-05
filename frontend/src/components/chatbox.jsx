@@ -15,10 +15,23 @@ const formatTime = (timestamp) => {
   return `${h}:${m}`;
 };
 
+const REASON_LABELS = {
+  checkmate: 'Checkmate',
+  stalemate: 'Stalemate',
+  threefold_repetition: 'Threefold Repetition',
+  insufficient_material: 'Insufficient Material',
+  draw: 'Draw',
+  draw_agreement: 'Draw by Agreement',
+  timeout: 'Time Ran Out',
+  resign: 'Resignation',
+  abandonment: 'Abandonment',
+  game_over: 'Game Over',
+};
+
 const ChatBox = ({
   messages = [], onSend, moves = [], myName = '',
   isSpectator = false, spectatorMessages = [], onSpectatorSend,
-  gameStatus = 'active',
+  gameStatus = 'active', gameResult = null, gameReason = null,
 }) => {
   const [input, setInput] = useState('');
   const [activeTab, setActiveTab] = useState(isSpectator ? 'spectators' : 'chat');
@@ -348,6 +361,27 @@ const ChatBox = ({
                 ))}
               </tbody>
             </table>
+          )}
+          {gameStatus === 'completed' && gameResult && (
+            <div
+              style={{
+                marginTop: '12px',
+                padding: '8px 12px',
+                background: 'var(--bg-elevated)',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border)',
+                textAlign: 'center',
+                fontSize: '13px',
+                fontWeight: 600,
+              }}
+            >
+              <span style={{ color: 'var(--text-primary)' }}>{gameResult}</span>
+              {gameReason && (
+                <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
+                  {' \u2014 '}{REASON_LABELS[gameReason] || gameReason.replace(/_/g, ' ')}
+                </span>
+              )}
+            </div>
           )}
         </div>
       )}

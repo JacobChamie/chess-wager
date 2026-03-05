@@ -471,6 +471,8 @@ const GamePage = () => {
               spectatorMessages={spectatorChatMessages}
               onSpectatorSend={sendSpectatorChat}
               gameStatus={gameState.status}
+              gameResult={gameState.result}
+              gameReason={gameState.reason}
             />
 
             {showDrawOffer && (

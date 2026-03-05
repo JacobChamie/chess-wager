@@ -315,7 +315,7 @@ export class GameRoom {
       blackTime: times.blackTime,
       moves: this.moveHistory,
       result: this._result,
-      resultReason: this._resultReason,
+      reason: this._resultReason,
       winner: this._winner,
       drawOffer: this.drawOffer,
       chatMessages: isSpec ? [] : this.chatMessages,
