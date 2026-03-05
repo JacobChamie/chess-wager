@@ -329,9 +329,13 @@ export class BotManager {
         bot2.socket.removeAllListeners('game:over');
       };
 
-      const finishGame = () => {
+      const finishGame = (forceResignBot = null) => {
         if (gameFinished) return;
         gameFinished = true;
+        // If we need to force-resign (e.g. timeout), do it before cleanup
+        if (forceResignBot?.socket?.connected && forceResignBot.gameId) {
+          forceResignBot.socket.emit('game:resign', { gameId: forceResignBot.gameId });
+        }
         cleanup();
         this.gamesPlayed++;
         resolve();
@@ -368,17 +372,24 @@ export class BotManager {
               this._log(`${botName} resigns after ${totalMoves} moves`);
               bot.socket.emit('game:resign', { gameId: bot.gameId });
             } else {
-              // Draw offer flow — the bot whose turn it is offers a draw
-              this._log(`${botName} offers draw after ${totalMoves} moves`);
-              bot.socket.emit('game:offer_draw', { gameId: bot.gameId });
-
-              // The other bot accepts the draw
+              // Draw offer flow — register accept handler BEFORE sending offer
               const otherBot = bot === bot1 ? bot2 : bot1;
               const acceptHandler = () => {
                 if (gameFinished || !this.running) return;
                 otherBot.socket.emit('game:respond_draw', { gameId: otherBot.gameId, accept: true });
               };
               otherBot.socket.once('game:draw_offered', acceptHandler);
+
+              this._log(`${botName} offers draw after ${totalMoves} moves`);
+              bot.socket.emit('game:offer_draw', { gameId: bot.gameId });
+
+              // Fallback: if draw doesn't resolve in 5s, just resign
+              setTimeout(() => {
+                if (gameFinished || !this.running) return;
+                this._log(`${botName} draw timeout — resigning instead`);
+                otherBot.socket.removeAllListeners('game:draw_offered');
+                bot.socket.emit('game:resign', { gameId: bot.gameId });
+              }, 5000);
             }
           }, this.config.delayMs);
           return;
@@ -454,23 +465,23 @@ export class BotManager {
         rating: 1200,
       });
 
-      // Timeout: if game doesn't finish in 60s, force cleanup
+      // Timeout: if game doesn't finish in 60s, force resign
       const gameTimeout = setTimeout(() => {
         if (!gameFinished) {
-          this._log(`Game timeout for ${name1} vs ${name2}`);
-          finishGame();
+          this._log(`Game timeout for ${name1} vs ${name2} — force resigning`);
+          finishGame(bot1);
         }
       }, 60000);
 
       // Also handle abort signal
       const onAbort = () => {
         clearTimeout(gameTimeout);
-        finishGame();
+        finishGame(bot1);
       };
 
       if (signal.aborted) {
         clearTimeout(gameTimeout);
-        finishGame();
+        finishGame(bot1);
         return;
       }
 

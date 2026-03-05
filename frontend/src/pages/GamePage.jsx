@@ -454,6 +454,7 @@ const GamePage = () => {
               gap: '8px',
               width: '340px',
               flexShrink: 0,
+              overflow: 'hidden',
             }}
           >
             {spectatorCount > 0 && (
