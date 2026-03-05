@@ -302,11 +302,8 @@ export class BotManager {
       return;
     }
 
-    // Determine end method for this game
-    let endMethod = this.config.endMethod;
-    if (endMethod === 'mixed') {
-      endMethod = Math.random() < 0.5 ? 'resign' : 'draw';
-    }
+    // Always use resign — draw offer/accept between bot sockets is unreliable
+    const endMethod = 'resign';
 
     // Reset game state
     bot1.gameId = null;
@@ -368,29 +365,8 @@ export class BotManager {
           setTimeout(() => {
             if (gameFinished || !this.running) return;
 
-            if (endMethod === 'resign') {
-              this._log(`${botName} resigns after ${totalMoves} moves`);
-              bot.socket.emit('game:resign', { gameId: bot.gameId });
-            } else {
-              // Draw offer flow — register accept handler BEFORE sending offer
-              const otherBot = bot === bot1 ? bot2 : bot1;
-              const acceptHandler = () => {
-                if (gameFinished || !this.running) return;
-                otherBot.socket.emit('game:respond_draw', { gameId: otherBot.gameId, accept: true });
-              };
-              otherBot.socket.once('game:draw_offered', acceptHandler);
-
-              this._log(`${botName} offers draw after ${totalMoves} moves`);
-              bot.socket.emit('game:offer_draw', { gameId: bot.gameId });
-
-              // Fallback: if draw doesn't resolve in 5s, just resign
-              setTimeout(() => {
-                if (gameFinished || !this.running) return;
-                this._log(`${botName} draw timeout — resigning instead`);
-                otherBot.socket.removeAllListeners('game:draw_offered');
-                bot.socket.emit('game:resign', { gameId: bot.gameId });
-              }, 5000);
-            }
+            this._log(`${botName} resigns after ${totalMoves} moves`);
+            bot.socket.emit('game:resign', { gameId: bot.gameId });
           }, this.config.delayMs);
           return;
         }
