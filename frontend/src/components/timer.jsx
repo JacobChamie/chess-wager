@@ -51,33 +51,17 @@ const Timer = memo(({ timeMs, player, active, resultIcon }) => {
   const iconMap = { win: '\u{1F451}', loss: '\u2717', draw: '\u00BD' };
   const icon = resultIcon ? iconMap[resultIcon] : null;
 
+  const timeClass = isLowTime && !resultIcon
+    ? 'timer-time-display timer-time-display--low'
+    : 'timer-time-display';
+
   return (
     <div className={timerClass} style={{ margin: '6px 0' }}>
-      <div
-        style={{
-          fontSize: '12px',
-          fontWeight: 600,
-          opacity: 0.8,
-          marginBottom: '2px',
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '5px',
-        }}
-      >
-        {icon && <span style={{ fontSize: '14px' }}>{icon}</span>}
+      <div className="timer-player-name">
+        {icon && <span className="timer-result-icon">{icon}</span>}
         {player}
       </div>
-      <div
-        style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: isLowTime && !resultIcon ? '24px' : '20px',
-          fontWeight: 700,
-          lineHeight: 1.2,
-        }}
-      >
+      <div className={timeClass}>
         {timeDisplay}
       </div>
     </div>

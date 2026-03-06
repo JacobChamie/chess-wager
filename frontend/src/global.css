@@ -107,7 +107,7 @@ body {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition), color var(--transition), transform 80ms ease;
+  transition: background var(--transition), border-color var(--transition), color var(--transition), transform 80ms ease;
   outline: none;
   user-select: none;
   white-space: nowrap;
@@ -179,6 +179,7 @@ body {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   padding: 24px;
+  contain: content;
 }
 
 .card-elevated {
@@ -237,7 +238,7 @@ body {
   border: 2px solid var(--border);
   background: var(--bg-elevated);
   cursor: pointer;
-  transition: background var(--transition), border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+  transition: background var(--transition), border-color var(--transition), transform var(--transition);
   user-select: none;
   overflow: hidden;
   min-width: 0;
@@ -283,9 +284,7 @@ body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.85);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -315,6 +314,7 @@ body {
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
+  will-change: transform;
 }
 
 .spinner-sm {
@@ -378,6 +378,7 @@ body {
   border-color: var(--danger);
   color: #fff;
   animation: pulse 1s ease infinite;
+  will-change: opacity;
 }
 
 .timer--win {
@@ -396,6 +397,34 @@ body {
   background: rgba(255, 193, 7, 0.1);
   border-color: rgba(255, 193, 7, 0.4);
   color: #ffc107;
+}
+
+.timer-player-name {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.8;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.timer-player-name .timer-result-icon {
+  font-size: 14px;
+}
+
+.timer-time-display {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.timer-time-display--low {
+  font-size: 24px;
 }
 
 /* ── Badge ────────────────────────────────────────────── */
@@ -422,6 +451,7 @@ body {
   color: #fff;
   animation: pulse 2s ease infinite;
   box-shadow: 0 0 20px rgba(229, 57, 53, 0.3);
+  will-change: opacity;
 }
 
 /* ── Divider ──────────────────────────────────────────── */
@@ -561,7 +591,8 @@ body {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+  transition: background var(--transition), border-color var(--transition);
+  contain: content;
 }
 
 .open-game-row:hover {
@@ -679,12 +710,22 @@ body {
   border-radius: 50%;
   background: #4caf50;
   box-shadow: 0 0 6px rgba(76, 175, 80, 0.6);
+  position: relative;
+}
+
+.online-dot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: rgba(76, 175, 80, 0.4);
   animation: pulse-dot 2s ease infinite;
+  will-change: opacity;
 }
 
 @keyframes pulse-dot {
-  0%, 100% { box-shadow: 0 0 6px rgba(76, 175, 80, 0.6); }
-  50% { box-shadow: 0 0 12px rgba(76, 175, 80, 0.9); }
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
 }
 
 .online-count {
@@ -743,6 +784,7 @@ body {
 
 .leaderboard-table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .leaderboard-table {
@@ -936,6 +978,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-size: 14px;
+  contain: content;
 }
 
 .profile-game-result {
@@ -998,6 +1041,231 @@ body {
   background: #ef5350;
   box-shadow: 0 0 6px rgba(239, 83, 80, 0.6);
   animation: pulse-dot 2s ease infinite;
+}
+
+/* ── Confetti Particles ──────────────────────────────── */
+
+.confetti-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.confetti-particle {
+  position: absolute;
+  top: -10px;
+  will-change: transform, opacity;
+}
+
+/* ── Chessboard Wrapper ─────────────────────────────── */
+
+.chessboard-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+}
+
+.chessboard-resize-handle {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 20px;
+  height: 20px;
+  cursor: se-resize;
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 3px;
+  box-sizing: border-box;
+}
+
+.chessboard-resize-handle-inner {
+  width: 100%;
+  height: 100%;
+  border-right: 2px solid #ccc;
+  border-bottom: 2px solid #ccc;
+  border-radius: 3px;
+}
+
+/* ── ChatBox ────────────────────────────────────────── */
+
+.chatbox {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  width: 100%;
+  color: var(--text-primary);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.chatbox-tabs {
+  display: flex;
+  margin-bottom: 12px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.chatbox-tab {
+  flex: 1;
+  padding: 8px 0;
+  border: none;
+  cursor: pointer;
+  font-weight: 400;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all var(--transition);
+  background: var(--bg-base);
+  color: var(--text-muted);
+}
+
+.chatbox-tab--active {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.chatbox-messages {
+  flex: 1;
+  min-height: 120px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+  background: var(--bg-base);
+  padding: 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.chatbox-messages--no-margin {
+  margin-bottom: 0;
+}
+
+.chatbox-empty {
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.chatbox-msg {
+  margin-bottom: 8px;
+  text-align: left;
+}
+
+.chatbox-msg-header {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.chatbox-msg-name {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.chatbox-msg-time {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.chatbox-msg-body {
+  font-size: 14px;
+  margin-top: 2px;
+  color: var(--text-primary);
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.chatbox-input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chatbox-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 2px;
+  margin-bottom: 8px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  padding: 8px;
+  border: 1px solid var(--border);
+}
+
+.chatbox-emoji-btn {
+  border: none;
+  background: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  line-height: 1;
+  transition: background var(--transition);
+}
+
+.chatbox-emoji-btn:hover {
+  background: var(--bg-hover);
+}
+
+.chatbox-move-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  font-family: var(--font-mono);
+}
+
+.chatbox-move-table th {
+  text-align: left;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.chatbox-move-cell {
+  padding: 4px;
+  width: 45%;
+  border-radius: 3px;
+}
+
+.chatbox-move-cell--active {
+  background: var(--accent-muted, rgba(99, 102, 241, 0.25));
+  font-weight: 700;
+}
+
+.chatbox-move-cell--clickable {
+  cursor: pointer;
+}
+
+.chatbox-move-num {
+  padding: 4px 4px 4px 0;
+  color: var(--text-muted);
+  width: 10%;
+}
+
+.chatbox-game-result {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 /* ── Admin Container ─────────────────────────────────── */

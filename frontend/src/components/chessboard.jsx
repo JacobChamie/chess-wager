@@ -1,6 +1,12 @@
 // src/components/chessboard.jsx
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { Chessboard } from 'react-chessboard';
+
+const CUSTOM_BOARD_STYLE = {
+  borderRadius: '12px',
+  overflow: 'hidden',
+  boxShadow: '0 0 25px rgba(0, 0, 0, 0.7)',
+};
 
 const ChessboardComponent = memo(({
   position,
@@ -48,18 +54,13 @@ const ChessboardComponent = memo(({
     window.addEventListener('mouseup', onMouseUp);
   };
 
+  const wrapStyle = useMemo(() => ({
+    width: boardSize,
+    height: boardSize,
+  }), [boardSize]);
+
   return (
-    <div
-      style={{
-        position: 'relative',
-        width: boardSize,
-        height: boardSize,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        margin: '0 auto',
-      }}
-    >
+    <div className="chessboard-wrap" style={wrapStyle}>
       <Chessboard
         id="main-board"
         position={position}
@@ -67,11 +68,7 @@ const ChessboardComponent = memo(({
         boardWidth={boardSize}
         boardOrientation={boardOrientation}
         animationDuration={100}
-        customBoardStyle={{
-          borderRadius: '12px',
-          overflow: 'hidden',
-          boxShadow: '0 0 25px rgba(0, 0, 0, 0.7)',
-        }}
+        customBoardStyle={CUSTOM_BOARD_STYLE}
         customSquareStyles={premoveSquares}
         onSquareClick={onSquareClick}
         onPieceClick={onPieceClick}
@@ -82,32 +79,10 @@ const ChessboardComponent = memo(({
       {isResizable && (
         <div
           onMouseDown={handleResizeMouseDown}
-          style={{
-            position: 'absolute',
-            right: 6,
-            bottom: 6,
-            width: 20,
-            height: 20,
-            cursor: 'se-resize',
-            backgroundColor: 'rgba(0,0,0,0.4)',
-            borderRadius: 4,
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'flex-end',
-            padding: 3,
-            boxSizing: 'border-box',
-          }}
+          className="chessboard-resize-handle"
           title="Drag to resize board"
         >
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              borderRight: '2px solid #ccc',
-              borderBottom: '2px solid #ccc',
-              borderRadius: 3,
-            }}
-          />
+          <div className="chessboard-resize-handle-inner" />
         </div>
       )}
     </div>

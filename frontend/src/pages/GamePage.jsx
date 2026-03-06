@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGameSocket } from '../hooks/useGameSocket.js';
 import ChessboardComponent from '../components/chessboard.jsx';
@@ -8,6 +8,7 @@ import GameOverModal from '../components/GameOverModal.jsx';
 import DrawOfferBar from '../components/DrawOfferBar.jsx';
 import PromotionPicker from '../components/PromotionPicker.jsx';
 import ConfettiOverlay from '../components/ConfettiOverlay.jsx';
+import '../game.css';
 
 // Live countdown banner for opponent disconnect
 const DisconnectBanner = ({ disconnectTime }) => {
@@ -349,19 +350,9 @@ const GamePage = () => {
 
   if (!connected || !gameState) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          background: 'var(--bg-base)',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: '16px',
-        }}
-      >
+      <div className="game-loading">
         <div className="spinner" />
-        <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>
+        <p className="game-loading-text">
           Connecting to game...
         </p>
       </div>
@@ -446,63 +437,21 @@ const GamePage = () => {
   }
 
   return (
-    <div
-      style={{
-        textAlign: 'center',
-        background: 'var(--bg-base)',
-        minHeight: 'calc(100vh - 52px)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        paddingTop: '12px',
-        position: 'relative',
-        overflowY: 'auto',
-        overflowX: 'hidden',
-      }}
-    >
+    <div className="game-container">
       {cheerReceived && <ConfettiOverlay targetColor={cheerReceived.targetColor} />}
 
       {disconnectTime && !gameState?.isBotGame && <DisconnectBanner disconnectTime={disconnectTime} />}
 
       {moveError && (
-        <div
-          style={{
-            padding: '8px 16px',
-            background: 'rgba(255, 152, 0, 0.12)',
-            border: '1px solid rgba(255, 152, 0, 0.3)',
-            borderRadius: 'var(--radius-sm)',
-            marginBottom: '8px',
-            fontSize: '13px',
-            color: '#ffa726',
-          }}
-        >
+        <div className="game-move-error">
           Move rejected: {moveError}
         </div>
       )}
 
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          justifyContent: 'center',
-          alignItems: isMobile ? 'center' : 'stretch',
-          gap: isMobile ? '4px' : '20px',
-          flex: 1,
-          minHeight: 0,
-          overflow: 'visible',
-          width: isMobile ? '100%' : undefined,
-        }}
-      >
+      <div className={`game-layout ${isMobile ? 'game-layout--mobile' : 'game-layout--desktop'}`}>
         {/* Board column */}
         {!isFullscreen && (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              position: 'relative',
-            }}
-          >
+          <div className="game-board-col">
             <Timer
               timeMs={opponentTime}
               player={opponentName}
@@ -532,29 +481,25 @@ const GamePage = () => {
             )}
 
             {/* Move navigation buttons */}
-            <div style={{ display: 'flex', gap: '4px', marginTop: '6px', justifyContent: 'center', alignItems: 'center' }}>
-              <button className="btn btn-ghost btn-sm" onClick={navigateFirst} title="First move" style={{ padding: '4px 8px', fontSize: '14px', minWidth: '36px' }}>
+            <div className="game-nav-buttons">
+              <button className="btn btn-ghost btn-sm game-nav-btn" onClick={navigateFirst} title="First move">
                 {'|<'}
               </button>
-              <button className="btn btn-ghost btn-sm" onClick={navigatePrev} title="Previous move" style={{ padding: '4px 8px', fontSize: '14px', minWidth: '36px' }}>
+              <button className="btn btn-ghost btn-sm game-nav-btn" onClick={navigatePrev} title="Previous move">
                 {'<'}
               </button>
-              <button className="btn btn-ghost btn-sm" onClick={navigateNext} title="Next move" style={{ padding: '4px 8px', fontSize: '14px', minWidth: '36px' }}>
+              <button className="btn btn-ghost btn-sm game-nav-btn" onClick={navigateNext} title="Next move">
                 {'>'}
               </button>
-              <button className="btn btn-ghost btn-sm" onClick={navigateLast} title="Last move (live)" style={{ padding: '4px 8px', fontSize: '14px', minWidth: '36px' }}>
+              <button className="btn btn-ghost btn-sm game-nav-btn" onClick={navigateLast} title="Last move (live)">
                 {'>|'}
               </button>
             </div>
 
             {isViewingHistory && (
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px',
-                padding: '4px 12px', background: 'rgba(255,152,0,0.12)', borderRadius: 'var(--radius-sm)',
-                fontSize: '13px', color: '#ffa726',
-              }}>
+              <div className="game-history-banner">
                 <span>Viewing move {viewMoveIndex === -1 ? 'start' : viewMoveIndex + 1}</span>
-                <button className="btn btn-ghost btn-sm" onClick={navigateLast} style={{ fontSize: '12px', padding: '2px 8px' }}>
+                <button className="btn btn-ghost btn-sm" onClick={navigateLast}>
                   Return to live
                 </button>
               </div>
@@ -562,9 +507,8 @@ const GamePage = () => {
 
             {!isMobile && (
               <button
-                className="btn btn-ghost btn-sm"
+                className="btn btn-ghost btn-sm game-fullscreen-btn"
                 onClick={() => setIsFullscreen(true)}
-                style={{ marginTop: '4px', fontSize: '12px' }}
               >
                 Full board
               </button>
@@ -579,7 +523,7 @@ const GamePage = () => {
 
             {/* Mobile action buttons inline */}
             {isMobile && isActive && !isSpectator && (
-              <div style={{ display: 'flex', gap: '8px', width: '100%', padding: '0 8px', marginTop: '4px' }}>
+              <div className="game-mobile-actions">
                 <button
                   className="btn btn-danger btn-sm"
                   onClick={resign}
@@ -604,20 +548,10 @@ const GamePage = () => {
 
         {/* Chat + actions column — collapsible on mobile */}
         {!isFullscreen && isMobile && (
-          <div style={{ width: '100%', padding: '0 8px' }}>
+          <div className="game-mobile-chat-wrap">
             <button
-              className="btn btn-ghost btn-sm"
+              className="btn btn-ghost btn-sm game-chat-toggle"
               onClick={() => setChatExpanded((v) => !v)}
-              style={{
-                width: '100%',
-                fontSize: '12px',
-                padding: '6px',
-                marginTop: '4px',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: '6px',
-              }}
             >
               {chatExpanded ? '\u25B2 Hide' : '\u25BC Chat & Moves'}
               {spectatorCount > 0 && ` \u00B7 ${spectatorCount} watching`}
@@ -646,9 +580,8 @@ const GamePage = () => {
         {/* Desktop sidebar toggle when hidden */}
         {!isFullscreen && !isMobile && !sidebarOpen && (
           <button
-            className="btn btn-ghost btn-sm"
+            className="btn btn-ghost btn-sm game-panel-toggle"
             onClick={() => setSidebarOpen(true)}
-            style={{ alignSelf: 'flex-start', marginTop: '8px', fontSize: '12px' }}
             title="Show panel"
           >
             {'\u25C0'} Panel
@@ -657,27 +590,16 @@ const GamePage = () => {
 
         {/* Desktop chat + actions */}
         {!isFullscreen && !isMobile && sidebarOpen && (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'stretch',
-              gap: '8px',
-              width: '340px',
-              flexShrink: 0,
-              overflow: 'hidden',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+          <div className="game-sidebar">
+            <div className="game-sidebar-header">
               {spectatorCount > 0 ? (
                 <div className="spectator-badge">
                   {'\uD83D\uDC41'} {spectatorCount} watching
                 </div>
               ) : <div />}
               <button
-                className="btn btn-ghost btn-sm"
+                className="btn btn-ghost btn-sm game-sidebar-close"
                 onClick={() => setSidebarOpen(false)}
-                style={{ fontSize: '11px', padding: '4px 8px' }}
                 title="Hide panel"
               >
                 {'\u2715'}
@@ -707,7 +629,7 @@ const GamePage = () => {
             )}
 
             {isActive && !isSpectator && (
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div className="game-sidebar-actions">
                 <button
                   className="btn btn-danger"
                   onClick={resign}
@@ -717,7 +639,7 @@ const GamePage = () => {
                 </button>
                 {!gameState?.isBotGame && (
                   <button
-                    className={`btn btn-ghost${drawOffer ? '' : ''}`}
+                    className="btn btn-ghost"
                     onClick={offerDraw}
                     disabled={!!drawOffer}
                     style={{ flex: 1 }}
@@ -729,20 +651,20 @@ const GamePage = () => {
             )}
 
             {isActive && isSpectator && (
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div className="game-sidebar-actions">
                 <button
-                  className="btn btn-sm"
-                  style={{ flex: 1, background: '#1565c0', color: '#fff', borderColor: '#1565c0' }}
+                  className="btn btn-sm game-cheer-btn--white"
                   onClick={() => sendCheer('w')}
                   disabled={cheerCooldown > 0 || gameState.whiteTime < 30000 || gameState.blackTime < 30000}
+                  style={{ flex: 1 }}
                 >
                   {cheerCooldown > 0 ? `${cheerCooldown}s` : 'Cheer White'}
                 </button>
                 <button
-                  className="btn btn-sm"
-                  style={{ flex: 1, background: '#c62828', color: '#fff', borderColor: '#c62828' }}
+                  className="btn btn-sm game-cheer-btn--black"
                   onClick={() => sendCheer('b')}
                   disabled={cheerCooldown > 0 || gameState.whiteTime < 30000 || gameState.blackTime < 30000}
+                  style={{ flex: 1 }}
                 >
                   {cheerCooldown > 0 ? `${cheerCooldown}s` : 'Cheer Black'}
                 </button>
@@ -769,14 +691,8 @@ const GamePage = () => {
       )}
 
       {isCompleted && isSpectator && (
-        <div style={{
-          marginTop: '16px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '8px',
-        }}>
-          <div style={{ fontSize: '15px', color: 'var(--text-secondary)' }}>
+        <div className="game-spectator-completed">
+          <div className="game-spectator-completed-text">
             Game over — {gameState.result} ({gameState.reason?.replace(/_/g, ' ')})
           </div>
           <button className="btn btn-primary btn-sm" onClick={() => navigate('/')}>
@@ -786,20 +702,8 @@ const GamePage = () => {
       )}
 
       {isFullscreen && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'var(--bg-base)',
-            zIndex: 950,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            overflow: 'hidden',
-          }}
-        >
-          <div style={{ position: 'absolute', top: 24, left: 24 }}>
+        <div className="game-fullscreen">
+          <div className="game-fullscreen-timer-top">
             <Timer
               timeMs={opponentTime}
               player={opponentName}
@@ -808,7 +712,7 @@ const GamePage = () => {
             />
           </div>
 
-          <div style={{ position: 'absolute', bottom: 24, left: 24 }}>
+          <div className="game-fullscreen-timer-bottom">
             <Timer
               timeMs={myTime}
               player={myName}
@@ -830,36 +734,32 @@ const GamePage = () => {
           />
 
           {/* Fullscreen nav buttons */}
-          <div style={{ display: 'flex', gap: '4px', marginTop: '8px', justifyContent: 'center', alignItems: 'center' }}>
-            <button className="btn btn-ghost btn-sm" onClick={navigateFirst} title="First move" style={{ padding: '4px 8px', fontSize: '14px', minWidth: '36px' }}>
+          <div className="game-nav-buttons" style={{ marginTop: '8px' }}>
+            <button className="btn btn-ghost btn-sm game-nav-btn" onClick={navigateFirst} title="First move">
               {'|<'}
             </button>
-            <button className="btn btn-ghost btn-sm" onClick={navigatePrev} title="Previous move" style={{ padding: '4px 8px', fontSize: '14px', minWidth: '36px' }}>
+            <button className="btn btn-ghost btn-sm game-nav-btn" onClick={navigatePrev} title="Previous move">
               {'<'}
             </button>
-            <button className="btn btn-ghost btn-sm" onClick={navigateNext} title="Next move" style={{ padding: '4px 8px', fontSize: '14px', minWidth: '36px' }}>
+            <button className="btn btn-ghost btn-sm game-nav-btn" onClick={navigateNext} title="Next move">
               {'>'}
             </button>
-            <button className="btn btn-ghost btn-sm" onClick={navigateLast} title="Last move (live)" style={{ padding: '4px 8px', fontSize: '14px', minWidth: '36px' }}>
+            <button className="btn btn-ghost btn-sm game-nav-btn" onClick={navigateLast} title="Last move (live)">
               {'>|'}
             </button>
           </div>
 
           {isViewingHistory && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px',
-              padding: '4px 12px', background: 'rgba(255,152,0,0.12)', borderRadius: 'var(--radius-sm)',
-              fontSize: '13px', color: '#ffa726',
-            }}>
+            <div className="game-history-banner">
               <span>Viewing move {viewMoveIndex === -1 ? 'start' : viewMoveIndex + 1}</span>
-              <button className="btn btn-ghost btn-sm" onClick={navigateLast} style={{ fontSize: '12px', padding: '2px 8px' }}>
+              <button className="btn btn-ghost btn-sm" onClick={navigateLast}>
                 Return to live
               </button>
             </div>
           )}
 
           {pendingPromotion && (
-            <div style={{ position: 'absolute', zIndex: 1000 }}>
+            <div className="game-fullscreen-promo">
               <PromotionPicker
                 color={myColor}
                 onSelect={handlePromotionChoice}
@@ -869,17 +769,7 @@ const GamePage = () => {
           )}
 
           {isActive && !isSpectator && (
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 24,
-                right: 24,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                alignItems: 'flex-end',
-              }}
-            >
+            <div className="game-fullscreen-actions">
               <button className="btn btn-danger" onClick={resign}>
                 Resign
               </button>
@@ -891,7 +781,7 @@ const GamePage = () => {
             </div>
           )}
 
-          <div style={{ position: 'absolute', top: 24, right: 24 }}>
+          <div className="game-fullscreen-exit">
             <button
               className="btn btn-ghost"
               onClick={() => setIsFullscreen(false)}

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo, useCallback } from 'react';
 
 const EMOJI_GRID = [
   '\uD83D\uDE00', '\uD83D\uDE02', '\uD83E\uDD23', '\uD83D\uDE0E', '\uD83E\uDD14', '\uD83D\uDE0F',
@@ -34,7 +34,7 @@ const getMoveText = (move) => {
   return move.san || '';
 };
 
-const ChatBox = ({
+const ChatBox = memo(({
   messages = [], onSend, moves = [], myName = '',
   isSpectator = false, spectatorMessages = [], onSpectatorSend,
   gameStatus = 'active', gameResult = null, gameReason = null,
@@ -80,37 +80,15 @@ const ChatBox = ({
     inputRef.current?.focus();
   };
 
-  const getNameColor = (senderName) => {
+  const getNameColor = useCallback((senderName) => {
     if (senderName === myName) return 'var(--accent)';
     return '#64b5f6';
-  };
+  }, [myName]);
 
   return (
-    <div
-      style={{
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border)',
-        borderRadius: 'var(--radius-lg)',
-        padding: '16px',
-        width: '100%',
-        color: 'var(--text-primary)',
-        boxShadow: 'var(--shadow)',
-        display: 'flex',
-        flexDirection: 'column',
-        flex: 1,
-        minHeight: 0,
-      }}
-    >
+    <div className="chatbox">
       {/* Tabs */}
-      <div
-        style={{
-          display: 'flex',
-          marginBottom: '12px',
-          borderRadius: 'var(--radius-sm)',
-          overflow: 'hidden',
-          border: '1px solid var(--border)',
-        }}
-      >
+      <div className="chatbox-tabs">
         {(isSpectator
           ? ['spectators', 'moves']
           : gameStatus === 'completed'
@@ -120,19 +98,7 @@ const ChatBox = ({
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            style={{
-              flex: 1,
-              padding: '8px 0',
-              border: 'none',
-              background: activeTab === tab ? 'var(--bg-elevated)' : 'var(--bg-base)',
-              color: activeTab === tab ? 'var(--text-primary)' : 'var(--text-muted)',
-              cursor: 'pointer',
-              fontWeight: activeTab === tab ? 600 : 400,
-              fontSize: '13px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              transition: 'all var(--transition)',
-            }}
+            className={`chatbox-tab${activeTab === tab ? ' chatbox-tab--active' : ''}`}
           >
             {tab}
           </button>
@@ -142,51 +108,26 @@ const ChatBox = ({
       {activeTab === 'chat' && !isSpectator && (
         <>
           {/* Messages area */}
-          <div
-            style={{
-              flex: 1,
-              minHeight: '120px',
-              overflowY: 'auto',
-              marginBottom: '12px',
-              background: 'var(--bg-base)',
-              padding: '10px',
-              borderRadius: 'var(--radius)',
-              border: '1px solid var(--border)',
-            }}
-          >
+          <div className="chatbox-messages">
             {messages.length === 0 && (
-              <div style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '20px 0' }}>
+              <div className="chatbox-empty">
                 No messages yet
               </div>
             )}
             {messages.map((msg, idx) => (
-              <div
-                key={idx}
-                style={{ marginBottom: '8px', textAlign: 'left' }}
-              >
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+              <div key={idx} className="chatbox-msg">
+                <div className="chatbox-msg-header">
                   <span
-                    style={{
-                      color: getNameColor(msg.senderName),
-                      fontWeight: 600,
-                      fontSize: '13px',
-                    }}
+                    className="chatbox-msg-name"
+                    style={{ color: getNameColor(msg.senderName) }}
                   >
                     {msg.senderName}
                   </span>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>
+                  <span className="chatbox-msg-time">
                     {formatTime(msg.timestamp)}
                   </span>
                 </div>
-                <div
-                  style={{
-                    fontSize: '14px',
-                    marginTop: '2px',
-                    color: 'var(--text-primary)',
-                    wordBreak: 'break-word',
-                    lineHeight: 1.4,
-                  }}
-                >
+                <div className="chatbox-msg-body">
                   {msg.message}
                 </div>
               </div>
@@ -196,34 +137,12 @@ const ChatBox = ({
 
           {/* Emoji picker */}
           {showEmojis && (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(6, 1fr)',
-                gap: '2px',
-                marginBottom: '8px',
-                background: 'var(--bg-elevated)',
-                borderRadius: 'var(--radius)',
-                padding: '8px',
-                border: '1px solid var(--border)',
-              }}
-            >
+            <div className="chatbox-emoji-grid">
               {EMOJI_GRID.map((emoji) => (
                 <button
                   key={emoji}
                   onClick={() => insertEmoji(emoji)}
-                  style={{
-                    border: 'none',
-                    background: 'none',
-                    fontSize: '20px',
-                    cursor: 'pointer',
-                    padding: '6px',
-                    borderRadius: '6px',
-                    lineHeight: 1,
-                    transition: 'background var(--transition)',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                  className="chatbox-emoji-btn"
                 >
                   {emoji}
                 </button>
@@ -232,7 +151,7 @@ const ChatBox = ({
           )}
 
           {/* Input row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div className="chatbox-input-row">
             <input
               ref={inputRef}
               className="input input-sm"
@@ -269,34 +188,23 @@ const ChatBox = ({
 
       {activeTab === 'spectators' && (
         <>
-          <div
-            style={{
-              flex: 1,
-              minHeight: '120px',
-              overflowY: 'auto',
-              marginBottom: isSpectator ? '12px' : '0',
-              background: 'var(--bg-base)',
-              padding: '10px',
-              borderRadius: 'var(--radius)',
-              border: '1px solid var(--border)',
-            }}
-          >
+          <div className={`chatbox-messages${isSpectator ? '' : ' chatbox-messages--no-margin'}`}>
             {spectatorMessages.length === 0 && (
-              <div style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '20px 0' }}>
+              <div className="chatbox-empty">
                 No spectator messages yet
               </div>
             )}
             {spectatorMessages.map((msg, idx) => (
-              <div key={idx} style={{ marginBottom: '8px', textAlign: 'left' }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                  <span style={{ color: '#ab47bc', fontWeight: 600, fontSize: '13px' }}>
+              <div key={idx} className="chatbox-msg">
+                <div className="chatbox-msg-header">
+                  <span className="chatbox-msg-name" style={{ color: '#ab47bc' }}>
                     {msg.senderName}
                   </span>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>
+                  <span className="chatbox-msg-time">
                     {formatTime(msg.timestamp)}
                   </span>
                 </div>
-                <div style={{ fontSize: '14px', marginTop: '2px', color: 'var(--text-primary)', wordBreak: 'break-word', lineHeight: 1.4 }}>
+                <div className="chatbox-msg-body">
                   {msg.message}
                 </div>
               </div>
@@ -305,7 +213,7 @@ const ChatBox = ({
           </div>
 
           {isSpectator && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div className="chatbox-input-row">
               <input
                 ref={inputRef}
                 className="input input-sm"
@@ -325,35 +233,18 @@ const ChatBox = ({
       )}
 
       {activeTab === 'moves' && (
-        <div
-          style={{
-            flex: 1,
-            minHeight: '120px',
-            overflowY: 'auto',
-            background: 'var(--bg-base)',
-            padding: '10px',
-            borderRadius: 'var(--radius)',
-            border: '1px solid var(--border)',
-          }}
-        >
+        <div className="chatbox-messages">
           {moves.length === 0 ? (
-            <div style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '20px 0' }}>
+            <div className="chatbox-empty">
               No moves yet
             </div>
           ) : (
-            <table
-              style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                fontSize: '14px',
-                fontFamily: 'var(--font-mono)',
-              }}
-            >
+            <table className="chatbox-move-table">
               <thead>
                 <tr>
-                  <th style={{ textAlign: 'left', paddingBottom: '8px', borderBottom: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: '11px', fontWeight: 600 }}>#</th>
-                  <th style={{ textAlign: 'left', paddingBottom: '8px', borderBottom: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: '11px', fontWeight: 600 }}>White</th>
-                  <th style={{ textAlign: 'left', paddingBottom: '8px', borderBottom: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: '11px', fontWeight: 600 }}>Black</th>
+                  <th>#</th>
+                  <th>White</th>
+                  <th>Black</th>
                 </tr>
               </thead>
               <tbody>
@@ -362,27 +253,19 @@ const ChatBox = ({
                   const blackIdx = whiteIdx + 1;
                   const whiteText = getMoveText(row.white);
                   const blackText = getMoveText(row.black);
-                  const moveCellStyle = (idx, hasMove) => ({
-                    padding: '4px',
-                    width: '45%',
-                    cursor: hasMove && onMoveClick ? 'pointer' : 'default',
-                    borderRadius: '3px',
-                    background: viewMoveIndex === idx ? 'var(--accent-muted, rgba(99, 102, 241, 0.25))' : 'transparent',
-                    fontWeight: viewMoveIndex === idx ? 700 : 400,
-                  });
                   return (
                     <tr key={row.moveNumber}>
-                      <td style={{ padding: '4px 4px 4px 0', color: 'var(--text-muted)', width: '10%' }}>
+                      <td className="chatbox-move-num">
                         {row.moveNumber}.
                       </td>
                       <td
-                        style={moveCellStyle(whiteIdx, !!whiteText)}
+                        className={`chatbox-move-cell${viewMoveIndex === whiteIdx ? ' chatbox-move-cell--active' : ''}${whiteText && onMoveClick ? ' chatbox-move-cell--clickable' : ''}`}
                         onClick={() => whiteText && onMoveClick?.(whiteIdx)}
                       >
                         {whiteText}
                       </td>
                       <td
-                        style={moveCellStyle(blackIdx, !!blackText)}
+                        className={`chatbox-move-cell${viewMoveIndex === blackIdx ? ' chatbox-move-cell--active' : ''}${blackText && onMoveClick ? ' chatbox-move-cell--clickable' : ''}`}
                         onClick={() => blackText && onMoveClick?.(blackIdx)}
                       >
                         {blackText}
@@ -394,18 +277,7 @@ const ChatBox = ({
             </table>
           )}
           {gameStatus === 'completed' && gameResult && (
-            <div
-              style={{
-                marginTop: '12px',
-                padding: '8px 12px',
-                background: 'var(--bg-elevated)',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border)',
-                textAlign: 'center',
-                fontSize: '13px',
-                fontWeight: 600,
-              }}
-            >
+            <div className="chatbox-game-result">
               <span style={{ color: 'var(--text-primary)' }}>{gameResult}</span>
               {gameReason && (
                 <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
@@ -418,6 +290,8 @@ const ChatBox = ({
       )}
     </div>
   );
-};
+});
+
+ChatBox.displayName = 'ChatBox';
 
 export default ChatBox;

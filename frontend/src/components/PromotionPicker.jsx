@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 const PIECES = [
   { key: 'q', label: 'Queen', white: '\u2655', black: '\u265B' },
   { key: 'r', label: 'Rook', white: '\u2656', black: '\u265C' },
@@ -5,7 +7,7 @@ const PIECES = [
   { key: 'n', label: 'Knight', white: '\u2658', black: '\u265E' },
 ];
 
-const PromotionPicker = ({ color, onSelect, onCancel }) => {
+const PromotionPicker = memo(({ color, onSelect, onCancel }) => {
   return (
     <div
       style={{
@@ -23,8 +25,7 @@ const PromotionPicker = ({ color, onSelect, onCancel }) => {
         style={{
           position: 'absolute',
           inset: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.6)',
-          backdropFilter: 'blur(2px)',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
         }}
       />
 
@@ -65,6 +66,8 @@ const PromotionPicker = ({ color, onSelect, onCancel }) => {
       </div>
     </div>
   );
-};
+});
+
+PromotionPicker.displayName = 'PromotionPicker';
 
 export default PromotionPicker;
