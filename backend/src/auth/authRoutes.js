@@ -48,7 +48,7 @@ router.post('/register', async (req, res) => {
         [verifyHash, user.id]
       );
       sendVerificationEmail(user.email, user.username, verifyToken).catch((err) =>
-        console.error('Verification email error:', err.message)
+        console.error('Verification email error:', err.message, err)
       );
     } catch (err) {
       console.error('Verification token error:', err.message);

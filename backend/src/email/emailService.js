@@ -27,11 +27,11 @@ export function hashToken(token) {
 }
 
 export async function sendVerificationEmail(email, username, token) {
-  if (!resend) return;
+  if (!resend) { console.warn('Resend not initialized, skipping verification email'); return; }
   const appUrl = process.env.APP_URL || 'http://localhost:5173';
   const verifyLink = `${appUrl}/verify-email?token=${token}`;
 
-  await resend.emails.send({
+  const { data, error } = await resend.emails.send({
     from: FROM_EMAIL,
     to: email,
     subject: 'Verify your ELO Stakes account',
@@ -46,14 +46,19 @@ export async function sendVerificationEmail(email, username, token) {
       </div>
     `,
   });
+  if (error) {
+    console.error('Resend verification email error:', JSON.stringify(error));
+    throw new Error(error.message || 'Failed to send verification email');
+  }
+  console.log('Verification email sent:', data?.id);
 }
 
 export async function sendPasswordResetEmail(email, username, token) {
-  if (!resend) return;
+  if (!resend) { console.warn('Resend not initialized, skipping reset email'); return; }
   const appUrl = process.env.APP_URL || 'http://localhost:5173';
   const resetLink = `${appUrl}/reset-password?token=${token}`;
 
-  await resend.emails.send({
+  const { data, error } = await resend.emails.send({
     from: FROM_EMAIL,
     to: email,
     subject: 'Reset your ELO Stakes password',
@@ -68,4 +73,9 @@ export async function sendPasswordResetEmail(email, username, token) {
       </div>
     `,
   });
+  if (error) {
+    console.error('Resend reset email error:', JSON.stringify(error));
+    throw new Error(error.message || 'Failed to send reset email');
+  }
+  console.log('Reset email sent:', data?.id);
 }
