@@ -560,7 +560,7 @@ const GamePage = () => {
               </div>
             )}
 
-            {!isMobile && !isViewingHistory && (
+            {!isMobile && (
               <button
                 className="btn btn-ghost btn-sm"
                 onClick={() => setIsFullscreen(true)}
@@ -785,7 +785,7 @@ const GamePage = () => {
         </div>
       )}
 
-      {isActive && isFullscreen && (
+      {isFullscreen && (
         <div
           style={{
             position: 'fixed',
@@ -793,6 +793,7 @@ const GamePage = () => {
             background: 'var(--bg-base)',
             zIndex: 950,
             display: 'flex',
+            flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
             overflow: 'hidden',
@@ -828,6 +829,35 @@ const GamePage = () => {
             onSquareRightClick={handleSquareRightClick}
           />
 
+          {/* Fullscreen nav buttons */}
+          <div style={{ display: 'flex', gap: '4px', marginTop: '8px', justifyContent: 'center', alignItems: 'center' }}>
+            <button className="btn btn-ghost btn-sm" onClick={navigateFirst} title="First move" style={{ padding: '4px 8px', fontSize: '14px', minWidth: '36px' }}>
+              {'|<'}
+            </button>
+            <button className="btn btn-ghost btn-sm" onClick={navigatePrev} title="Previous move" style={{ padding: '4px 8px', fontSize: '14px', minWidth: '36px' }}>
+              {'<'}
+            </button>
+            <button className="btn btn-ghost btn-sm" onClick={navigateNext} title="Next move" style={{ padding: '4px 8px', fontSize: '14px', minWidth: '36px' }}>
+              {'>'}
+            </button>
+            <button className="btn btn-ghost btn-sm" onClick={navigateLast} title="Last move (live)" style={{ padding: '4px 8px', fontSize: '14px', minWidth: '36px' }}>
+              {'>|'}
+            </button>
+          </div>
+
+          {isViewingHistory && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px',
+              padding: '4px 12px', background: 'rgba(255,152,0,0.12)', borderRadius: 'var(--radius-sm)',
+              fontSize: '13px', color: '#ffa726',
+            }}>
+              <span>Viewing move {viewMoveIndex === -1 ? 'start' : viewMoveIndex + 1}</span>
+              <button className="btn btn-ghost btn-sm" onClick={navigateLast} style={{ fontSize: '12px', padding: '2px 8px' }}>
+                Return to live
+              </button>
+            </div>
+          )}
+
           {pendingPromotion && (
             <div style={{ position: 'absolute', zIndex: 1000 }}>
               <PromotionPicker
@@ -838,26 +868,28 @@ const GamePage = () => {
             </div>
           )}
 
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 24,
-              right: 24,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
-              alignItems: 'flex-end',
-            }}
-          >
-            <button className="btn btn-danger" onClick={resign}>
-              Resign
-            </button>
-            {!gameState?.isBotGame && (
-              <button className="btn btn-ghost" onClick={offerDraw}>
-                Offer Draw
+          {isActive && !isSpectator && (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 24,
+                right: 24,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                alignItems: 'flex-end',
+              }}
+            >
+              <button className="btn btn-danger" onClick={resign}>
+                Resign
               </button>
-            )}
-          </div>
+              {!gameState?.isBotGame && (
+                <button className="btn btn-ghost" onClick={offerDraw}>
+                  Offer Draw
+                </button>
+              )}
+            </div>
+          )}
 
           <div style={{ position: 'absolute', top: 24, right: 24 }}>
             <button
