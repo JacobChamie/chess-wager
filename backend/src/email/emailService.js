@@ -2,7 +2,7 @@ import { Resend } from 'resend';
 import crypto from 'crypto';
 
 let resend = null;
-const FROM_EMAIL = 'ELO Stakes <noreply@send.elostakes.com>';
+const FROM_EMAIL = 'ELO Stakes <noreply@elostakes.com>';
 
 export function initEmailTransporter() {
   const apiKey = process.env.RESEND_API_KEY;
