@@ -1,27 +1,19 @@
-import { createTransport } from 'nodemailer';
+import { Resend } from 'resend';
 import crypto from 'crypto';
 
-let transporter = null;
+let resend = null;
+const FROM_EMAIL = 'ELO Stakes <noreply@send.elostakes.com>';
 
 export function initEmailTransporter() {
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const apiKey = process.env.RESEND_API_KEY;
 
-  if (!user || !pass) {
-    console.warn('SMTP credentials not configured — email sending disabled');
+  if (!apiKey) {
+    console.warn('RESEND_API_KEY not configured — email sending disabled');
     return;
   }
 
-  transporter = createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: { user, pass },
-  });
-
-  transporter.verify()
-    .then(() => console.log('Email transporter ready'))
-    .catch((err) => console.error('Email transporter verification failed:', err.message));
+  resend = new Resend(apiKey);
+  console.log('Resend email client initialized');
 }
 
 export function generateTokenPair() {
@@ -35,12 +27,12 @@ export function hashToken(token) {
 }
 
 export async function sendVerificationEmail(email, username, token) {
-  if (!transporter) return;
+  if (!resend) return;
   const appUrl = process.env.APP_URL || 'http://localhost:5173';
   const verifyLink = `${appUrl}/verify-email?token=${token}`;
 
-  await transporter.sendMail({
-    from: `"ELO Stakes" <${process.env.SMTP_USER}>`,
+  await resend.emails.send({
+    from: FROM_EMAIL,
     to: email,
     subject: 'Verify your ELO Stakes account',
     html: `
@@ -57,12 +49,12 @@ export async function sendVerificationEmail(email, username, token) {
 }
 
 export async function sendPasswordResetEmail(email, username, token) {
-  if (!transporter) return;
+  if (!resend) return;
   const appUrl = process.env.APP_URL || 'http://localhost:5173';
   const resetLink = `${appUrl}/reset-password?token=${token}`;
 
-  await transporter.sendMail({
-    from: `"ELO Stakes" <${process.env.SMTP_USER}>`,
+  await resend.emails.send({
+    from: FROM_EMAIL,
     to: email,
     subject: 'Reset your ELO Stakes password',
     html: `
