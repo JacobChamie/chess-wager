@@ -3,29 +3,30 @@ import { memo, useEffect, useState, useRef } from 'react';
 // resultIcon: 'win' | 'loss' | 'draw' | null
 const Timer = memo(({ timeMs, player, active, resultIcon }) => {
   const [displayTime, setDisplayTime] = useState(timeMs);
-  const lastSyncRef = useRef(Date.now());
-  const baseTimeRef = useRef(timeMs);
+  const baseRef = useRef(timeMs);
+  const syncRef = useRef(Date.now());
 
+  // Sync base when server sends new time
   useEffect(() => {
-    baseTimeRef.current = timeMs;
+    baseRef.current = timeMs;
+    syncRef.current = Date.now();
     setDisplayTime(timeMs);
-    lastSyncRef.current = Date.now();
   }, [timeMs]);
 
-  const isLowTime = displayTime < 30000;
-
+  // Stable countdown interval — only recreated when active changes
   useEffect(() => {
     if (!active) return;
     const interval = setInterval(() => {
-      const elapsed = Date.now() - lastSyncRef.current;
-      const current = Math.max(0, baseTimeRef.current - elapsed);
-      setDisplayTime(current);
-    }, isLowTime ? 50 : 100);
+      const elapsed = Date.now() - syncRef.current;
+      setDisplayTime(Math.max(0, baseRef.current - elapsed));
+    }, 100);
     return () => clearInterval(interval);
-  }, [active, timeMs, isLowTime]);
+  }, [active]);
+
+  const isLowTime = displayTime < 30000;
 
   let timeDisplay;
-  if (displayTime < 30000) {
+  if (isLowTime) {
     const totalTenths = Math.max(0, Math.floor(displayTime / 100));
     const secs = Math.floor(totalTenths / 10);
     const tenths = totalTenths % 10;
