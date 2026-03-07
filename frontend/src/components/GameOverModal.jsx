@@ -22,7 +22,6 @@ const GameOverModal = ({
   onBackToLobby,
   onDismiss,
   isBotGame,
-  botPersonality,
 }) => {
   const resultText = RESULT_LABELS[reason] || 'Game Over';
 

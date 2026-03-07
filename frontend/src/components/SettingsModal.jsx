@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { AVATAR_MAP, AVATAR_OPTIONS, getAvatar } from '../utils/avatars.js';
+import { AVATAR_MAP, AVATAR_OPTIONS } from '../utils/avatars.js';
 
 const SettingsModal = ({ onClose }) => {
   const { user, updateProfile } = useAuth();

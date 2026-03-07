@@ -5,6 +5,7 @@ const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
 
 const AuthContext = createContext(null);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGameSocket } from '../hooks/useGameSocket.js';
 import ChessboardComponent from '../components/chessboard.jsx';
