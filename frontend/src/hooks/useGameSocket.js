@@ -344,7 +344,21 @@ export function useGameSocket(gameId) {
       if (move) {
         const fen = chessRef.current.fen();
         const turn = chessRef.current.turn();
-        setGameState((prev) => (prev ? { ...prev, fen, turn } : prev));
+        setGameState((prev) => {
+          if (!prev) return prev;
+          const elapsed = Date.now() - clockRef.current.lastSync;
+          const incrementMs = (prev.timeControl?.increment || 0) * 1000;
+          const mc = myColorRef.current;
+          let wt = prev.whiteTime;
+          let bt = prev.blackTime;
+          if (mc === 'w') {
+            wt = Math.max(0, wt - elapsed) + incrementMs;
+          } else if (mc === 'b') {
+            bt = Math.max(0, bt - elapsed) + incrementMs;
+          }
+          return { ...prev, fen, turn, whiteTime: wt, blackTime: bt };
+        });
+        clockRef.current.lastSync = Date.now();
       }
       return move;
     } catch {

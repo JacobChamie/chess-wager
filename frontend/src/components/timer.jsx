@@ -4,8 +4,10 @@ import { memo, useEffect, useState, useRef } from 'react';
 const Timer = memo(({ timeMs, player, active, resultIcon }) => {
   const [displayTime, setDisplayTime] = useState(timeMs);
   const lastSyncRef = useRef(Date.now());
+  const baseTimeRef = useRef(timeMs);
 
   useEffect(() => {
+    baseTimeRef.current = timeMs;
     setDisplayTime(timeMs);
     lastSyncRef.current = Date.now();
   }, [timeMs]);
@@ -16,7 +18,7 @@ const Timer = memo(({ timeMs, player, active, resultIcon }) => {
     if (!active) return;
     const interval = setInterval(() => {
       const elapsed = Date.now() - lastSyncRef.current;
-      const current = Math.max(0, timeMs - elapsed);
+      const current = Math.max(0, baseTimeRef.current - elapsed);
       setDisplayTime(current);
     }, isLowTime ? 50 : 100);
     return () => clearInterval(interval);

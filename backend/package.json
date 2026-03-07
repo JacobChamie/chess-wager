@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "node --watch src/index.js",
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:unit": "vitest run tests/unit"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -20,5 +24,9 @@
     "socket.io": "^4.7.0",
     "socket.io-client": "^4.8.3",
     "stockfish": "^18.0.5"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.18",
+    "vitest": "^4.0.18"
   }
 }
