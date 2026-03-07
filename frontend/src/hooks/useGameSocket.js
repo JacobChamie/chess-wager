@@ -239,16 +239,9 @@ export function useGameSocket(gameId) {
         blackTime,
         lastSync: Date.now(),
       };
-      // Only sync gameState if times drift >2s from current value
-      // to avoid glitchy Timer resets every second
       setGameState((prev) => {
         if (!prev) return prev;
-        const wDrift = Math.abs(prev.whiteTime - whiteTime);
-        const bDrift = Math.abs(prev.blackTime - blackTime);
-        if (wDrift > 2000 || bDrift > 2000) {
-          return { ...prev, whiteTime, blackTime };
-        }
-        return prev;
+        return { ...prev, whiteTime, blackTime };
       });
     };
 
@@ -349,8 +342,8 @@ export function useGameSocket(gameId) {
           const elapsed = Date.now() - clockRef.current.lastSync;
           const incrementMs = (prev.timeControl?.increment || 0) * 1000;
           const mc = myColorRef.current;
-          let wt = prev.whiteTime;
-          let bt = prev.blackTime;
+          let wt = clockRef.current.whiteTime;
+          let bt = clockRef.current.blackTime;
           if (mc === 'w') {
             wt = Math.max(0, wt - elapsed) + incrementMs;
           } else if (mc === 'b') {
