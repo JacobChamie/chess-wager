@@ -20,6 +20,8 @@ jobs:
         working-directory: backend
       - run: npm test
         working-directory: backend
+      - run: npm run test:e2e
+        working-directory: backend
 
   frontend-tests:
     runs-on: ubuntu-latest
