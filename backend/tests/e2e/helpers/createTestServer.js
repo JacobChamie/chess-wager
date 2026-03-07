@@ -1,16 +1,36 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import { Chess } from 'chess.js';
 import { GameManager } from '../../../src/game/GameManager.js';
 import { LobbyManager } from '../../../src/lobby/LobbyManager.js';
+import { BotGameManager } from '../../../src/bot/BotGameManager.js';
 import { registerHandlers } from '../../../src/socket/handlers.js';
 import { createMockPool } from '../../helpers/mockPool.js';
 
 /**
+ * Mock Stockfish engine that returns the first legal move.
+ * Deterministic — no real Stockfish process needed.
+ */
+class MockStockfishEngine {
+  async getBestMove(fen) {
+    const chess = new Chess(fen);
+    const moves = chess.moves({ verbose: true });
+    if (moves.length === 0) return null;
+    const pick = moves[0];
+    return { from: pick.from, to: pick.to, promotion: pick.promotion };
+  }
+  destroy() {}
+}
+
+/**
  * Spin up a real Express + Socket.IO server on a random port
  * with mock DB pool (no Postgres needed).
+ *
+ * @param {Object} opts
+ * @param {boolean} opts.enableBots — create a BotGameManager with mock engine
  */
-export async function createTestServer() {
+export async function createTestServer(opts = {}) {
   const app = express();
   const httpServer = createServer(app);
   const io = new Server(httpServer, {
@@ -23,6 +43,12 @@ export async function createTestServer() {
 
   // Mock persistGame to avoid the 5-minute cleanup setTimeout
   gameManager.persistGame = vi.fn().mockResolvedValue(undefined);
+
+  let botGameManager = null;
+  if (opts.enableBots) {
+    const engine = new MockStockfishEngine();
+    botGameManager = new BotGameManager(gameManager, engine);
+  }
 
   let onlineCount = 0;
 
@@ -37,7 +63,7 @@ export async function createTestServer() {
     const activeGames = gameManager.getActiveGames().length;
     io.emit('online:count', { count: onlineCount, games: activeGames });
 
-    registerHandlers(io, socket, sessionId, gameManager, lobbyManager, null, null);
+    registerHandlers(io, socket, sessionId, gameManager, lobbyManager, null, botGameManager);
 
     socket.on('disconnect', () => {
       onlineCount = Math.max(0, onlineCount - 1);
@@ -58,10 +84,12 @@ export async function createTestServer() {
     httpServer,
     gameManager,
     lobbyManager,
+    botGameManager,
     port,
     url,
     close() {
       return new Promise((resolve) => {
+        if (botGameManager) botGameManager.destroyAll();
         // Destroy all active game rooms (clears intervals/timers)
         for (const [, room] of gameManager.games) {
           room.destroy();
