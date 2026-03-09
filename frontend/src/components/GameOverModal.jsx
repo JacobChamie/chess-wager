@@ -22,6 +22,8 @@ const GameOverModal = ({
   onBackToLobby,
   onDismiss,
   isBotGame,
+  wagerAmount,
+  isWagerGame,
 }) => {
   const resultText = RESULT_LABELS[reason] || 'Game Over';
 
@@ -99,12 +101,27 @@ const GameOverModal = ({
           style={{
             fontSize: '13px',
             color: 'var(--text-muted)',
-            marginBottom: '24px',
+            marginBottom: isWagerGame ? '8px' : '24px',
             fontFamily: 'var(--font-mono)',
           }}
         >
           {result}
         </p>
+
+        {isWagerGame && wagerAmount > 0 && (
+          <p style={{
+            fontSize: '14px',
+            fontWeight: 700,
+            marginBottom: '24px',
+            color: !winner ? '#ffa726' : winner === myColor ? '#66bb6a' : '#ef5350',
+          }}>
+            {!winner
+              ? `Wager refunded: +${wagerAmount} tokens`
+              : winner === myColor
+                ? `Won ${wagerAmount * 2} tokens!`
+                : `Lost ${wagerAmount} tokens`}
+          </p>
+        )}
 
         <div
           style={{

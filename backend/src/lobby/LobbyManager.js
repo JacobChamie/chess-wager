@@ -22,17 +22,20 @@ export class LobbyManager {
     this.pendingGames = new Map();
   }
 
-  addToQueue(sessionId, socketId, playerName, timeControl, userId = null, rating = null, colorPref = 'random') {
+  addToQueue(sessionId, socketId, playerName, timeControl, userId = null, rating = null, colorPref = 'random', wagerAmount = 0) {
     // Remove this socket if already in queue
     this.queue = this.queue.filter((e) => e.socketId !== socketId);
 
-    this.queue.push({ sessionId, socketId, playerName, timeControl, userId, rating, colorPref });
+    this.queue.push({ sessionId, socketId, playerName, timeControl, userId, rating, colorPref, wagerAmount });
 
-    // Try to find a match with same time control (different socket)
+    // Try to find a match with same time control + same wager amount (different socket)
     const myKey = tcKey(timeControl);
+    const myWager = wagerAmount || 0;
     const match = this.queue.find(
       (entry) =>
-        entry.socketId !== socketId && tcKey(entry.timeControl) === myKey
+        entry.socketId !== socketId &&
+        tcKey(entry.timeControl) === myKey &&
+        (entry.wagerAmount || 0) === myWager
     );
 
     if (match) {
@@ -41,7 +44,7 @@ export class LobbyManager {
         (e) => e.socketId !== socketId && e.socketId !== match.socketId
       );
       return this._createMatch(
-        { sessionId, socketId, playerName, timeControl, userId, colorPref },
+        { sessionId, socketId, playerName, timeControl, userId, colorPref, wagerAmount },
         match
       );
     }
@@ -57,8 +60,12 @@ export class LobbyManager {
     this.queue = this.queue.filter((e) => e.socketId !== socketId);
   }
 
-  createPendingGame(sessionId, socketId, playerName, timeControl, userId = null, rating = null, colorPref = 'random') {
+  createPendingGame(sessionId, socketId, playerName, timeControl, userId = null, rating = null, colorPref = 'random', wagerAmount = 0) {
     const room = this.gameManager.createGame(timeControl);
+    if (wagerAmount > 0) {
+      room.wagerAmount = wagerAmount;
+      room.isWagerGame = true;
+    }
     this.pendingGames.set(room.gameId, {
       sessionId,
       socketId,
@@ -67,6 +74,7 @@ export class LobbyManager {
       userId,
       rating,
       colorPref,
+      wagerAmount,
     });
     return room.gameId;
   }
@@ -134,6 +142,7 @@ export class LobbyManager {
         timeControl: pending.timeControl,
         rating: pending.rating,
         colorPref: pending.colorPref,
+        wagerAmount: pending.wagerAmount || 0,
       });
     }
     return games;
@@ -150,12 +159,20 @@ export class LobbyManager {
       timeControl: entry.timeControl,
       rating: entry.rating,
       colorPref: entry.colorPref,
+      wagerAmount: entry.wagerAmount || 0,
     }));
   }
 
   _createMatch(player1, player2) {
     const room = this.gameManager.createGame(player1.timeControl);
     const gameId = room.gameId;
+
+    // Set wager if applicable
+    const wager = player1.wagerAmount || 0;
+    if (wager > 0) {
+      room.wagerAmount = wager;
+      room.isWagerGame = true;
+    }
 
     // Color assignment based on preferences
     const p1IsWhite = resolveColors(player1.colorPref || 'random', player2.colorPref || 'random');

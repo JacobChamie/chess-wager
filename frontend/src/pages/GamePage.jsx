@@ -452,6 +452,19 @@ const GamePage = () => {
         {/* Board column */}
         {!isFullscreen && (
           <div className="game-board-col">
+            {gameState.isWagerGame && gameState.wagerAmount > 0 && (
+              <div style={{
+                display: 'flex', justifyContent: 'center', marginBottom: '6px',
+              }}>
+                <span style={{
+                  background: 'rgba(255, 215, 0, 0.15)', border: '1px solid rgba(255, 215, 0, 0.3)',
+                  borderRadius: 'var(--radius-sm)', padding: '3px 12px',
+                  fontSize: '12px', fontWeight: 700, color: '#ffd700',
+                }}>
+                  {'\u26C1'} {gameState.wagerAmount} Token Wager
+                </span>
+              </div>
+            )}
             <Timer
               timeMs={opponentTime}
               player={opponentName}
@@ -687,6 +700,8 @@ const GamePage = () => {
           onDismiss={() => setModalDismissed(true)}
           isBotGame={gameState.isBotGame}
           botPersonality={gameState.botPersonality}
+          wagerAmount={gameState.wagerAmount}
+          isWagerGame={gameState.isWagerGame}
         />
       )}
 

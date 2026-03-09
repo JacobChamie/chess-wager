@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { socket } from '../socket.js';
 import AuthModal from './AuthModal.jsx';
 import SettingsModal from './SettingsModal.jsx';
+import BalanceDisplay from './BalanceDisplay.jsx';
 
 const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
 
@@ -70,6 +71,7 @@ const Navbar = () => {
 
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <BalanceDisplay />
               <Link to={`/leaderboard/${user.username}`} className="navbar-user" style={{ textDecoration: 'none' }}>
                 {user.username}
               </Link>

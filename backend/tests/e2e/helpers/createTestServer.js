@@ -7,6 +7,7 @@ import { LobbyManager } from '../../../src/lobby/LobbyManager.js';
 import { BotGameManager } from '../../../src/bot/BotGameManager.js';
 import { registerHandlers } from '../../../src/socket/handlers.js';
 import { createMockPool } from '../../helpers/mockPool.js';
+import { WagerService } from '../../../src/wager/WagerService.js';
 
 /**
  * Mock Stockfish engine that returns the first legal move.
@@ -50,6 +51,15 @@ export async function createTestServer(opts = {}) {
     botGameManager = new BotGameManager(gameManager, engine);
   }
 
+  // WagerService — mock lockWager/settleWager for E2E tests (no real DB)
+  let wagerService = null;
+  if (opts.enableWagers) {
+    wagerService = new WagerService(pool);
+    // Override with mocks that always succeed
+    wagerService.lockWager = vi.fn().mockResolvedValue({ success: true });
+    wagerService.settleWager = vi.fn().mockResolvedValue(undefined);
+  }
+
   let onlineCount = 0;
 
   io.on('connection', (socket) => {
@@ -63,7 +73,7 @@ export async function createTestServer(opts = {}) {
     const activeGames = gameManager.getActiveGames().length;
     io.emit('online:count', { count: onlineCount, games: activeGames });
 
-    registerHandlers(io, socket, sessionId, gameManager, lobbyManager, null, botGameManager);
+    registerHandlers(io, socket, sessionId, gameManager, lobbyManager, null, botGameManager, wagerService);
 
     socket.on('disconnect', () => {
       onlineCount = Math.max(0, onlineCount - 1);
@@ -85,6 +95,8 @@ export async function createTestServer(opts = {}) {
     gameManager,
     lobbyManager,
     botGameManager,
+    wagerService,
+    pool,
     port,
     url,
     close() {

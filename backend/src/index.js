@@ -15,6 +15,13 @@ import { verifyToken } from './auth/authService.js';
 import { StockfishEngine } from './bot/StockfishEngine.js';
 import { BotGameManager } from './bot/BotGameManager.js';
 import { initEmailTransporter } from './email/emailService.js';
+import { WalletManager } from './crypto/WalletManager.js';
+import { PriceService } from './crypto/PriceService.js';
+import { DepositMonitor } from './crypto/DepositMonitor.js';
+import { WithdrawalProcessor } from './crypto/WithdrawalProcessor.js';
+import { SweepManager } from './crypto/SweepManager.js';
+import createCryptoRoutes from './crypto/cryptoRoutes.js';
+import { WagerService } from './wager/WagerService.js';
 
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
@@ -39,6 +46,14 @@ const botManager = new BotManager();
 const stockfishEngine = new StockfishEngine();
 let botGameManager;
 
+// Crypto & wager infrastructure
+const walletManager = new WalletManager(pool);
+const priceService = new PriceService();
+const depositMonitor = new DepositMonitor(pool, walletManager, priceService);
+const withdrawalProcessor = new WithdrawalProcessor(pool, walletManager, priceService);
+const sweepManager = new SweepManager(pool, walletManager);
+const wagerService = new WagerService(pool);
+
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
@@ -46,6 +61,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/admin', createAdminRoutes(io, botManager, gameManager));
+app.use('/api/crypto', createCryptoRoutes(pool, walletManager, priceService));
 
 let onlineCount = 0;
 
@@ -82,7 +98,7 @@ io.on('connection', async (socket) => {
   io.emit('online:count', { count: onlineCount, games: activeGames });
 
   console.log(`Connected: socket=${socket.id} session=${sessionId}${authUser ? ` user=${authUser.username}` : ''}`);
-  registerHandlers(io, socket, sessionId, gameManager, lobbyManager, authUser, botGameManager);
+  registerHandlers(io, socket, sessionId, gameManager, lobbyManager, authUser, botGameManager, wagerService);
 
   socket.on('disconnect', () => {
     onlineCount = Math.max(0, onlineCount - 1);
@@ -104,6 +120,16 @@ async function start() {
   } catch (err) {
     console.error('Failed to initialize Stockfish:', err.message);
     console.warn('Bot games will be unavailable');
+  }
+
+  // Start crypto polling services
+  if (process.env.WALLET_MNEMONIC) {
+    depositMonitor.start();
+    withdrawalProcessor.start();
+    sweepManager.start();
+    console.log('Crypto deposit/withdrawal services started');
+  } else {
+    console.warn('WALLET_MNEMONIC not set — crypto services disabled');
   }
 
   httpServer.listen(PORT, () => {

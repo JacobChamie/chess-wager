@@ -4,6 +4,7 @@ import { socket } from '../socket.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import OpenGamesBrowser from '../components/OpenGamesBrowser.jsx';
 import BotCard from '../components/BotCard.jsx';
+import WagerSelector from '../components/WagerSelector.jsx';
 
 const DEFAULT_BOT_PERSONALITIES = [
   { id: 'beginner', name: 'Woody', title: 'The Beginner', description: 'Just learning the pieces', rating: 800 },
@@ -65,6 +66,7 @@ const LobbyPage = () => {
   const [selectedBot, setSelectedBot] = useState(null);
   const [botPersonalities, setBotPersonalities] = useState(DEFAULT_BOT_PERSONALITIES);
   const [botPrivate, setBotPrivate] = useState(false);
+  const [wagerAmount, setWagerAmount] = useState(0);
 
   const getName = useCallback(
     () => user?.username || playerName.trim() || 'Anonymous',
@@ -129,7 +131,7 @@ const LobbyPage = () => {
     setError(null);
     const name = getName();
     if (!user) localStorage.setItem('chess_player_name', name);
-    socket.emit('lobby:play', { timeControl, playerName: name, colorPref, rating: user?.rating || null });
+    socket.emit('lobby:play', { timeControl, playerName: name, colorPref, rating: user?.rating || null, wagerAmount });
     setStatus('queued');
   };
 
@@ -142,7 +144,7 @@ const LobbyPage = () => {
     setError(null);
     const name = getName();
     if (!user) localStorage.setItem('chess_player_name', name);
-    socket.emit('lobby:create_game', { timeControl, playerName: name, colorPref, rating: user?.rating || null });
+    socket.emit('lobby:create_game', { timeControl, playerName: name, colorPref, rating: user?.rating || null, wagerAmount });
     setStatus('creating');
   };
 
@@ -411,6 +413,9 @@ const LobbyPage = () => {
                 </div>
               </div>
 
+              {/* Wager selector */}
+              <WagerSelector value={wagerAmount} onChange={setWagerAmount} />
+
               {/* Error */}
               {error && (
                 <div
@@ -436,7 +441,7 @@ const LobbyPage = () => {
                     onClick={handlePlay}
                     style={{ width: '100%' }}
                   >
-                    Play {tcDisplay}
+                    {wagerAmount > 0 ? `Play ${tcDisplay} \u2014 ${wagerAmount} Token Wager` : `Play ${tcDisplay}`}
                   </button>
 
                   <button

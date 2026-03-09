@@ -20,7 +20,7 @@ function broadcastLobbyState(io, lobbyManager, gameManager) {
   }
 }
 
-export function registerHandlers(io, socket, sessionId, gameManager, lobbyManager, authUser, botGameManager) {
+export function registerHandlers(io, socket, sessionId, gameManager, lobbyManager, authUser, botGameManager, wagerService) {
   const checkRate = () => {
     if (!rateLimiter(socket.id)) {
       console.warn(`[RateLimit] Socket ${socket.id} exceeded rate limit`);
@@ -40,8 +40,10 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     });
   });
 
-  socket.on('lobby:play', ({ timeControl, playerName, colorPref, rating }) => {
+  socket.on('lobby:play', async ({ timeControl, playerName, colorPref, rating, wagerAmount }) => {
     if (!checkRate()) return;
+    const wager = parseFloat(wagerAmount) || 0;
+
     const match = lobbyManager.addToQueue(
       sessionId,
       socket.id,
@@ -49,18 +51,30 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       timeControl || 300,
       authUser?.id || null,
       rating || null,
-      colorPref || 'random'
+      colorPref || 'random',
+      wager
     );
 
     if (match) {
-      // Match found — notify both players
       const { room, player1, player2 } = match;
-      const gameId = room.gameId;
+
+      // Lock wager if applicable
+      if (wager > 0 && wagerService) {
+        room.wagerAmount = wager;
+        room.isWagerGame = true;
+        const lockResult = await wagerService.lockWager(
+          room.gameId, room.white.userId, room.black.userId, wager
+        );
+        if (!lockResult.success) {
+          socket.emit('lobby:error', { message: lockResult.error });
+          gameManager.cleanupGame(room.gameId);
+          broadcastLobbyState(io, lobbyManager, gameManager);
+          return;
+        }
+      }
 
       _emitGameStart(io, room, player1, player2);
-
-      // Set up game callbacks
-      _setupGameCallbacks(io, room, gameManager, lobbyManager);
+      _setupGameCallbacks(io, room, gameManager, lobbyManager, wagerService);
     } else {
       socket.emit('lobby:queued', {});
     }
@@ -73,8 +87,9 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     broadcastLobbyState(io, lobbyManager, gameManager);
   });
 
-  socket.on('lobby:create_game', ({ timeControl, playerName, colorPref, rating }) => {
+  socket.on('lobby:create_game', ({ timeControl, playerName, colorPref, rating, wagerAmount }) => {
     if (!checkRate()) return;
+    const wager = parseFloat(wagerAmount) || 0;
     const gameId = lobbyManager.createPendingGame(
       sessionId,
       socket.id,
@@ -82,7 +97,8 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       timeControl || 300,
       authUser?.id || null,
       rating || null,
-      colorPref || 'random'
+      colorPref || 'random',
+      wager
     );
     socket.emit('lobby:game_created', { gameId });
     broadcastLobbyState(io, lobbyManager, gameManager);
@@ -94,7 +110,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     broadcastLobbyState(io, lobbyManager, gameManager);
   });
 
-  socket.on('lobby:join_game', ({ gameId, playerName }) => {
+  socket.on('lobby:join_game', async ({ gameId, playerName }) => {
     if (!checkRate()) return;
     const result = lobbyManager.joinPendingGame(
       gameId,
@@ -111,8 +127,21 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
 
     const { room, creator, joiner } = result;
 
+    // Lock wager if applicable
+    if (room.wagerAmount > 0 && wagerService) {
+      const lockResult = await wagerService.lockWager(
+        room.gameId, room.white.userId, room.black.userId, room.wagerAmount
+      );
+      if (!lockResult.success) {
+        socket.emit('lobby:error', { message: lockResult.error });
+        gameManager.cleanupGame(room.gameId);
+        broadcastLobbyState(io, lobbyManager, gameManager);
+        return;
+      }
+    }
+
     _emitGameStart(io, room, creator, joiner);
-    _setupGameCallbacks(io, room, gameManager, lobbyManager);
+    _setupGameCallbacks(io, room, gameManager, lobbyManager, wagerService);
     broadcastLobbyState(io, lobbyManager, gameManager);
   });
 
@@ -213,7 +242,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     }
   });
 
-  socket.on('game:move', ({ gameId, from, to, promotion }) => {
+  socket.on('game:move', async ({ gameId, from, to, promotion }) => {
     if (!checkRate()) return;
     const room = gameManager.getGame(gameId);
     if (!room) return;
@@ -237,6 +266,11 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     });
 
     if (result.gameOver) {
+      if (room.isWagerGame && room.wagerAmount > 0 && wagerService) {
+        await _settleGameWager(room, result.gameOver, wagerService);
+        result.gameOver.wagerAmount = room.wagerAmount;
+        result.gameOver.isWagerGame = true;
+      }
       io.to(gameId).emit('game:over', result.gameOver);
       gameManager.persistGame(gameId);
       broadcastLobbyState(io, lobbyManager, gameManager);
@@ -248,13 +282,18 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     }
   });
 
-  socket.on('game:resign', ({ gameId }) => {
+  socket.on('game:resign', async ({ gameId }) => {
     if (!checkRate()) return;
     const room = gameManager.getGame(gameId);
     if (!room) return;
 
     const result = room.resign(socket.id);
     if (result) {
+      if (room.isWagerGame && room.wagerAmount > 0 && wagerService) {
+        await _settleGameWager(room, result, wagerService);
+        result.wagerAmount = room.wagerAmount;
+        result.isWagerGame = true;
+      }
       io.to(gameId).emit('game:over', result);
       gameManager.persistGame(gameId);
       broadcastLobbyState(io, lobbyManager, gameManager);
@@ -283,7 +322,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     }
   });
 
-  socket.on('game:respond_draw', ({ gameId, accept }) => {
+  socket.on('game:respond_draw', async ({ gameId, accept }) => {
     if (!checkRate()) return;
     const room = gameManager.getGame(gameId);
     if (!room) return;
@@ -292,6 +331,11 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     if (!result) return;
 
     if (result.result) {
+      if (room.isWagerGame && room.wagerAmount > 0 && wagerService) {
+        await _settleGameWager(room, result, wagerService);
+        result.wagerAmount = room.wagerAmount;
+        result.isWagerGame = true;
+      }
       io.to(gameId).emit('game:over', result);
       gameManager.persistGame(gameId);
       broadcastLobbyState(io, lobbyManager, gameManager);
@@ -463,6 +507,26 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
 
 // --- Helpers ---
 
+async function _settleGameWager(room, result, wagerService) {
+  try {
+    const isDraw = result.result === '1/2-1/2';
+    if (isDraw) {
+      // Refund both — pass white as "winner" and black as "loser" (both get refunded)
+      await wagerService.settleWager(
+        room.gameId, room.white?.userId, room.black?.userId, room.wagerAmount, true
+      );
+    } else {
+      const winnerUserId = result.winner === 'w' ? room.white?.userId : room.black?.userId;
+      const loserUserId = result.winner === 'w' ? room.black?.userId : room.white?.userId;
+      await wagerService.settleWager(
+        room.gameId, winnerUserId, loserUserId, room.wagerAmount, false
+      );
+    }
+  } catch (err) {
+    console.error(`Wager settlement error for game ${room.gameId}:`, err.message);
+  }
+}
+
 function _emitGameStart(io, room, playerA, playerB) {
   const gameId = room.gameId;
 
@@ -495,14 +559,21 @@ function _emitGameStart(io, room, playerA, playerB) {
   }
 }
 
-function _setupGameCallbacks(io, room, gameManager, lobbyManager) {
+function _setupGameCallbacks(io, room, gameManager, lobbyManager, wagerService) {
   const gameId = room.gameId;
 
   room.onClockUpdate = (times) => {
     io.to(gameId).emit('game:clock_update', times);
   };
 
-  room.onGameOver = (result) => {
+  room.onGameOver = async (result) => {
+    // Settle wager if applicable
+    if (room.isWagerGame && room.wagerAmount > 0 && wagerService) {
+      await _settleGameWager(room, result, wagerService);
+      result.wagerAmount = room.wagerAmount;
+      result.isWagerGame = true;
+    }
+
     io.to(gameId).emit('game:over', result);
     gameManager.persistGame(gameId);
     broadcastLobbyState(io, lobbyManager, gameManager);

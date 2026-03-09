@@ -66,12 +66,14 @@ export class GameManager {
         `INSERT INTO games (id, status, white_player, black_player, white_name, black_name,
           time_control, fen, moves, result, result_reason,
           white_time_remaining, black_time_remaining, started_at, ended_at,
-          white_user_id, black_user_id, is_bot_game, bot_personality)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+          white_user_id, black_user_id, is_bot_game, bot_personality,
+          wager_amount, is_wager_game, wager_status)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
         ON CONFLICT (id) DO UPDATE SET
           status = $2, fen = $8, moves = $9, result = $10, result_reason = $11,
           white_time_remaining = $12, black_time_remaining = $13, ended_at = $15,
-          white_user_id = $16, black_user_id = $17, is_bot_game = $18, bot_personality = $19`,
+          white_user_id = $16, black_user_id = $17, is_bot_game = $18, bot_personality = $19,
+          wager_amount = $20, is_wager_game = $21, wager_status = $22`,
         [
           room.gameId,
           room.status,
@@ -92,6 +94,9 @@ export class GameManager {
           room.black?.userId || null,
           room.isBotGame || false,
           room.botPersonality?.id || null,
+          room.wagerAmount || 0,
+          room.isWagerGame || false,
+          room.isWagerGame ? (room.status === 'completed' ? 'settled' : 'locked') : null,
         ]
       );
 

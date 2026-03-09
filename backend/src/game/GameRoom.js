@@ -31,6 +31,10 @@ export class GameRoom {
     this.botPersonality = null;
     this.isPrivate = false;
 
+    // Wager fields
+    this.wagerAmount = 0;
+    this.isWagerGame = false;
+
     // Spectators: sessionId -> { socketId, name }
     this.spectators = new Map();
 
@@ -340,6 +344,8 @@ export class GameRoom {
         title: this.botPersonality.title,
         rating: this.botPersonality.rating,
       } : null,
+      wagerAmount: this.wagerAmount,
+      isWagerGame: this.isWagerGame,
     };
   }
 
