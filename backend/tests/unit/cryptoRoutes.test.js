@@ -181,7 +181,7 @@ describe('Crypto Routes', () => {
       expect(status).toBe(200);
       expect(data.withdrawalId).toBe('w-123');
       expect(data.amountTokens).toBe(100);
-      expect(data.amountCrypto).toBeCloseTo(100 / 3000, 4);
+      expect(data.amountCrypto).toBeCloseTo(97 / 3000, 4); // 100 - 3% rake = 97 tokens worth
     });
 
     it('should reject invalid Ethereum address', async () => {

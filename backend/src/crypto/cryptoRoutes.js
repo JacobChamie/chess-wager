@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { verifyToken } from '../auth/authService.js';
-import { WITHDRAWAL_FEE, MIN_DEPOSIT, CHAINS } from './constants.js';
+import { WITHDRAWAL_RAKE, MIN_DEPOSIT, CHAINS } from './constants.js';
 
 export default function createCryptoRoutes(pool, walletManager, priceService) {
   const router = Router();
@@ -130,12 +130,13 @@ export default function createCryptoRoutes(pool, walletManager, priceService) {
         return res.status(400).json({ error: 'Invalid Solana address' });
       }
 
-      const fee = WITHDRAWAL_FEE[asset] || 0;
-      const totalDeduction = amount + fee;
+      const fee = +(amount * WITHDRAWAL_RAKE).toFixed(8);
+      const netAmount = amount - fee;
+      const totalDeduction = amount; // full amount deducted, fee kept by platform
 
-      // Get price to calculate crypto amount
+      // Get price to calculate crypto amount (user receives netAmount worth)
       const price = await priceService.getPrice(asset);
-      const usdValue = amount; // tokens = USD 1:1
+      const usdValue = netAmount; // net after rake
       const amountCrypto = usdValue / price;
 
       // Deduct from balance in a transaction
@@ -174,6 +175,7 @@ export default function createCryptoRoutes(pool, walletManager, priceService) {
           amountTokens: amount,
           amountCrypto,
           fee,
+          rake: `${(WITHDRAWAL_RAKE * 100).toFixed(0)}%`,
           newBalance: parseFloat(newBalance),
         });
       } catch (err) {

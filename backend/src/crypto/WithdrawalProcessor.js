@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { Connection, PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
-import { CHAINS, WITHDRAWAL_POLL_INTERVAL } from './constants.js';
+import { CHAINS, WITHDRAWAL_POLL_INTERVAL, WITHDRAWAL_RAKE } from './constants.js';
 
 export class WithdrawalProcessor {
   constructor(pool, walletManager, priceService) {

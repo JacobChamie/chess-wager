@@ -61,10 +61,13 @@ const WithdrawForm = ({ onBalanceChange }) => {
     } catch { /* ignore */ }
   };
 
+  const RAKE = 0.03;
   const amountNum = parseFloat(amount) || 0;
+  const fee = +(amountNum * RAKE).toFixed(2);
+  const netAmount = amountNum - fee;
   const priceKey = asset === 'USDC_ERC20' || asset === 'USDC_SPL' ? 'USDC' : asset;
   const price = prices[priceKey] || 0;
-  const cryptoAmount = price > 0 ? amountNum / price : 0;
+  const cryptoAmount = price > 0 ? netAmount / price : 0;
 
   const handleWithdraw = async () => {
     setError(null);
@@ -181,10 +184,11 @@ const WithdrawForm = ({ onBalanceChange }) => {
             Max ({balance.toFixed(2)})
           </button>
         </div>
-        {cryptoAmount > 0 && (
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
-            {'\u2248'} {cryptoAmount.toFixed(6)} {asset.replace('_', ' ')}
-          </p>
+        {amountNum > 0 && (
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
+            <p>Fee: {fee.toFixed(2)} tokens (3%)</p>
+            <p>You receive: {netAmount.toFixed(2)} tokens {cryptoAmount > 0 ? `\u2248 ${cryptoAmount.toFixed(6)} ${asset.replace('_', ' ')}` : ''}</p>
+          </div>
         )}
       </div>
 

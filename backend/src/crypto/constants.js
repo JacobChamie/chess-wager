@@ -49,10 +49,5 @@ export const MIN_DEPOSIT = {
   USDC_SPL: 1,
 };
 
-// Withdrawal fee (in tokens) — flat fee to cover gas
-export const WITHDRAWAL_FEE = {
-  ETH: 2,
-  SOL: 0.5,
-  USDC_ERC20: 2,
-  USDC_SPL: 0.5,
-};
+// Withdrawal rake — percentage taken on withdrawal (0.03 = 3%)
+export const WITHDRAWAL_RAKE = 0.03;
