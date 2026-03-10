@@ -167,9 +167,11 @@ export class BotManager {
     const botUserIds = [...this.bots.values()].map(b => b.userId).filter(Boolean);
     if (botUserIds.length > 0) {
       try {
+        await pool.query('DELETE FROM ledger WHERE user_id = ANY($1)', [botUserIds]);
+        await pool.query('DELETE FROM wager_escrow WHERE game_id IN (SELECT id FROM games WHERE white_user_id = ANY($1) OR black_user_id = ANY($1))', [botUserIds]).catch(() => {});
         await pool.query('DELETE FROM games WHERE white_user_id = ANY($1) OR black_user_id = ANY($1)', [botUserIds]);
         await pool.query('DELETE FROM users WHERE id = ANY($1)', [botUserIds]);
-        this._log(`Cleaned up ${botUserIds.length} bot users and their games from DB`);
+        this._log(`Cleaned up ${botUserIds.length} bot users, games, and ledger from DB`);
       } catch (err) {
         this._log(`DB cleanup error: ${err.message}`);
       }
@@ -204,7 +206,7 @@ export class BotManager {
       await pool.query('DELETE FROM users WHERE email = $1', [email]);
 
       const result = await pool.query(
-        'INSERT INTO users (username, email, password_hash, rating) VALUES ($1, $2, $3, 1200) RETURNING id',
+        'INSERT INTO users (username, email, password_hash, rating, token_balance) VALUES ($1, $2, $3, 1200, 50) RETURNING id',
         [displayName, email, passwordHash]
       );
 
@@ -429,6 +431,7 @@ export class BotManager {
         playerName: displayName1,
         colorPref: 'random',
         rating: 1200,
+        wagerAmount: 5,
       });
 
       // Small delay before second bot joins to avoid race conditions
@@ -439,6 +442,7 @@ export class BotManager {
         playerName: displayName2,
         colorPref: 'random',
         rating: 1200,
+        wagerAmount: 5,
       });
 
       // Timeout: if game doesn't finish in 15s, force resign
