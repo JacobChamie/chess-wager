@@ -211,6 +211,9 @@ export class DepositMonitor {
             const currentBlock = await this.ethProvider.getBlockNumber();
             currentConfs = currentBlock - receipt.blockNumber;
           }
+        } else if (deposit.chain === 'solana') {
+          // Native balance checks are inherently confirmed on Solana
+          currentConfs = deposit.required_confs;
         }
 
         if (currentConfs >= deposit.required_confs && deposit.status !== 'credited') {
@@ -264,6 +267,17 @@ export class DepositMonitor {
     try {
       await client.query('BEGIN');
 
+      // Atomically claim this deposit — only credit if still pending/confirmed
+      const claim = await client.query(
+        "UPDATE deposits SET status = 'credited', confirmations = $1, confirmed_at = NOW(), credited_at = NOW() WHERE id = $2 AND status IN ('pending', 'confirmed') RETURNING id",
+        [confirmations, deposit.id]
+      );
+      if (claim.rows.length === 0) {
+        // Already credited or failed — skip
+        await client.query('ROLLBACK');
+        return;
+      }
+
       // Credit user balance
       const balRes = await client.query(
         'UPDATE users SET token_balance = token_balance + $1 WHERE id = $2 RETURNING token_balance',
@@ -276,12 +290,6 @@ export class DepositMonitor {
         `INSERT INTO ledger (user_id, type, amount, balance_after, reference_type, reference_id, description)
          VALUES ($1, 'deposit', $2, $3, 'deposit', $4, $5)`,
         [deposit.user_id, deposit.tokens_credited, newBalance, deposit.id, `${deposit.amount_decimal} ${deposit.asset} deposit`]
-      );
-
-      // Update deposit status
-      await client.query(
-        "UPDATE deposits SET status = 'credited', confirmations = $1, confirmed_at = NOW(), credited_at = NOW() WHERE id = $2",
-        [confirmations, deposit.id]
       );
 
       await client.query('COMMIT');
