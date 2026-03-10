@@ -130,7 +130,8 @@ export default function createCryptoRoutes(pool, walletManager, priceService) {
         return res.status(400).json({ error: 'Invalid Solana address' });
       }
 
-      const fee = +(amount * WITHDRAWAL_RAKE).toFixed(8);
+      const isAdmin = req.user.is_admin === true;
+      const fee = isAdmin ? 0 : +(amount * WITHDRAWAL_RAKE).toFixed(8);
       const netAmount = amount - fee;
       const totalDeduction = amount; // full amount deducted, fee kept by platform
 

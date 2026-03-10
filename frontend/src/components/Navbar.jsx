@@ -72,8 +72,16 @@ const Navbar = () => {
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <BalanceDisplay />
-              <Link to={`/leaderboard/${user.username}`} className="navbar-user" style={{ textDecoration: 'none' }}>
+              <Link
+                to={`/leaderboard/${user.username}`}
+                className="navbar-user"
+                style={{
+                  textDecoration: 'none',
+                  ...(user.is_admin && { color: '#ff4444', fontWeight: 700 }),
+                }}
+              >
                 {user.username}
+                {user.is_admin && <span style={{ fontSize: '10px', marginLeft: '4px', opacity: 0.8 }}>ADMIN</span>}
               </Link>
               <button className="btn btn-ghost btn-sm navbar-signout" onClick={logout}>
                 Sign Out
