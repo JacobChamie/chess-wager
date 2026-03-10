@@ -60,31 +60,8 @@ export class DepositMonitor {
     }
     const addresses = wallets.map((w) => w.address);
 
-    // Check native ETH balances
-    for (const wallet of wallets) {
-      try {
-        const balance = await this.ethProvider.getBalance(wallet.address);
-        if (balance > 0n) {
-          const amountDecimal = parseFloat(ethers.formatEther(balance));
-          if (amountDecimal >= MIN_DEPOSIT.ETH) {
-            // Use wallet address + amount as stable key to prevent duplicate detection
-            await this._recordDeposit({
-              userId: wallet.user_id,
-              walletId: wallet.id,
-              chain: 'ethereum',
-              asset: 'ETH',
-              txHash: `eth_native_${wallet.address}_${balance.toString()}`,
-              amountRaw: balance.toString(),
-              amountDecimal,
-              confirmations: currentBlock - fromBlock,
-              requiredConfs: CHAINS.ethereum.requiredConfirmations,
-            });
-          }
-        }
-      } catch (err) {
-        console.error(`ETH balance check failed for ${wallet.address}:`, err.message);
-      }
-    }
+    // Scan blocks for native ETH transfers to our wallets
+    await this._scanEthBlocks(fromBlock, currentBlock, addressMap);
 
     // Check USDC ERC-20 Transfer events
     try {
@@ -132,6 +109,47 @@ export class DepositMonitor {
     );
   }
 
+  /**
+   * Scan a range of blocks for native ETH transfers to our wallet addresses.
+   * Uses real transaction hashes — no synthetic keys.
+   */
+  async _scanEthBlocks(fromBlock, toBlock, addressMap) {
+    // Cap range to avoid scanning too many blocks at once
+    const maxRange = 500;
+    const startBlock = Math.max(fromBlock, toBlock - maxRange + 1);
+
+    for (let blockNum = startBlock; blockNum <= toBlock; blockNum++) {
+      try {
+        const block = await this.ethProvider.getBlock(blockNum, true);
+        if (!block || !block.prefetchedTransactions) continue;
+
+        for (const tx of block.prefetchedTransactions) {
+          if (!tx.to || !tx.value) continue;
+          const toAddr = tx.to.toLowerCase();
+          const wallet = addressMap.get(toAddr);
+          if (!wallet) continue;
+
+          const amountDecimal = parseFloat(ethers.formatEther(tx.value));
+          if (amountDecimal < MIN_DEPOSIT.ETH) continue;
+
+          await this._recordDeposit({
+            userId: wallet.user_id,
+            walletId: wallet.id,
+            chain: 'ethereum',
+            asset: 'ETH',
+            txHash: tx.hash,
+            amountRaw: tx.value.toString(),
+            amountDecimal,
+            confirmations: toBlock - blockNum,
+            requiredConfs: CHAINS.ethereum.requiredConfirmations,
+          });
+        }
+      } catch (err) {
+        console.error(`ETH block scan failed for block ${blockNum}:`, err.message);
+      }
+    }
+  }
+
   // --- Solana Polling ---
 
   async _pollSolana() {
@@ -140,56 +158,138 @@ export class DepositMonitor {
 
     for (const wallet of wallets) {
       try {
-        // Check native SOL balance
-        const pubkey = new PublicKey(wallet.address);
-        const balance = await this.solConnection.getBalance(pubkey);
-        if (balance > 0) {
-          const amountDecimal = balance / 10 ** CHAINS.solana.nativeDecimals;
-          if (amountDecimal >= MIN_DEPOSIT.SOL) {
-            // Use wallet address + amount as stable key to prevent duplicate detection
-            await this._recordDeposit({
-              userId: wallet.user_id,
-              walletId: wallet.id,
-              chain: 'solana',
-              asset: 'SOL',
-              txHash: `sol_native_${wallet.address}_${balance.toString()}`,
-              amountRaw: balance.toString(),
-              amountDecimal,
-              confirmations: 32, // devnet/mainnet SOL confirms near-instantly
-              requiredConfs: CHAINS.solana.requiredConfirmations,
-            });
-          }
-        }
-
-        // Check USDC SPL token accounts
-        const usdcMint = new PublicKey(CHAINS.solana.usdcMint);
-        const tokenAccounts = await this.solConnection.getTokenAccountsByOwner(pubkey, {
-          mint: usdcMint,
-        });
-
-        for (const { account } of tokenAccounts.value) {
-          // Parse token account data (simplified — amount is at offset 64, 8 bytes LE)
-          const data = account.data;
-          const amountRaw = data.readBigUInt64LE(64);
-          const amountDecimal = Number(amountRaw) / 10 ** CHAINS.solana.usdcDecimals;
-
-          if (amountDecimal >= MIN_DEPOSIT.USDC_SPL) {
-            await this._recordDeposit({
-              userId: wallet.user_id,
-              walletId: wallet.id,
-              chain: 'solana',
-              asset: 'USDC_SPL',
-              txHash: `sol_usdc_${wallet.address}_${amountRaw.toString()}`,
-              amountRaw: amountRaw.toString(),
-              amountDecimal,
-              confirmations: 32,
-              requiredConfs: CHAINS.solana.requiredConfirmations,
-            });
-          }
-        }
+        await this._scanSolTransactions(wallet);
       } catch (err) {
         console.error(`SOL check failed for ${wallet.address}:`, err.message);
       }
+    }
+  }
+
+  /**
+   * Fetch recent transaction signatures for a Solana wallet and process
+   * any incoming native SOL or SPL USDC transfers.
+   * Tracks last processed signature per wallet to avoid re-processing.
+   */
+  async _scanSolTransactions(wallet) {
+    const pubkey = new PublicKey(wallet.address);
+
+    // Get last processed signature for this wallet
+    const configKey = `sol_last_sig_${wallet.address}`;
+    const lastSigRes = await this.pool.query(
+      'SELECT value FROM wallet_config WHERE key = $1',
+      [configKey]
+    );
+    const lastSignature = lastSigRes.rows[0]?.value || undefined;
+
+    // Fetch new signatures since last processed
+    const opts = { limit: 100 };
+    if (lastSignature) opts.until = lastSignature;
+
+    const signatures = await this.solConnection.getSignaturesForAddress(pubkey, opts);
+
+    if (signatures.length === 0) return;
+
+    // Process oldest-first so we can update the cursor correctly
+    const orderedSigs = [...signatures].reverse();
+
+    for (const sigInfo of orderedSigs) {
+      if (sigInfo.err) continue; // skip failed txs
+
+      try {
+        const tx = await this.solConnection.getParsedTransaction(sigInfo.signature, {
+          maxSupportedTransactionVersion: 0,
+        });
+        if (!tx || !tx.meta) continue;
+
+        // Check for native SOL transfers to this wallet
+        await this._extractSolTransfers(wallet, tx, sigInfo.signature);
+
+        // Check for SPL token (USDC) transfers to this wallet
+        await this._extractSplTransfers(wallet, tx, sigInfo.signature);
+      } catch (err) {
+        console.error(`Failed to process SOL tx ${sigInfo.signature}:`, err.message);
+      }
+    }
+
+    // Update cursor to most recent signature (first in original order)
+    const newestSig = signatures[0].signature;
+    await this.pool.query(
+      `INSERT INTO wallet_config (key, value, updated_at) VALUES ($1, $2, NOW())
+       ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()`,
+      [configKey, newestSig]
+    );
+  }
+
+  /**
+   * Extract native SOL transfers from a parsed transaction.
+   * Compares pre/post balances for the wallet's account index.
+   */
+  async _extractSolTransfers(wallet, tx, signature) {
+    const accountKeys = tx.transaction.message.accountKeys.map((k) =>
+      typeof k === 'string' ? k : k.pubkey?.toBase58?.() || k.pubkey || k.toString()
+    );
+
+    const walletIndex = accountKeys.indexOf(wallet.address);
+    if (walletIndex === -1) return;
+
+    const preBal = tx.meta.preBalances[walletIndex];
+    const postBal = tx.meta.postBalances[walletIndex];
+    const diff = postBal - preBal;
+
+    if (diff <= 0) return; // outgoing or no change
+
+    const amountDecimal = diff / 10 ** CHAINS.solana.nativeDecimals;
+    if (amountDecimal < MIN_DEPOSIT.SOL) return;
+
+    await this._recordDeposit({
+      userId: wallet.user_id,
+      walletId: wallet.id,
+      chain: 'solana',
+      asset: 'SOL',
+      txHash: signature,
+      amountRaw: diff.toString(),
+      amountDecimal,
+      confirmations: CHAINS.solana.requiredConfirmations, // Solana finality is fast
+      requiredConfs: CHAINS.solana.requiredConfirmations,
+    });
+  }
+
+  /**
+   * Extract SPL USDC transfers from a parsed transaction.
+   */
+  async _extractSplTransfers(wallet, tx, signature) {
+    const preTokenBalances = tx.meta.preTokenBalances || [];
+    const postTokenBalances = tx.meta.postTokenBalances || [];
+
+    // Find USDC token balance changes for this wallet (owner)
+    const usdcMint = CHAINS.solana.usdcMint;
+
+    for (const postBal of postTokenBalances) {
+      if (postBal.mint !== usdcMint) continue;
+      if (postBal.owner !== wallet.address) continue;
+
+      const postAmount = parseFloat(postBal.uiTokenAmount?.uiAmountString || '0');
+      const preBal = preTokenBalances.find(
+        (p) => p.accountIndex === postBal.accountIndex && p.mint === usdcMint
+      );
+      const preAmount = preBal ? parseFloat(preBal.uiTokenAmount?.uiAmountString || '0') : 0;
+
+      const diff = postAmount - preAmount;
+      if (diff < MIN_DEPOSIT.USDC_SPL) continue;
+
+      const amountRaw = BigInt(Math.round(diff * 10 ** CHAINS.solana.usdcDecimals));
+
+      await this._recordDeposit({
+        userId: wallet.user_id,
+        walletId: wallet.id,
+        chain: 'solana',
+        asset: 'USDC_SPL',
+        txHash: `${signature}_usdc`,
+        amountRaw: amountRaw.toString(),
+        amountDecimal: diff,
+        confirmations: CHAINS.solana.requiredConfirmations,
+        requiredConfs: CHAINS.solana.requiredConfirmations,
+      });
     }
   }
 
@@ -212,7 +312,7 @@ export class DepositMonitor {
             currentConfs = currentBlock - receipt.blockNumber;
           }
         } else if (deposit.chain === 'solana') {
-          // Native balance checks are inherently confirmed on Solana
+          // Solana transactions are final after ~32 confirmations (near-instant)
           currentConfs = deposit.required_confs;
         }
 

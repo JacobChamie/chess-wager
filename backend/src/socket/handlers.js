@@ -42,7 +42,10 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
 
   socket.on('lobby:play', async ({ timeControl, playerName, colorPref, rating, wagerAmount }) => {
     if (!checkRate()) return;
-    const wager = parseFloat(wagerAmount) || 0;
+    let wager = parseFloat(wagerAmount) || 0;
+    if (!Number.isFinite(wager) || wager < 0) wager = 0;
+    if (wager > 10000) wager = 10000;
+    wager = Math.round(wager * 100) / 100;
 
     const match = lobbyManager.addToQueue(
       sessionId,
@@ -89,7 +92,10 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
 
   socket.on('lobby:create_game', ({ timeControl, playerName, colorPref, rating, wagerAmount }) => {
     if (!checkRate()) return;
-    const wager = parseFloat(wagerAmount) || 0;
+    let wager = parseFloat(wagerAmount) || 0;
+    if (!Number.isFinite(wager) || wager < 0) wager = 0;
+    if (wager > 10000) wager = 10000;
+    wager = Math.round(wager * 100) / 100;
     const gameId = lobbyManager.createPendingGame(
       sessionId,
       socket.id,
