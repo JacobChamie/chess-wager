@@ -46,12 +46,12 @@ const botManager = new BotManager();
 const stockfishEngine = new StockfishEngine();
 let botGameManager;
 
-// Crypto & wager infrastructure
-const walletManager = new WalletManager(pool);
-const priceService = new PriceService();
-const depositMonitor = new DepositMonitor(pool, walletManager, priceService);
-const withdrawalProcessor = new WithdrawalProcessor(pool, walletManager, priceService);
-const sweepManager = new SweepManager(pool, walletManager);
+// Crypto & wager infrastructure (initialized lazily in start() if WALLET_MNEMONIC is set)
+let walletManager = null;
+let priceService = null;
+let depositMonitor = null;
+let withdrawalProcessor = null;
+let sweepManager = null;
 const wagerService = new WagerService(pool);
 
 app.get('/health', (_req, res) => {
@@ -61,7 +61,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/admin', createAdminRoutes(io, botManager, gameManager));
-app.use('/api/crypto', createCryptoRoutes(pool, walletManager, priceService));
+// Crypto routes mounted in start() after initialization
 
 let onlineCount = 0;
 
@@ -122,8 +122,14 @@ async function start() {
     console.warn('Bot games will be unavailable');
   }
 
-  // Start crypto polling services
+  // Start crypto services if mnemonic is configured
   if (process.env.WALLET_MNEMONIC) {
+    walletManager = new WalletManager(pool);
+    priceService = new PriceService();
+    depositMonitor = new DepositMonitor(pool, walletManager, priceService);
+    withdrawalProcessor = new WithdrawalProcessor(pool, walletManager, priceService);
+    sweepManager = new SweepManager(pool, walletManager);
+    app.use('/api/crypto', createCryptoRoutes(pool, walletManager, priceService));
     depositMonitor.start();
     withdrawalProcessor.start();
     sweepManager.start();

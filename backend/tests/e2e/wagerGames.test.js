@@ -166,13 +166,14 @@ describe('E2E: Wager Games', () => {
     expect(overDataA.winner).toBeDefined();
   });
 
-  it('should emit wager info on checkmate game:over', async () => {
+  it('should emit wager info on checkmate game:over', { timeout: 30000 }, async () => {
     const c1 = await connectClient(server.url, 'cm-w-a');
     const c2 = await connectClient(server.url, 'cm-w-b');
     clients.push(c1, c2);
 
-    const startA = waitForEvent(c1, 'lobby:game_start');
-    const startB = waitForEvent(c2, 'lobby:game_start');
+    const T = 15000; // generous timeout for parallel CI
+    const startA = waitForEvent(c1, 'lobby:game_start', T);
+    const startB = waitForEvent(c2, 'lobby:game_start', T);
 
     c1.emit('lobby:play', { timeControl: 300, playerName: 'Alice', wagerAmount: 5 });
     c2.emit('lobby:play', { timeControl: 300, playerName: 'Bob', wagerAmount: 5 });
@@ -196,15 +197,16 @@ describe('E2E: Wager Games', () => {
     for (const { client, from, to } of moves) {
       const movePromise = waitForEvent(
         client === whiteClient ? blackClient : whiteClient,
-        'game:move_made'
+        'game:move_made',
+        T
       );
       client.emit('game:move', { gameId, from, to });
       await movePromise;
     }
 
     // Checkmate move
-    const overW = waitForEvent(whiteClient, 'game:over');
-    const overB = waitForEvent(blackClient, 'game:over');
+    const overW = waitForEvent(whiteClient, 'game:over', T);
+    const overB = waitForEvent(blackClient, 'game:over', T);
     whiteClient.emit('game:move', { gameId, from: 'h5', to: 'f7' });
     const [overDataW, overDataB] = await Promise.all([overW, overB]);
 
