@@ -6,6 +6,7 @@ import LeaderboardPage from './pages/LeaderboardPage.jsx';
 import PlayerProfilePage from './pages/PlayerProfilePage.jsx';
 import VerifyEmailPage from './pages/VerifyEmailPage.jsx';
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
+import LichessCallbackPage from './pages/LichessCallbackPage.jsx';
 
 const GamePage = lazy(() => import('./pages/GamePage.jsx'));
 const AdminPage = lazy(() => import('./pages/AdminPage.jsx'));
@@ -31,6 +32,7 @@ const App = () => {
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/auth/lichess/callback" element={<LichessCallbackPage />} />
         </Routes>
       </Suspense>
     </>

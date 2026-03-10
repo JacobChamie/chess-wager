@@ -134,6 +134,12 @@ router.get('/players/:username', async (req, res) => {
       LIMIT 20
     `, [user.id]);
 
+    // Linked accounts (verified only)
+    const linkedResult = await pool.query(
+      'SELECT platform, platform_username, is_verified, ratings, profile_url FROM linked_accounts WHERE user_id = $1 AND is_verified = true',
+      [user.id]
+    );
+
     const recentGames = recentResult.rows.map((g) => {
       const playedWhite = g.white_user_id === user.id;
       const opponentName = playedWhite ? g.black_name : g.white_name;
@@ -175,6 +181,12 @@ router.get('/players/:username', async (req, res) => {
           : 0,
       },
       recentGames,
+      linkedAccounts: linkedResult.rows.map((r) => ({
+        platform: r.platform,
+        username: r.platform_username,
+        ratings: r.ratings || {},
+        profileUrl: r.profile_url,
+      })),
     });
   } catch (err) {
     console.error('Profile error:', err);

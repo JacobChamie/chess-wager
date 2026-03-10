@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { AVATAR_MAP, AVATAR_OPTIONS } from '../utils/avatars.js';
+import LinkedAccounts from './LinkedAccounts.jsx';
 
 const SettingsModal = ({ onClose }) => {
   const { user, updateProfile } = useAuth();
@@ -84,6 +85,8 @@ const SettingsModal = ({ onClose }) => {
             </div>
           </div>
         )}
+
+        {user && <LinkedAccounts />}
 
         <div className="form-group">
           <label className="form-label">Board Theme</label>

@@ -22,6 +22,7 @@ import { WithdrawalProcessor } from './crypto/WithdrawalProcessor.js';
 import { SweepManager } from './crypto/SweepManager.js';
 import createCryptoRoutes from './crypto/cryptoRoutes.js';
 import { WagerService } from './wager/WagerService.js';
+import linkedAccountRoutes from './linkedAccounts/linkedAccountRoutes.js';
 
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
@@ -61,6 +62,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/admin', createAdminRoutes(io, botManager, gameManager));
+app.use('/api/linked', linkedAccountRoutes);
 // Crypto routes mounted in start() after initialization
 
 let onlineCount = 0;

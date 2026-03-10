@@ -6,12 +6,14 @@ import { getAvatar } from '../utils/avatars.js';
 const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
 
 const RESULT_COLORS = { win: '#7cb342', loss: '#e53935', draw: '#a0a0a0' };
+const PLATFORM_LABELS = { lichess: 'Lichess', chess_com: 'Chess.com' };
 
 const PlayerProfilePage = () => {
   const { username } = useParams();
   const { user: currentUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [recentGames, setRecentGames] = useState([]);
+  const [linkedAccounts, setLinkedAccounts] = useState([]);
   const [h2h, setH2h] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -26,6 +28,7 @@ const PlayerProfilePage = () => {
       .then((data) => {
         setProfile(data.player);
         setRecentGames(data.recentGames);
+        setLinkedAccounts(data.linkedAccounts || []);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -93,6 +96,45 @@ const PlayerProfilePage = () => {
           <span className="profile-stat-label">Win Rate</span>
         </div>
       </div>
+
+      {/* Linked Accounts */}
+      {linkedAccounts.length > 0 && (
+        <div className="profile-section">
+          <h2 className="profile-section-title">External Ratings</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {linkedAccounts.map((acct) => (
+              <div key={acct.platform} style={{
+                display: 'flex', flexDirection: 'column', gap: '4px',
+                padding: '8px 12px', background: 'var(--bg-secondary)',
+                borderRadius: 'var(--radius-sm)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontWeight: 600, fontSize: '13px' }}>
+                    {PLATFORM_LABELS[acct.platform] || acct.platform}
+                  </span>
+                  <a
+                    href={acct.profileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ fontSize: '13px', color: 'var(--accent-text)' }}
+                  >
+                    {acct.username}
+                  </a>
+                </div>
+                {acct.ratings && Object.keys(acct.ratings).length > 0 && (
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    {Object.entries(acct.ratings).map(([tc, rating]) => (
+                      <span key={tc} style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                        {tc.charAt(0).toUpperCase() + tc.slice(1)}: <strong style={{ color: 'var(--text-primary)' }}>{rating}</strong>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Head-to-head */}
       {h2h && h2h.games > 0 && (
