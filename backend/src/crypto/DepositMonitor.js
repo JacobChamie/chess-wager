@@ -67,15 +67,16 @@ export class DepositMonitor {
         if (balance > 0n) {
           const amountDecimal = parseFloat(ethers.formatEther(balance));
           if (amountDecimal >= MIN_DEPOSIT.ETH) {
+            // Use wallet address + amount as stable key to prevent duplicate detection
             await this._recordDeposit({
               userId: wallet.user_id,
               walletId: wallet.id,
               chain: 'ethereum',
               asset: 'ETH',
-              txHash: `eth_native_${wallet.address}_${currentBlock}`,
+              txHash: `eth_native_${wallet.address}_${balance.toString()}`,
               amountRaw: balance.toString(),
               amountDecimal,
-              confirmations: 0,
+              confirmations: currentBlock - fromBlock,
               requiredConfs: CHAINS.ethereum.requiredConfirmations,
             });
           }
@@ -145,16 +146,16 @@ export class DepositMonitor {
         if (balance > 0) {
           const amountDecimal = balance / 10 ** CHAINS.solana.nativeDecimals;
           if (amountDecimal >= MIN_DEPOSIT.SOL) {
-            const slot = await this.solConnection.getSlot();
+            // Use wallet address + amount as stable key to prevent duplicate detection
             await this._recordDeposit({
               userId: wallet.user_id,
               walletId: wallet.id,
               chain: 'solana',
               asset: 'SOL',
-              txHash: `sol_native_${wallet.address}_${slot}`,
+              txHash: `sol_native_${wallet.address}_${balance.toString()}`,
               amountRaw: balance.toString(),
               amountDecimal,
-              confirmations: 0,
+              confirmations: 32, // devnet/mainnet SOL confirms near-instantly
               requiredConfs: CHAINS.solana.requiredConfirmations,
             });
           }
@@ -173,16 +174,15 @@ export class DepositMonitor {
           const amountDecimal = Number(amountRaw) / 10 ** CHAINS.solana.usdcDecimals;
 
           if (amountDecimal >= MIN_DEPOSIT.USDC_SPL) {
-            const slot = await this.solConnection.getSlot();
             await this._recordDeposit({
               userId: wallet.user_id,
               walletId: wallet.id,
               chain: 'solana',
               asset: 'USDC_SPL',
-              txHash: `sol_usdc_${wallet.address}_${slot}`,
+              txHash: `sol_usdc_${wallet.address}_${amountRaw.toString()}`,
               amountRaw: amountRaw.toString(),
               amountDecimal,
-              confirmations: 0,
+              confirmations: 32,
               requiredConfs: CHAINS.solana.requiredConfirmations,
             });
           }
