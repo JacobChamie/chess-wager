@@ -1069,6 +1069,20 @@ body {
   margin: 0 auto;
 }
 
+/* Smooth square highlight transitions (last-move, selection, legal-move dots) */
+.chessboard-wrap div[data-square] {
+  transition: background 150ms ease, background-color 150ms ease;
+}
+
+/* Piece cursor feedback */
+.chessboard-wrap [data-piece] {
+  cursor: grab !important;
+}
+.chessboard-wrap [data-piece]:active {
+  cursor: grabbing !important;
+  will-change: transform;
+}
+
 .chessboard-resize-handle {
   position: absolute;
   right: 6px;

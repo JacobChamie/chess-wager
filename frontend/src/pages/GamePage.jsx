@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGameSocket } from '../hooks/useGameSocket.js';
 import ChessboardComponent from '../components/chessboard.jsx';
@@ -348,6 +348,44 @@ const GamePage = () => {
     clearPremoves();
   }, [clearPremoves]);
 
+  // Merge last-move + premove + click-to-move highlights
+  const mergedSquareStyles = useMemo(() => {
+    const styles = { ...premoveSquares };
+    if (lastMove) {
+      styles[lastMove.from] = {
+        backgroundColor: 'rgba(255, 255, 0, 0.2)',
+        ...(styles[lastMove.from] || {}),
+      };
+      styles[lastMove.to] = {
+        backgroundColor: 'rgba(255, 255, 0, 0.25)',
+        ...(styles[lastMove.to] || {}),
+      };
+    }
+    if (selectedSquare && chessRef.current) {
+      styles[selectedSquare] = {
+        backgroundColor: 'rgba(255, 255, 0, 0.4)',
+        ...(styles[selectedSquare] || {}),
+      };
+      const legalMoves = chessRef.current.moves({ square: selectedSquare, verbose: true });
+      for (const m of legalMoves) {
+        const existing = styles[m.to] || {};
+        if (m.captured) {
+          styles[m.to] = {
+            background: 'radial-gradient(circle, transparent 55%, rgba(0,0,0,0.25) 56%)',
+            borderRadius: '50%',
+            ...existing,
+          };
+        } else {
+          styles[m.to] = {
+            background: 'radial-gradient(circle, rgba(0,0,0,0.2) 20%, transparent 21%)',
+            ...existing,
+          };
+        }
+      }
+    }
+    return styles;
+  }, [premoveSquares, lastMove, selectedSquare, chessRef]);
+
   if (!connected || !gameState) {
     return (
       <div className="game-loading">
@@ -399,42 +437,6 @@ const GamePage = () => {
   }
 
   const showDrawOffer = !isSpectator && drawOffer && drawOffer !== myColor;
-
-  // Merge last-move + premove + click-to-move highlights
-  const mergedSquareStyles = { ...premoveSquares };
-  if (lastMove) {
-    mergedSquareStyles[lastMove.from] = {
-      backgroundColor: 'rgba(255, 255, 0, 0.2)',
-      ...(mergedSquareStyles[lastMove.from] || {}),
-    };
-    mergedSquareStyles[lastMove.to] = {
-      backgroundColor: 'rgba(255, 255, 0, 0.25)',
-      ...(mergedSquareStyles[lastMove.to] || {}),
-    };
-  }
-  if (selectedSquare && chessRef.current) {
-    mergedSquareStyles[selectedSquare] = {
-      backgroundColor: 'rgba(255, 255, 0, 0.4)',
-      ...(mergedSquareStyles[selectedSquare] || {}),
-    };
-    const legalMoves = chessRef.current.moves({ square: selectedSquare, verbose: true });
-    for (const m of legalMoves) {
-      const existing = mergedSquareStyles[m.to] || {};
-      // Capture vs empty square — different dot styles
-      if (m.captured) {
-        mergedSquareStyles[m.to] = {
-          background: 'radial-gradient(circle, transparent 55%, rgba(0,0,0,0.25) 56%)',
-          borderRadius: '50%',
-          ...existing,
-        };
-      } else {
-        mergedSquareStyles[m.to] = {
-          background: 'radial-gradient(circle, rgba(0,0,0,0.2) 20%, transparent 21%)',
-          ...existing,
-        };
-      }
-    }
-  }
 
   return (
     <div className="game-container">
