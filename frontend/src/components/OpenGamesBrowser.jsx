@@ -87,7 +87,7 @@ const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
 
       {openGames.length > 0 && (
         <div className="open-games-list">
-          {openGames.map((game) => {
+          {[...openGames].sort((a, b) => (b.wagerAmount || 0) - (a.wagerAmount || 0)).map((game) => {
             const isMine = game.creatorSessionId === sessionId;
             return (
               <div
@@ -103,6 +103,7 @@ const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
                   </span>
                   <span className="open-game-tc">
                     {colorPrefIcon(game.colorPref)} {formatTc(game.timeControl)}
+                    {game.wagerAmount > 0 && <span style={{ color: '#ffd700', marginLeft: '6px', fontWeight: 600 }}>{game.wagerAmount} tok</span>}
                   </span>
                 </div>
                 {isMine ? (
@@ -146,7 +147,7 @@ const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
             Players Seeking
           </div>
           <div className="open-games-list">
-            {seekers.map((seeker, i) => {
+            {[...seekers].sort((a, b) => (b.wagerAmount || 0) - (a.wagerAmount || 0)).map((seeker, i) => {
               const isMine = seeker.sessionId === sessionId;
               return (
                 <div
@@ -162,6 +163,7 @@ const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
                     </span>
                     <span className="open-game-tc">
                       {colorPrefIcon(seeker.colorPref)} {formatTc(seeker.timeControl)}
+                      {seeker.wagerAmount > 0 && <span style={{ color: '#ffd700', marginLeft: '6px', fontWeight: 600 }}>{seeker.wagerAmount} tok</span>}
                     </span>
                   </div>
                   {isMine ? (
@@ -210,7 +212,7 @@ const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
             Live Games
           </div>
           <div className="open-games-list">
-            {activeGames.map((game) => (
+            {[...activeGames].sort((a, b) => (b.wagerAmount || 0) - (a.wagerAmount || 0)).map((game) => (
               <div
                 key={game.gameId}
                 className="open-game-row open-game-row--joinable"
@@ -230,6 +232,19 @@ const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
                         fontWeight: 600,
                       }}>
                         BOT
+                      </span>
+                    )}
+                    {game.wagerAmount > 0 && (
+                      <span style={{
+                        fontSize: '10px',
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        background: 'rgba(255,215,0,0.15)',
+                        color: '#ffd700',
+                        marginLeft: '6px',
+                        fontWeight: 600,
+                      }}>
+                        {game.wagerAmount} tok
                       </span>
                     )}
                   </span>

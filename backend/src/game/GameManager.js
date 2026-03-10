@@ -38,6 +38,7 @@ export class GameManager {
           moveCount: room.chess.history().length,
           isBotGame: room.isBotGame || false,
           botPersonality: room.botPersonality ? room.botPersonality.name : null,
+          wagerAmount: room.wagerAmount || 0,
         });
       }
     }
