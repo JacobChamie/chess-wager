@@ -1,6 +1,9 @@
 -- Token balance on users
 ALTER TABLE users ADD COLUMN IF NOT EXISTS token_balance NUMERIC(18,8) NOT NULL DEFAULT 0;
-ALTER TABLE users ADD CONSTRAINT users_token_balance_nonneg CHECK (token_balance >= 0);
+DO $$ BEGIN
+  ALTER TABLE users ADD CONSTRAINT users_token_balance_nonneg CHECK (token_balance >= 0);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Deposit wallets (derived HD addresses)
 CREATE TABLE IF NOT EXISTS wallets (
