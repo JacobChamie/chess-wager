@@ -23,6 +23,8 @@ import { SweepManager } from './crypto/SweepManager.js';
 import createCryptoRoutes from './crypto/cryptoRoutes.js';
 import { WagerService } from './wager/WagerService.js';
 import linkedAccountRoutes from './linkedAccounts/linkedAccountRoutes.js';
+import createPremiumRoutes from './premium/premiumRoutes.js';
+import { PremiumExpiryChecker } from './premium/PremiumExpiryChecker.js';
 
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
@@ -63,6 +65,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/admin', createAdminRoutes(io, botManager, gameManager));
 app.use('/api/linked', linkedAccountRoutes);
+app.use('/api/premium', createPremiumRoutes(pool));
 // Crypto routes mounted in start() after initialization
 
 let onlineCount = 0;
@@ -81,17 +84,20 @@ io.on('connection', async (socket) => {
     authUser = verifyToken(token);
   }
 
-  // Check if user is banned
+  // Check if user is banned + fetch premium status
   if (authUser?.id) {
     try {
-      const banCheck = await pool.query('SELECT is_banned FROM users WHERE id = $1', [authUser.id]);
-      if (banCheck.rows[0]?.is_banned) {
+      const userCheck = await pool.query('SELECT is_banned, is_premium FROM users WHERE id = $1', [authUser.id]);
+      if (userCheck.rows[0]?.is_banned) {
         socket.emit('auth:banned');
         socket.disconnect(true);
         return;
       }
+      if (userCheck.rows[0]) {
+        authUser.is_premium = userCheck.rows[0].is_premium || false;
+      }
     } catch (err) {
-      console.error('Ban check error:', err.message);
+      console.error('User check error:', err.message);
     }
   }
 
@@ -123,6 +129,10 @@ async function start() {
     console.error('Failed to initialize Stockfish:', err.message);
     console.warn('Bot games will be unavailable');
   }
+
+  // Start premium expiry checker
+  const premiumChecker = new PremiumExpiryChecker(pool);
+  premiumChecker.start();
 
   // Start crypto services if mnemonic is configured
   if (process.env.WALLET_MNEMONIC) {

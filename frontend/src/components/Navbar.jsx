@@ -74,14 +74,38 @@ const Navbar = () => {
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <BalanceDisplay />
+              {!user.is_premium && !user.is_admin && (
+                <Link
+                  to="/premium"
+                  className="hide-mobile"
+                  style={{
+                    textDecoration: 'none',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    padding: '3px 10px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,170,0,0.15))',
+                    color: '#ffd700',
+                    border: '1px solid rgba(255,215,0,0.3)',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Go Premium
+                </Link>
+              )}
               <Link
                 to={`/leaderboard/${user.username}`}
                 className="navbar-user hide-mobile"
                 style={{
                   textDecoration: 'none',
-                  ...(user.is_admin && { color: '#ff4444', fontWeight: 700 }),
+                  ...(user.is_admin
+                    ? { color: '#ff4444', fontWeight: 700 }
+                    : user.is_premium
+                      ? { color: '#ffd700', fontWeight: 700, textShadow: '0 0 6px rgba(255, 215, 0, 0.4)' }
+                      : {}),
                 }}
               >
+                {user.is_premium && !user.is_admin && '\u2605 '}
                 {user.username}
                 {user.is_admin && <span style={{ fontSize: '10px', marginLeft: '4px', opacity: 0.8 }}>ADMIN</span>}
               </Link>

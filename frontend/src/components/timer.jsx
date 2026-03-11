@@ -1,7 +1,7 @@
 import { memo, useEffect, useState, useRef } from 'react';
 
 // resultIcon: 'win' | 'loss' | 'draw' | null
-const Timer = memo(({ timeMs, player, active, resultIcon }) => {
+const Timer = memo(({ timeMs, player, active, resultIcon, isPremium }) => {
   const [displayTime, setDisplayTime] = useState(timeMs);
   const baseRef = useRef(timeMs);
   const syncRef = useRef(Date.now());
@@ -60,9 +60,9 @@ const Timer = memo(({ timeMs, player, active, resultIcon }) => {
 
   return (
     <div className={timerClass} style={{ margin: '6px 0' }}>
-      <div className="timer-player-name">
+      <div className="timer-player-name" style={isPremium ? { color: '#ffd700', textShadow: '0 0 6px rgba(255,215,0,0.4)', fontWeight: 700 } : undefined}>
         {icon && <span className="timer-result-icon">{icon}</span>}
-        {player}
+        {isPremium && '\u2605 '}{player}
       </div>
       <div className={timeClass}>
         {timeDisplay}

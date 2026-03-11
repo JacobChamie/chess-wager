@@ -39,6 +39,8 @@ export class GameManager {
           isBotGame: room.isBotGame || false,
           botPersonality: room.botPersonality ? room.botPersonality.name : null,
           wagerAmount: room.wagerAmount || 0,
+          whiteIsPremium: room.white?.isPremium || false,
+          blackIsPremium: room.black?.isPremium || false,
         });
       }
     }

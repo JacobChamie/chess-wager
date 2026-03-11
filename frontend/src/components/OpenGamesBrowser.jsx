@@ -87,7 +87,7 @@ const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
 
       {openGames.length > 0 && (
         <div className="open-games-list">
-          {[...openGames].sort((a, b) => (b.wagerAmount || 0) - (a.wagerAmount || 0)).map((game) => {
+          {[...openGames].sort((a, b) => (b.isPremium ? 1 : 0) - (a.isPremium ? 1 : 0) || (b.wagerAmount || 0) - (a.wagerAmount || 0)).map((game) => {
             const isMine = game.creatorSessionId === sessionId;
             return (
               <div
@@ -97,7 +97,10 @@ const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
               >
                 <div className="open-game-info">
                   <span className="open-game-name">
-                    {game.creatorName}
+                    <span style={game.isPremium ? { color: '#ffd700', textShadow: '0 0 6px rgba(255,215,0,0.4)', fontWeight: 700 } : undefined}>
+                      {game.isPremium && '\u2605 '}{game.creatorName}
+                    </span>
+                    {game.isPremium && <span className="premium-badge">PREMIUM</span>}
                     {game.rating && <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginLeft: '4px' }}>({game.rating})</span>}
                     {isMine && <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginLeft: '6px' }}>(you)</span>}
                   </span>
@@ -147,7 +150,7 @@ const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
             Players Seeking
           </div>
           <div className="open-games-list">
-            {[...seekers].sort((a, b) => (b.wagerAmount || 0) - (a.wagerAmount || 0)).map((seeker, i) => {
+            {[...seekers].sort((a, b) => (b.isPremium ? 1 : 0) - (a.isPremium ? 1 : 0) || (b.wagerAmount || 0) - (a.wagerAmount || 0)).map((seeker, i) => {
               const isMine = seeker.sessionId === sessionId;
               return (
                 <div
@@ -157,7 +160,10 @@ const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
                 >
                   <div className="open-game-info">
                     <span className="open-game-name">
-                      {seeker.playerName}
+                      <span style={seeker.isPremium ? { color: '#ffd700', textShadow: '0 0 6px rgba(255,215,0,0.4)', fontWeight: 700 } : undefined}>
+                        {seeker.isPremium && '\u2605 '}{seeker.playerName}
+                      </span>
+                      {seeker.isPremium && <span className="premium-badge">PREMIUM</span>}
                       {seeker.rating && <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginLeft: '4px' }}>({seeker.rating})</span>}
                       {isMine && <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginLeft: '6px' }}>(you)</span>}
                     </span>
@@ -212,7 +218,7 @@ const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
             Live Games
           </div>
           <div className="open-games-list">
-            {[...activeGames].sort((a, b) => (b.wagerAmount || 0) - (a.wagerAmount || 0)).map((game) => (
+            {[...activeGames].sort((a, b) => ((b.whiteIsPremium || b.blackIsPremium) ? 1 : 0) - ((a.whiteIsPremium || a.blackIsPremium) ? 1 : 0) || (b.wagerAmount || 0) - (a.wagerAmount || 0)).map((game) => (
               <div
                 key={game.gameId}
                 className="open-game-row open-game-row--joinable"
@@ -220,7 +226,14 @@ const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
               >
                 <div className="open-game-info">
                   <span className="open-game-name">
-                    {game.whiteName} vs {game.blackName}
+                    <span style={game.whiteIsPremium ? { color: '#ffd700', fontWeight: 700 } : undefined}>
+                      {game.whiteIsPremium && '\u2605 '}{game.whiteName}
+                    </span>
+                    {' vs '}
+                    <span style={game.blackIsPremium ? { color: '#ffd700', fontWeight: 700 } : undefined}>
+                      {game.blackIsPremium && '\u2605 '}{game.blackName}
+                    </span>
+                    {(game.whiteIsPremium || game.blackIsPremium) && <span className="premium-badge">PREMIUM</span>}
                     {game.isBotGame && (
                       <span style={{
                         fontSize: '10px',

@@ -450,6 +450,14 @@ const GamePage = () => {
   const topTurnActive = gameState.turn === topColor && isActive;
   const bottomTurnActive = gameState.turn === bottomColor && isActive;
 
+  // Premium status for timers
+  const topIsPremium = isSpectator
+    ? (gameState.blackIsPremium || false)
+    : (myColor === 'w' ? gameState.blackIsPremium : gameState.whiteIsPremium) || false;
+  const bottomIsPremium = isSpectator
+    ? (gameState.whiteIsPremium || false)
+    : (myColor === 'w' ? gameState.whiteIsPremium : gameState.blackIsPremium) || false;
+
   // Backwards compat aliases
   const myName = bottomName;
   const opponentName = topName;
@@ -509,6 +517,7 @@ const GamePage = () => {
               player={opponentName}
               active={opponentTurnActive}
               resultIcon={topResultIcon}
+              isPremium={topIsPremium}
             />
 
             <ChessboardComponent
@@ -571,6 +580,7 @@ const GamePage = () => {
               player={myName}
               active={myTurnActive}
               resultIcon={bottomResultIcon}
+              isPremium={bottomIsPremium}
             />
 
             {/* Mobile action buttons inline */}
@@ -763,6 +773,7 @@ const GamePage = () => {
               player={opponentName}
               active={opponentTurnActive}
               resultIcon={topResultIcon}
+              isPremium={topIsPremium}
             />
           </div>
 
@@ -772,6 +783,7 @@ const GamePage = () => {
               player={myName}
               active={myTurnActive}
               resultIcon={bottomResultIcon}
+              isPremium={bottomIsPremium}
             />
           </div>
 

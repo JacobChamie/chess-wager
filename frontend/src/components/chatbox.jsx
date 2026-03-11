@@ -142,9 +142,11 @@ const ChatBox = memo(({
                 <div className="chatbox-msg-header">
                   <span
                     className="chatbox-msg-name"
-                    style={{ color: getNameColor(msg.senderName) }}
+                    style={msg.isPremium
+                      ? { color: '#ffd700', textShadow: '0 0 6px rgba(255,215,0,0.4)', fontWeight: 700 }
+                      : { color: getNameColor(msg.senderName) }}
                   >
-                    {msg.senderName}
+                    {msg.isPremium && '\u2605 '}{msg.senderName}
                   </span>
                   <span className="chatbox-msg-time">
                     {formatTime(msg.timestamp)}

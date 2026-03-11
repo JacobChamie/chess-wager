@@ -64,7 +64,8 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       rating || null,
       colorPref || 'random',
       wager,
-      sanitizedGates
+      sanitizedGates,
+      authUser?.is_premium || false
     );
 
     if (match) {
@@ -122,7 +123,8 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       rating || null,
       colorPref || 'random',
       wager,
-      sanitizedGates
+      sanitizedGates,
+      authUser?.is_premium || false
     );
     socket.emit('lobby:game_created', { gameId });
     broadcastLobbyState(io, lobbyManager, gameManager);
@@ -154,7 +156,8 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       sessionId,
       socket.id,
       playerName || 'Anonymous',
-      authUser?.id || null
+      authUser?.id || null,
+      authUser?.is_premium || false
     );
 
     if (result.error) {

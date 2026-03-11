@@ -130,8 +130,15 @@ export default function createCryptoRoutes(pool, walletManager, priceService) {
         return res.status(400).json({ error: 'Invalid Solana address' });
       }
 
+      // Check premium status alongside admin
       const isAdmin = req.user.is_admin === true;
-      const fee = isAdmin ? 0 : +(amount * WITHDRAWAL_RAKE).toFixed(8);
+      let isPremium = false;
+      try {
+        const premRes = await pool.query('SELECT is_premium FROM users WHERE id = $1', [req.user.id]);
+        isPremium = premRes.rows[0]?.is_premium || false;
+      } catch { /* proceed without premium benefits */ }
+      const feeExempt = isAdmin || isPremium;
+      const fee = feeExempt ? 0 : +(amount * WITHDRAWAL_RAKE).toFixed(8);
       const netAmount = amount - fee;
       const totalDeduction = amount; // full amount deducted, fee kept by platform
 
@@ -155,11 +162,12 @@ export default function createCryptoRoutes(pool, walletManager, priceService) {
         }
         const newBalance = balRes.rows[0].token_balance;
 
-        // Create withdrawal record
+        // Create withdrawal record — premium/admin skip awaiting_approval
+        const withdrawalStatus = feeExempt ? 'pending' : 'awaiting_approval';
         const wRes = await client.query(
-          `INSERT INTO withdrawals (user_id, chain, asset, to_address, amount_tokens, amount_crypto, usd_value, fee_tokens)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-          [req.user.id, chain, asset, to_address, amount, amountCrypto, usdValue, fee]
+          `INSERT INTO withdrawals (user_id, chain, asset, to_address, amount_tokens, amount_crypto, usd_value, fee_tokens, status)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+          [req.user.id, chain, asset, to_address, amount, amountCrypto, usdValue, fee, withdrawalStatus]
         );
 
         // Ledger entry
@@ -178,7 +186,7 @@ export default function createCryptoRoutes(pool, walletManager, priceService) {
           fee,
           rake: `${(WITHDRAWAL_RAKE * 100).toFixed(0)}%`,
           newBalance: parseFloat(newBalance),
-          message: 'Submitted for admin approval',
+          message: feeExempt ? 'Processing immediately' : 'Submitted for admin approval',
         });
       } catch (err) {
         await client.query('ROLLBACK');

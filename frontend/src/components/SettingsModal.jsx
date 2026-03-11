@@ -4,6 +4,13 @@ import { AVATAR_MAP, AVATAR_OPTIONS } from '../utils/avatars.js';
 import { BOARD_THEMES, THEME_KEYS } from '../utils/boardThemes.js';
 import LinkedAccounts from './LinkedAccounts.jsx';
 
+const ANIMATION_SPEEDS = [
+  { key: 'instant', label: 'Instant', ms: 0 },
+  { key: 'fast', label: 'Fast', ms: 100 },
+  { key: 'normal', label: 'Normal', ms: 200 },
+  { key: 'slow', label: 'Slow', ms: 400 },
+];
+
 const SettingsModal = ({ onClose }) => {
   const { user, updateProfile } = useAuth();
   const [displayName, setDisplayName] = useState(
@@ -13,6 +20,9 @@ const SettingsModal = ({ onClose }) => {
   const [selectedTheme, setSelectedTheme] = useState(
     () => localStorage.getItem('chess_board_theme') || user?.board_theme || 'default'
   );
+  const [selectedSpeed, setSelectedSpeed] = useState(
+    () => localStorage.getItem('chess_animation_speed') || user?.animation_speed || 'normal'
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -21,13 +31,14 @@ const SettingsModal = ({ onClose }) => {
     setError(null);
     setSuccess(false);
 
-    // Always persist theme to localStorage for immediate use
+    // Always persist to localStorage for immediate use
     localStorage.setItem('chess_board_theme', selectedTheme);
+    localStorage.setItem('chess_animation_speed', selectedSpeed);
 
     if (user) {
       setSaving(true);
       try {
-        await updateProfile(displayName, selectedAvatar, selectedTheme);
+        await updateProfile(displayName, selectedAvatar, selectedTheme, selectedSpeed);
         setSuccess(true);
       } catch (err) {
         setError(err.message);
@@ -127,6 +138,34 @@ const SettingsModal = ({ onClose }) => {
                 </button>
               );
             })}
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Animation Speed</label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+            {ANIMATION_SPEEDS.map((speed) => (
+              <button
+                key={speed.key}
+                type="button"
+                onClick={() => setSelectedSpeed(speed.key)}
+                style={{
+                  padding: '8px 4px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: selectedSpeed === speed.key ? '2px solid var(--accent)' : '2px solid transparent',
+                  background: 'var(--surface)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '2px',
+                  color: 'var(--text-primary)',
+                }}
+              >
+                <span style={{ fontSize: '13px', fontWeight: 600 }}>{speed.label}</span>
+                <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{speed.ms}ms</span>
+              </button>
+            ))}
           </div>
         </div>
 

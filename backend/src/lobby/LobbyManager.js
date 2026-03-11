@@ -22,21 +22,26 @@ export class LobbyManager {
     this.pendingGames = new Map();
   }
 
-  addToQueue(sessionId, socketId, playerName, timeControl, userId = null, rating = null, colorPref = 'random', wagerAmount = 0, gates = null) {
+  addToQueue(sessionId, socketId, playerName, timeControl, userId = null, rating = null, colorPref = 'random', wagerAmount = 0, gates = null, isPremium = false) {
     // Remove this socket if already in queue
     this.queue = this.queue.filter((e) => e.socketId !== socketId);
 
-    this.queue.push({ sessionId, socketId, playerName, timeControl, userId, rating, colorPref, wagerAmount, gates });
+    this.queue.push({ sessionId, socketId, playerName, timeControl, userId, rating, colorPref, wagerAmount, gates, isPremium });
 
     // Try to find a match with same time control + same wager amount (different socket)
+    // Premium users get matched first
     const myKey = tcKey(timeControl);
     const myWager = wagerAmount || 0;
-    const match = this.queue.find(
-      (entry) =>
-        entry.socketId !== socketId &&
-        tcKey(entry.timeControl) === myKey &&
-        (entry.wagerAmount || 0) === myWager
-    );
+    const candidates = this.queue
+      .filter(
+        (entry) =>
+          entry.socketId !== socketId &&
+          tcKey(entry.timeControl) === myKey &&
+          (entry.wagerAmount || 0) === myWager
+      )
+      .sort((a, b) => (b.isPremium ? 1 : 0) - (a.isPremium ? 1 : 0));
+
+    const match = candidates[0] || null;
 
     if (match) {
       // Remove both from queue
@@ -44,7 +49,7 @@ export class LobbyManager {
         (e) => e.socketId !== socketId && e.socketId !== match.socketId
       );
       return this._createMatch(
-        { sessionId, socketId, playerName, timeControl, userId, colorPref, wagerAmount, gates },
+        { sessionId, socketId, playerName, timeControl, userId, colorPref, wagerAmount, gates, isPremium },
         match
       );
     }
@@ -60,7 +65,7 @@ export class LobbyManager {
     this.queue = this.queue.filter((e) => e.socketId !== socketId);
   }
 
-  createPendingGame(sessionId, socketId, playerName, timeControl, userId = null, rating = null, colorPref = 'random', wagerAmount = 0, gates = null) {
+  createPendingGame(sessionId, socketId, playerName, timeControl, userId = null, rating = null, colorPref = 'random', wagerAmount = 0, gates = null, isPremium = false) {
     const room = this.gameManager.createGame(timeControl);
     if (wagerAmount > 0) {
       room.wagerAmount = wagerAmount;
@@ -76,11 +81,12 @@ export class LobbyManager {
       colorPref,
       wagerAmount,
       gates,
+      isPremium,
     });
     return room.gameId;
   }
 
-  joinPendingGame(gameId, sessionId, socketId, playerName, userId = null) {
+  joinPendingGame(gameId, sessionId, socketId, playerName, userId = null, isPremium = false) {
     const pending = this.pendingGames.get(gameId);
     if (!pending) return { error: 'Game not found or already started' };
 
@@ -97,11 +103,11 @@ export class LobbyManager {
     const creatorIsWhite = resolveColors(pending.colorPref || 'random', 'random');
 
     if (creatorIsWhite) {
-      room.addPlayer(pending.sessionId, pending.socketId, pending.playerName, 'w', pending.userId);
-      room.addPlayer(sessionId, socketId, playerName, 'b', userId);
+      room.addPlayer(pending.sessionId, pending.socketId, pending.playerName, 'w', pending.userId, pending.isPremium);
+      room.addPlayer(sessionId, socketId, playerName, 'b', userId, isPremium);
     } else {
-      room.addPlayer(sessionId, socketId, playerName, 'w', userId);
-      room.addPlayer(pending.sessionId, pending.socketId, pending.playerName, 'b', pending.userId);
+      room.addPlayer(sessionId, socketId, playerName, 'w', userId, isPremium);
+      room.addPlayer(pending.sessionId, pending.socketId, pending.playerName, 'b', pending.userId, pending.isPremium);
     }
 
     room.startGame();
@@ -145,6 +151,7 @@ export class LobbyManager {
         colorPref: pending.colorPref,
         wagerAmount: pending.wagerAmount || 0,
         gates: pending.gates || null,
+        isPremium: pending.isPremium || false,
       });
     }
     return games;
@@ -163,6 +170,7 @@ export class LobbyManager {
       colorPref: entry.colorPref,
       wagerAmount: entry.wagerAmount || 0,
       gates: entry.gates || null,
+      isPremium: entry.isPremium || false,
     }));
   }
 
@@ -181,11 +189,11 @@ export class LobbyManager {
     const p1IsWhite = resolveColors(player1.colorPref || 'random', player2.colorPref || 'random');
 
     if (p1IsWhite) {
-      room.addPlayer(player1.sessionId, player1.socketId, player1.playerName, 'w', player1.userId);
-      room.addPlayer(player2.sessionId, player2.socketId, player2.playerName, 'b', player2.userId);
+      room.addPlayer(player1.sessionId, player1.socketId, player1.playerName, 'w', player1.userId, player1.isPremium);
+      room.addPlayer(player2.sessionId, player2.socketId, player2.playerName, 'b', player2.userId, player2.isPremium);
     } else {
-      room.addPlayer(player2.sessionId, player2.socketId, player2.playerName, 'w', player2.userId);
-      room.addPlayer(player1.sessionId, player1.socketId, player1.playerName, 'b', player1.userId);
+      room.addPlayer(player2.sessionId, player2.socketId, player2.playerName, 'w', player2.userId, player2.isPremium);
+      room.addPlayer(player1.sessionId, player1.socketId, player1.playerName, 'b', player1.userId, player1.isPremium);
     }
 
     room.startGame();

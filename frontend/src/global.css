@@ -1460,3 +1460,24 @@ body {
     padding-bottom: 60px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════ */
+/*  Premium                                               */
+/* ═══════════════════════════════════════════════════════ */
+
+.premium-name {
+  color: #ffd700;
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.4);
+  font-weight: 700;
+}
+
+.premium-badge {
+  display: inline-flex;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 215, 0, 0.15);
+  color: #ffd700;
+  font-size: 10px;
+  font-weight: 600;
+  margin-left: 4px;
+}

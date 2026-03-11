@@ -9,6 +9,8 @@ const CUSTOM_BOARD_STYLE = {
   boxShadow: '0 0 25px rgba(0, 0, 0, 0.7)',
 };
 
+const SPEED_MAP = { instant: 0, fast: 100, normal: 200, slow: 400 };
+
 const ChessboardComponent = memo(({
   position,
   onPieceDrop,
@@ -58,6 +60,8 @@ const ChessboardComponent = memo(({
   const themeKey = typeof window !== 'undefined' ? localStorage.getItem('chess_board_theme') || 'default' : 'default';
   const theme = BOARD_THEMES[themeKey] || BOARD_THEMES.default;
 
+  const speedKey = typeof window !== 'undefined' ? localStorage.getItem('chess_animation_speed') || 'normal' : 'normal';
+
   const wrapStyle = useMemo(() => ({
     width: boardSize,
     height: boardSize,
@@ -71,7 +75,7 @@ const ChessboardComponent = memo(({
         onPieceDrop={onPieceDrop}
         boardWidth={boardSize}
         boardOrientation={boardOrientation}
-        animationDuration={200}
+        animationDuration={SPEED_MAP[speedKey] ?? 200}
         customBoardStyle={CUSTOM_BOARD_STYLE}
         customLightSquareStyle={{ backgroundColor: theme.lightSquare }}
         customDarkSquareStyle={{ backgroundColor: theme.darkSquare }}

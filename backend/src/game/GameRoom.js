@@ -46,8 +46,8 @@ export class GameRoom {
     this.onClockUpdate = null;
   }
 
-  addPlayer(sessionId, socketId, name, color, userId = null) {
-    const player = { sessionId, socketId, name, userId };
+  addPlayer(sessionId, socketId, name, color, userId = null, isPremium = false) {
+    const player = { sessionId, socketId, name, userId, isPremium };
     if (color === 'w') {
       this.white = player;
     } else {
@@ -247,6 +247,7 @@ export class GameRoom {
       senderName: player.name,
       message: sanitized,
       timestamp: Date.now(),
+      isPremium: player.isPremium || false,
     };
     this.chatMessages.push(msg);
     return msg;
@@ -346,6 +347,8 @@ export class GameRoom {
       } : null,
       wagerAmount: this.wagerAmount,
       isWagerGame: this.isWagerGame,
+      whiteIsPremium: this.white?.isPremium || false,
+      blackIsPremium: this.black?.isPremium || false,
     };
   }
 

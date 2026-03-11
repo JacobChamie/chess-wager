@@ -28,8 +28,15 @@ const BottomNav = () => {
     { key: 'settings', icon: '\u2699\uFE0F', label: 'Settings', action: () => setShowSettings(true) },
   ];
 
+  // Add Premium tab for non-premium users (between Wallet and Settings)
+  if (user && !user.is_premium) {
+    tabs.splice(3, 0, { key: 'premium', icon: '\u2605', label: 'Premium', path: '/premium' });
+  }
+
   if (user?.is_admin) {
-    tabs.splice(3, 0, { key: 'admin', icon: '\uD83D\uDEE1\uFE0F', label: 'Admin', path: '/admin' });
+    // Insert before Settings (which may be at index 3 or 4 now)
+    const settingsIdx = tabs.findIndex((t) => t.key === 'settings');
+    tabs.splice(settingsIdx, 0, { key: 'admin', icon: '\uD83D\uDEE1\uFE0F', label: 'Admin', path: '/admin' });
   }
 
   const isActive = (tab) => {
