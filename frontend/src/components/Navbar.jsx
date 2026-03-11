@@ -53,7 +53,7 @@ const Navbar = () => {
         </div>
 
         <div className="navbar-actions">
-          <span className="hide-mobile">
+          <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             {user?.is_admin && (
               <Link to="/admin" className="navbar-icon-btn" title="Admin">
                 {'\uD83D\uDEE1\uFE0F'}
@@ -69,7 +69,7 @@ const Navbar = () => {
             >
               {'\u2699\uFE0F'}
             </button>
-          </span>
+          </div>
 
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
