@@ -100,7 +100,7 @@ io.on('connection', async (socket) => {
   io.emit('online:count', { count: onlineCount, games: activeGames });
 
   console.log(`Connected: socket=${socket.id} session=${sessionId}${authUser ? ` user=${authUser.username}` : ''}`);
-  registerHandlers(io, socket, sessionId, gameManager, lobbyManager, authUser, botGameManager, wagerService);
+  registerHandlers(io, socket, sessionId, gameManager, lobbyManager, authUser, botGameManager, wagerService, pool);
 
   socket.on('disconnect', () => {
     onlineCount = Math.max(0, onlineCount - 1);

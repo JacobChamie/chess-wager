@@ -73,7 +73,7 @@ export async function createTestServer(opts = {}) {
     const activeGames = gameManager.getActiveGames().length;
     io.emit('online:count', { count: onlineCount, games: activeGames });
 
-    registerHandlers(io, socket, sessionId, gameManager, lobbyManager, null, botGameManager, wagerService);
+    registerHandlers(io, socket, sessionId, gameManager, lobbyManager, null, botGameManager, wagerService, pool);
 
     socket.on('disconnect', () => {
       onlineCount = Math.max(0, onlineCount - 1);

@@ -85,8 +85,31 @@ const ChatBox = memo(({
     return '#64b5f6';
   }, [myName]);
 
+  // Swipe detection for tab switching
+  const touchStartRef = useRef(null);
+
+  const handleTouchStart = useCallback((e) => {
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, []);
+
+  const handleTouchEnd = useCallback((e) => {
+    if (!touchStartRef.current) return;
+    const dx = e.changedTouches[0].clientX - touchStartRef.current.x;
+    const dy = e.changedTouches[0].clientY - touchStartRef.current.y;
+    touchStartRef.current = null;
+    if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return;
+    const tabs = isSpectator
+      ? ['spectators', 'moves']
+      : gameStatus === 'completed'
+        ? ['chat', 'spectators', 'moves']
+        : ['chat', 'moves'];
+    const idx = tabs.indexOf(activeTab);
+    if (dx < 0 && idx < tabs.length - 1) setActiveTab(tabs[idx + 1]);
+    if (dx > 0 && idx > 0) setActiveTab(tabs[idx - 1]);
+  }, [activeTab, isSpectator, gameStatus]);
+
   return (
-    <div className="chatbox">
+    <div className="chatbox" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {/* Tabs */}
       <div className="chatbox-tabs">
         {(isSpectator

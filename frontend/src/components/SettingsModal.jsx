@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { AVATAR_MAP, AVATAR_OPTIONS } from '../utils/avatars.js';
+import { BOARD_THEMES, THEME_KEYS } from '../utils/boardThemes.js';
 import LinkedAccounts from './LinkedAccounts.jsx';
 
 const SettingsModal = ({ onClose }) => {
@@ -9,6 +10,9 @@ const SettingsModal = ({ onClose }) => {
     user?.username || localStorage.getItem('chess_player_name') || ''
   );
   const [selectedAvatar, setSelectedAvatar] = useState(user?.avatar_id || 'default');
+  const [selectedTheme, setSelectedTheme] = useState(
+    () => localStorage.getItem('chess_board_theme') || user?.board_theme || 'default'
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -17,10 +21,13 @@ const SettingsModal = ({ onClose }) => {
     setError(null);
     setSuccess(false);
 
+    // Always persist theme to localStorage for immediate use
+    localStorage.setItem('chess_board_theme', selectedTheme);
+
     if (user) {
       setSaving(true);
       try {
-        await updateProfile(displayName, selectedAvatar);
+        await updateProfile(displayName, selectedAvatar, selectedTheme);
         setSuccess(true);
       } catch (err) {
         setError(err.message);
@@ -90,9 +97,37 @@ const SettingsModal = ({ onClose }) => {
 
         <div className="form-group">
           <label className="form-label">Board Theme</label>
-          <select className="input" disabled style={{ color: 'var(--text-muted)' }}>
-            <option>Default (coming soon)</option>
-          </select>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
+            {THEME_KEYS.map((key) => {
+              const theme = BOARD_THEMES[key];
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setSelectedTheme(key)}
+                  style={{
+                    padding: '8px 4px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: selectedTheme === key ? '2px solid var(--accent)' : '2px solid transparent',
+                    background: 'var(--surface)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', width: '32px', height: '32px', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ background: theme.lightSquare }} />
+                    <div style={{ background: theme.darkSquare }} />
+                    <div style={{ background: theme.darkSquare }} />
+                    <div style={{ background: theme.lightSquare }} />
+                  </div>
+                  <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{theme.name}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>

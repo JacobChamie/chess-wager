@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import OpenGamesBrowser from '../components/OpenGamesBrowser.jsx';
 import BotCard from '../components/BotCard.jsx';
 import WagerSelector from '../components/WagerSelector.jsx';
+import WagerGateSelector from '../components/WagerGateSelector.jsx';
 
 const DEFAULT_BOT_PERSONALITIES = [
   { id: 'beginner', name: 'Woody', title: 'The Beginner', description: 'Just learning the pieces', rating: 800 },
@@ -67,6 +68,7 @@ const LobbyPage = () => {
   const [botPersonalities, setBotPersonalities] = useState(DEFAULT_BOT_PERSONALITIES);
   const [botPrivate, setBotPrivate] = useState(false);
   const [wagerAmount, setWagerAmount] = useState(0);
+  const [wagerGates, setWagerGates] = useState({});
 
   const getName = useCallback(
     () => user?.username || playerName.trim() || 'Anonymous',
@@ -131,7 +133,8 @@ const LobbyPage = () => {
     setError(null);
     const name = getName();
     if (!user) localStorage.setItem('chess_player_name', name);
-    socket.emit('lobby:play', { timeControl, playerName: name, colorPref, rating: user?.rating || null, wagerAmount });
+    const gates = wagerAmount > 0 && Object.keys(wagerGates).length > 0 ? wagerGates : undefined;
+    socket.emit('lobby:play', { timeControl, playerName: name, colorPref, rating: user?.rating || null, wagerAmount, gates });
     setStatus('queued');
   };
 
@@ -144,7 +147,8 @@ const LobbyPage = () => {
     setError(null);
     const name = getName();
     if (!user) localStorage.setItem('chess_player_name', name);
-    socket.emit('lobby:create_game', { timeControl, playerName: name, colorPref, rating: user?.rating || null, wagerAmount });
+    const gates = wagerAmount > 0 && Object.keys(wagerGates).length > 0 ? wagerGates : undefined;
+    socket.emit('lobby:create_game', { timeControl, playerName: name, colorPref, rating: user?.rating || null, wagerAmount, gates });
     setStatus('creating');
   };
 
@@ -415,6 +419,9 @@ const LobbyPage = () => {
 
               {/* Wager selector */}
               <WagerSelector value={wagerAmount} onChange={setWagerAmount} />
+
+              {/* Wager gates */}
+              <WagerGateSelector gates={wagerGates} onChange={setWagerGates} visible={wagerAmount > 0} />
 
               {/* Error */}
               {error && (

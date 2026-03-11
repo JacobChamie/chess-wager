@@ -67,10 +67,11 @@ export const AuthProvider = ({ children }) => {
     updateSocketAuth(null);
   }, []);
 
-  const updateProfile = useCallback(async (username, avatar_id) => {
+  const updateProfile = useCallback(async (username, avatar_id, board_theme) => {
     const token = localStorage.getItem('chess_token');
     const body = { username };
     if (avatar_id) body.avatar_id = avatar_id;
+    if (board_theme) body.board_theme = board_theme;
     const res = await fetch(`${API_URL}/api/auth/profile`, {
       method: 'PUT',
       headers: {

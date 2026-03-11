@@ -53,28 +53,30 @@ const Navbar = () => {
         </div>
 
         <div className="navbar-actions">
-          {user?.is_admin && (
-            <Link to="/admin" className="navbar-icon-btn" title="Admin">
-              {'\uD83D\uDEE1\uFE0F'}
+          <span className="hide-mobile">
+            {user?.is_admin && (
+              <Link to="/admin" className="navbar-icon-btn" title="Admin">
+                {'\uD83D\uDEE1\uFE0F'}
+              </Link>
+            )}
+            <Link to="/leaderboard" className="navbar-icon-btn" title="Leaderboard">
+              {'\uD83C\uDFC6'}
             </Link>
-          )}
-          <Link to="/leaderboard" className="navbar-icon-btn" title="Leaderboard">
-            {'\uD83C\uDFC6'}
-          </Link>
-          <button
-            className="navbar-icon-btn"
-            onClick={() => setShowSettings(true)}
-            title="Settings"
-          >
-            {'\u2699\uFE0F'}
-          </button>
+            <button
+              className="navbar-icon-btn"
+              onClick={() => setShowSettings(true)}
+              title="Settings"
+            >
+              {'\u2699\uFE0F'}
+            </button>
+          </span>
 
           {user ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <BalanceDisplay />
               <Link
                 to={`/leaderboard/${user.username}`}
-                className="navbar-user"
+                className="navbar-user hide-mobile"
                 style={{
                   textDecoration: 'none',
                   ...(user.is_admin && { color: '#ff4444', fontWeight: 700 }),
@@ -83,7 +85,7 @@ const Navbar = () => {
                 {user.username}
                 {user.is_admin && <span style={{ fontSize: '10px', marginLeft: '4px', opacity: 0.8 }}>ADMIN</span>}
               </Link>
-              <button className="btn btn-ghost btn-sm navbar-signout" onClick={logout}>
+              <button className="btn btn-ghost btn-sm navbar-signout hide-mobile" onClick={logout}>
                 Sign Out
               </button>
             </div>

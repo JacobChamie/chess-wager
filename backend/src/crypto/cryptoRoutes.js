@@ -178,6 +178,7 @@ export default function createCryptoRoutes(pool, walletManager, priceService) {
           fee,
           rake: `${(WITHDRAWAL_RAKE * 100).toFixed(0)}%`,
           newBalance: parseFloat(newBalance),
+          message: 'Submitted for admin approval',
         });
       } catch (err) {
         await client.query('ROLLBACK');

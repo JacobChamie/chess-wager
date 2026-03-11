@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { CHAINS, DEPOSIT_POLL_INTERVAL, ERC20_TRANSFER_TOPIC, MIN_DEPOSIT } from './constants.js';
+import { sendDepositReceiptEmail } from '../email/emailService.js';
 
 export class DepositMonitor {
   constructor(pool, walletManager, priceService) {
@@ -394,11 +395,50 @@ export class DepositMonitor {
 
       await client.query('COMMIT');
       console.log(`Deposit credited: ${deposit.tokens_credited} tokens for user ${deposit.user_id}`);
+
+      // Create purchase receipt (non-blocking)
+      this._createPurchaseReceipt(deposit).catch((err) => {
+        console.error(`Purchase receipt failed for deposit ${deposit.id}:`, err.message);
+      });
     } catch (err) {
       await client.query('ROLLBACK');
       console.error(`Failed to credit deposit ${deposit.id}:`, err.message);
     } finally {
       client.release();
     }
+  }
+
+  async _createPurchaseReceipt(deposit) {
+    // Insert purchase record
+    await this.pool.query(
+      `INSERT INTO purchases (user_id, deposit_id, chain, asset, amount_crypto, usd_value, tokens_credited)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [deposit.user_id, deposit.id, deposit.chain, deposit.asset, deposit.amount_decimal, deposit.usd_value, deposit.tokens_credited]
+    );
+
+    // Fetch user email
+    const userRes = await this.pool.query(
+      'SELECT email, username FROM users WHERE id = $1',
+      [deposit.user_id]
+    );
+    const user = userRes.rows[0];
+    if (!user?.email) return;
+
+    // Send receipt email
+    await sendDepositReceiptEmail(user.email, user.username, {
+      amount: deposit.amount_decimal,
+      asset: deposit.asset,
+      chain: deposit.chain,
+      usdValue: deposit.usd_value,
+      tokensCredited: deposit.tokens_credited,
+      txHash: deposit.tx_hash,
+    });
+
+    // Mark receipt as sent
+    await this.pool.query(
+      `UPDATE purchases SET receipt_sent = true, receipt_sent_at = NOW()
+       WHERE deposit_id = $1`,
+      [deposit.id]
+    );
   }
 }

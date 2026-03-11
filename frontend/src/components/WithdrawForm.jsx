@@ -91,7 +91,7 @@ const WithdrawForm = ({ onBalanceChange }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      setSuccess(`Withdrawal queued! ${data.amountCrypto.toFixed(6)} ${asset} to ${toAddress.slice(0, 10)}...`);
+      setSuccess(`Submitted for admin approval. ${data.amountCrypto.toFixed(6)} ${asset} to ${toAddress.slice(0, 10)}...`);
       setAmount('');
       setToAddress('');
       onBalanceChange?.(data.newBalance);

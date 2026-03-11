@@ -8,6 +8,7 @@ import GameOverModal from '../components/GameOverModal.jsx';
 import DrawOfferBar from '../components/DrawOfferBar.jsx';
 import PromotionPicker from '../components/PromotionPicker.jsx';
 import ConfettiOverlay from '../components/ConfettiOverlay.jsx';
+import { useGameTabTitle } from '../hooks/useGameTabTitle.js';
 import '../game.css';
 
 // Live countdown banner for opponent disconnect
@@ -87,7 +88,7 @@ const GamePage = () => {
     const mobile = window.innerWidth < 640;
     if (mobile) {
       // Fill width minus padding
-      return Math.min(window.innerWidth - 16, window.innerHeight - 280);
+      return Math.min(window.innerWidth - 16, window.innerHeight - 336);
     }
     const maxByWidth = Math.floor(window.innerWidth * 0.9) - 40;
     const maxByHeight = Math.floor(window.innerHeight - 52 - 200);
@@ -106,6 +107,14 @@ const GamePage = () => {
   const [selectedSquare, setSelectedSquare] = useState(null);
   const [modalDismissed, setModalDismissed] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [flipped, setFlipped] = useState(false);
+
+  // Tab title + favicon badge
+  useGameTabTitle(gameState ? {
+    status: gameState.status,
+    isMyTurn: gameState.myColor && gameState.turn === gameState.myColor,
+    isSpectator: gameState.myColor === null,
+  } : null);
 
   // Track viewport changes for responsive layout
   useEffect(() => {
@@ -151,9 +160,36 @@ const GamePage = () => {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') clearPremoves();
-      // Skip arrow nav if user is typing
+      // Skip if user is typing
       const tag = e.target.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+      // F to flip board
+      if (e.key === 'f' || e.key === 'F') {
+        setFlipped((v) => !v);
+        return;
+      }
+
+      // Ctrl/Cmd+R to resign (prevent browser reload)
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R')) {
+        const gs = gameStateRef.current;
+        if (gs?.status === 'active' && gs?.myColor) {
+          e.preventDefault();
+          resign();
+        }
+        return;
+      }
+
+      // Ctrl/Cmd+D to offer draw (prevent bookmark)
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'd' || e.key === 'D')) {
+        const gs = gameStateRef.current;
+        if (gs?.status === 'active' && gs?.myColor) {
+          e.preventDefault();
+          offerDraw();
+        }
+        return;
+      }
+
       switch (e.key) {
         case 'ArrowLeft':
           e.preventDefault();
@@ -175,7 +211,7 @@ const GamePage = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [clearPremoves, navigatePrev, navigateNext, navigateFirst, navigateLast]);
+  }, [clearPremoves, navigatePrev, navigateNext, navigateFirst, navigateLast, resign, offerDraw]);
 
   const handlePieceDrop = useCallback(
     (sourceSquare, targetSquare, piece) => {
@@ -401,7 +437,8 @@ const GamePage = () => {
   const isCompleted = gameState.status === 'completed';
   const myColor = gameState.myColor;
   const isSpectator = myColor === null;
-  const orientation = myColor === 'b' ? 'black' : 'white'; // spectators see white at bottom
+  const baseOrientation = myColor === 'b' ? 'black' : 'white'; // spectators see white at bottom
+  const orientation = flipped ? (baseOrientation === 'white' ? 'black' : 'white') : baseOrientation;
 
   // For spectators: top = black, bottom = white
   const topName = isSpectator ? gameState.blackName : (myColor === 'w' ? gameState.blackName : gameState.whiteName);

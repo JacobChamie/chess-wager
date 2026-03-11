@@ -22,11 +22,11 @@ export class LobbyManager {
     this.pendingGames = new Map();
   }
 
-  addToQueue(sessionId, socketId, playerName, timeControl, userId = null, rating = null, colorPref = 'random', wagerAmount = 0) {
+  addToQueue(sessionId, socketId, playerName, timeControl, userId = null, rating = null, colorPref = 'random', wagerAmount = 0, gates = null) {
     // Remove this socket if already in queue
     this.queue = this.queue.filter((e) => e.socketId !== socketId);
 
-    this.queue.push({ sessionId, socketId, playerName, timeControl, userId, rating, colorPref, wagerAmount });
+    this.queue.push({ sessionId, socketId, playerName, timeControl, userId, rating, colorPref, wagerAmount, gates });
 
     // Try to find a match with same time control + same wager amount (different socket)
     const myKey = tcKey(timeControl);
@@ -44,7 +44,7 @@ export class LobbyManager {
         (e) => e.socketId !== socketId && e.socketId !== match.socketId
       );
       return this._createMatch(
-        { sessionId, socketId, playerName, timeControl, userId, colorPref, wagerAmount },
+        { sessionId, socketId, playerName, timeControl, userId, colorPref, wagerAmount, gates },
         match
       );
     }
@@ -60,7 +60,7 @@ export class LobbyManager {
     this.queue = this.queue.filter((e) => e.socketId !== socketId);
   }
 
-  createPendingGame(sessionId, socketId, playerName, timeControl, userId = null, rating = null, colorPref = 'random', wagerAmount = 0) {
+  createPendingGame(sessionId, socketId, playerName, timeControl, userId = null, rating = null, colorPref = 'random', wagerAmount = 0, gates = null) {
     const room = this.gameManager.createGame(timeControl);
     if (wagerAmount > 0) {
       room.wagerAmount = wagerAmount;
@@ -75,6 +75,7 @@ export class LobbyManager {
       rating,
       colorPref,
       wagerAmount,
+      gates,
     });
     return room.gameId;
   }
@@ -143,6 +144,7 @@ export class LobbyManager {
         rating: pending.rating,
         colorPref: pending.colorPref,
         wagerAmount: pending.wagerAmount || 0,
+        gates: pending.gates || null,
       });
     }
     return games;
@@ -160,6 +162,7 @@ export class LobbyManager {
       rating: entry.rating,
       colorPref: entry.colorPref,
       wagerAmount: entry.wagerAmount || 0,
+      gates: entry.gates || null,
     }));
   }
 

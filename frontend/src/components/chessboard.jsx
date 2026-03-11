@@ -1,6 +1,7 @@
 // src/components/chessboard.jsx
 import { memo, useMemo } from 'react';
 import { Chessboard } from 'react-chessboard';
+import { BOARD_THEMES } from '../utils/boardThemes.js';
 
 const CUSTOM_BOARD_STYLE = {
   borderRadius: '12px',
@@ -54,6 +55,9 @@ const ChessboardComponent = memo(({
     window.addEventListener('mouseup', onMouseUp);
   };
 
+  const themeKey = typeof window !== 'undefined' ? localStorage.getItem('chess_board_theme') || 'default' : 'default';
+  const theme = BOARD_THEMES[themeKey] || BOARD_THEMES.default;
+
   const wrapStyle = useMemo(() => ({
     width: boardSize,
     height: boardSize,
@@ -69,6 +73,8 @@ const ChessboardComponent = memo(({
         boardOrientation={boardOrientation}
         animationDuration={200}
         customBoardStyle={CUSTOM_BOARD_STYLE}
+        customLightSquareStyle={{ backgroundColor: theme.lightSquare }}
+        customDarkSquareStyle={{ backgroundColor: theme.darkSquare }}
         customDropSquareStyle={{ backgroundColor: 'rgba(255, 255, 0, 0.3)' }}
         customSquareStyles={premoveSquares}
         onSquareClick={onSquareClick}

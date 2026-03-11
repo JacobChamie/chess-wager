@@ -79,3 +79,32 @@ export async function sendPasswordResetEmail(email, username, token) {
   }
   console.log('Reset email sent:', data?.id);
 }
+
+export async function sendDepositReceiptEmail(email, username, { amount, asset, chain, usdValue, tokensCredited, txHash }) {
+  if (!resend) { console.warn('Resend not initialized, skipping receipt email'); return; }
+
+  const { data, error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: email,
+    subject: 'ELO Stakes — Deposit Receipt',
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #1a1a2e; color: #e0e0e0; border-radius: 12px;">
+        <h1 style="color: #7c3aed; margin-bottom: 24px;">Deposit Received</h1>
+        <p style="font-size: 16px; line-height: 1.5;">Hi ${username}, your deposit has been confirmed and credited.</p>
+        <table style="width: 100%; margin: 20px 0; border-collapse: collapse;">
+          <tr><td style="padding: 8px 0; color: #999;">Asset</td><td style="padding: 8px 0; text-align: right;">${asset} (${chain})</td></tr>
+          <tr><td style="padding: 8px 0; color: #999;">Amount</td><td style="padding: 8px 0; text-align: right;">${Number(amount).toFixed(6)} ${asset}</td></tr>
+          <tr><td style="padding: 8px 0; color: #999;">USD Value</td><td style="padding: 8px 0; text-align: right;">$${Number(usdValue).toFixed(2)}</td></tr>
+          <tr style="border-top: 1px solid #333;"><td style="padding: 12px 0; color: #7c3aed; font-weight: 600;">Tokens Credited</td><td style="padding: 12px 0; text-align: right; color: #7c3aed; font-weight: 600;">${Number(tokensCredited).toFixed(2)}</td></tr>
+        </table>
+        <p style="font-size: 12px; color: #666; word-break: break-all;">Tx: ${txHash}</p>
+        <p style="font-size: 13px; color: #999; margin-top: 16px;">Thank you for using ELO Stakes!</p>
+      </div>
+    `,
+  });
+  if (error) {
+    console.error('Resend receipt email error:', JSON.stringify(error));
+    throw new Error(error.message || 'Failed to send receipt email');
+  }
+  console.log('Deposit receipt email sent:', data?.id);
+}

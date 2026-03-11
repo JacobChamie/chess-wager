@@ -1,4 +1,5 @@
 import { createRateLimiter } from '../utils/rateLimiter.js';
+import { checkWagerGates } from '../wager/gateCheck.js';
 
 const rateLimiter = createRateLimiter(15, 1000); // 15 events per second
 
@@ -20,7 +21,7 @@ function broadcastLobbyState(io, lobbyManager, gameManager) {
   }
 }
 
-export function registerHandlers(io, socket, sessionId, gameManager, lobbyManager, authUser, botGameManager, wagerService) {
+export function registerHandlers(io, socket, sessionId, gameManager, lobbyManager, authUser, botGameManager, wagerService, pool) {
   const checkRate = () => {
     if (!rateLimiter(socket.id)) {
       console.warn(`[RateLimit] Socket ${socket.id} exceeded rate limit`);
@@ -40,12 +41,19 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     });
   });
 
-  socket.on('lobby:play', async ({ timeControl, playerName, colorPref, rating, wagerAmount }) => {
+  socket.on('lobby:play', async ({ timeControl, playerName, colorPref, rating, wagerAmount, gates }) => {
     if (!checkRate()) return;
     let wager = parseFloat(wagerAmount) || 0;
     if (!Number.isFinite(wager) || wager < 0) wager = 0;
     if (wager > 10000) wager = 10000;
     wager = Math.round(wager * 100) / 100;
+
+    const sanitizedGates = wager > 0 && gates ? {
+      requireVerified: !!gates.requireVerified,
+      minExternalRating: gates.minExternalRating ? parseInt(gates.minExternalRating) || null : null,
+      minExternalPlatform: gates.minExternalPlatform || null,
+      minExternalTimeControl: gates.minExternalTimeControl || null,
+    } : null;
 
     const match = lobbyManager.addToQueue(
       sessionId,
@@ -55,7 +63,8 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       authUser?.id || null,
       rating || null,
       colorPref || 'random',
-      wager
+      wager,
+      sanitizedGates
     );
 
     if (match) {
@@ -90,12 +99,20 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     broadcastLobbyState(io, lobbyManager, gameManager);
   });
 
-  socket.on('lobby:create_game', ({ timeControl, playerName, colorPref, rating, wagerAmount }) => {
+  socket.on('lobby:create_game', ({ timeControl, playerName, colorPref, rating, wagerAmount, gates }) => {
     if (!checkRate()) return;
     let wager = parseFloat(wagerAmount) || 0;
     if (!Number.isFinite(wager) || wager < 0) wager = 0;
     if (wager > 10000) wager = 10000;
     wager = Math.round(wager * 100) / 100;
+
+    const sanitizedGates = wager > 0 && gates ? {
+      requireVerified: !!gates.requireVerified,
+      minExternalRating: gates.minExternalRating ? parseInt(gates.minExternalRating) || null : null,
+      minExternalPlatform: gates.minExternalPlatform || null,
+      minExternalTimeControl: gates.minExternalTimeControl || null,
+    } : null;
+
     const gameId = lobbyManager.createPendingGame(
       sessionId,
       socket.id,
@@ -104,7 +121,8 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       authUser?.id || null,
       rating || null,
       colorPref || 'random',
-      wager
+      wager,
+      sanitizedGates
     );
     socket.emit('lobby:game_created', { gameId });
     broadcastLobbyState(io, lobbyManager, gameManager);
@@ -118,6 +136,19 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
 
   socket.on('lobby:join_game', async ({ gameId, playerName }) => {
     if (!checkRate()) return;
+
+    // Check wager gates before joining
+    if (pool) {
+      const pending = lobbyManager.pendingGames.get(gameId);
+      if (pending?.gates && pending.wagerAmount > 0) {
+        const gateResult = await checkWagerGates(pool, authUser?.id, pending.gates);
+        if (!gateResult.pass) {
+          socket.emit('lobby:error', { message: gateResult.reason });
+          return;
+        }
+      }
+    }
+
     const result = lobbyManager.joinPendingGame(
       gameId,
       sessionId,

@@ -18,10 +18,24 @@ const DELAY_OPTIONS = [
 
 const AdminPage = () => {
   const { user } = useAuth();
+  const [adminTab, setAdminTab] = useState('users');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleteGameId, setDeleteGameId] = useState('');
   const [message, setMessage] = useState(null);
+
+  // Withdrawal approval state
+  const [pendingWithdrawals, setPendingWithdrawals] = useState([]);
+  const [wdLoading, setWdLoading] = useState(false);
+  const [rejectReasons, setRejectReasons] = useState({});
+
+  // Transaction browser state
+  const [transactions, setTransactions] = useState([]);
+  const [txTotal, setTxTotal] = useState(0);
+  const [txPage, setTxPage] = useState(1);
+  const [txFilter, setTxFilter] = useState('all');
+  const [txLoading, setTxLoading] = useState(false);
+  const [reverseReasons, setReverseReasons] = useState({});
 
   // Stress test state
   const [stConfig, setStConfig] = useState({
@@ -171,6 +185,82 @@ const AdminPage = () => {
     }
   };
 
+  // Withdrawal approval handlers
+  const fetchPendingWithdrawals = useCallback(async () => {
+    setWdLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/admin/withdrawals/pending`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPendingWithdrawals(data.withdrawals);
+      }
+    } catch (err) {
+      showMsg('error', err.message);
+    } finally {
+      setWdLoading(false);
+    }
+  }, [token]);
+
+  const handleApproveWithdrawal = async (id) => {
+    const data = await adminAction(`${API_URL}/api/admin/withdrawals/${id}/approve`, 'POST');
+    if (data) {
+      showMsg('success', 'Withdrawal approved');
+      fetchPendingWithdrawals();
+    }
+  };
+
+  const handleRejectWithdrawal = async (id) => {
+    const reason = rejectReasons[id] || '';
+    const data = await adminAction(`${API_URL}/api/admin/withdrawals/${id}/reject`, 'POST', { reason });
+    if (data) {
+      showMsg('success', 'Withdrawal rejected, tokens refunded');
+      setRejectReasons((prev) => { const n = { ...prev }; delete n[id]; return n; });
+      fetchPendingWithdrawals();
+    }
+  };
+
+  // Transaction browser handlers
+  const fetchTransactions = useCallback(async (page = 1, type = 'all') => {
+    setTxLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/admin/transactions?page=${page}&limit=50&type=${type}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTransactions(data.transactions);
+        setTxTotal(data.total);
+        setTxPage(data.page);
+      }
+    } catch (err) {
+      showMsg('error', err.message);
+    } finally {
+      setTxLoading(false);
+    }
+  }, [token]);
+
+  const handleReverseTransaction = async (id) => {
+    const reason = reverseReasons[id] || '';
+    if (!reason.trim()) {
+      showMsg('error', 'Please provide a reason for reversal');
+      return;
+    }
+    const data = await adminAction(`${API_URL}/api/admin/transactions/${id}/reverse`, 'POST', { reason });
+    if (data) {
+      showMsg('success', 'Transaction reversed');
+      setReverseReasons((prev) => { const n = { ...prev }; delete n[id]; return n; });
+      fetchTransactions(txPage, txFilter);
+    }
+  };
+
+  // Fetch data when switching tabs
+  useEffect(() => {
+    if (adminTab === 'withdrawals') fetchPendingWithdrawals();
+    if (adminTab === 'transactions') fetchTransactions(1, txFilter);
+  }, [adminTab, fetchPendingWithdrawals, fetchTransactions, txFilter]);
+
   if (!user?.is_admin) {
     return (
       <div className="admin-container">
@@ -201,6 +291,15 @@ const AdminPage = () => {
     <div className="admin-container">
       <h2 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '20px' }}>Admin Panel</h2>
 
+      {/* Tab bar */}
+      <div className="tab-bar" style={{ marginBottom: '20px' }}>
+        {['users', 'withdrawals', 'transactions', 'stress'].map((t) => (
+          <button key={t} className={adminTab === t ? 'active' : ''} onClick={() => setAdminTab(t)}>
+            {t === 'users' ? 'Users' : t === 'withdrawals' ? 'Withdrawals' : t === 'transactions' ? 'Transactions' : 'Stress Test'}
+          </button>
+        ))}
+      </div>
+
       {message && (
         <div
           style={{
@@ -216,85 +315,245 @@ const AdminPage = () => {
         </div>
       )}
 
-      {/* Delete game */}
-      <div style={{ marginBottom: '24px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-        <input
-          className="input input-sm"
-          placeholder="Game ID to delete"
-          value={deleteGameId}
-          onChange={(e) => setDeleteGameId(e.target.value)}
-          style={{ maxWidth: '240px' }}
-        />
-        <button className="btn btn-danger btn-sm" onClick={handleDeleteGame}>
-          Delete Game
-        </button>
-      </div>
+      {/* Users tab */}
+      {adminTab === 'users' && (
+        <>
+          {/* Delete game */}
+          <div style={{ marginBottom: '24px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <input
+              className="input input-sm"
+              placeholder="Game ID to delete"
+              value={deleteGameId}
+              onChange={(e) => setDeleteGameId(e.target.value)}
+              style={{ maxWidth: '240px' }}
+            />
+            <button className="btn btn-danger btn-sm" onClick={handleDeleteGame}>
+              Delete Game
+            </button>
+          </div>
 
-      {/* Users table */}
-      <div style={{ overflowX: 'auto', marginBottom: '32px' }}>
-        <table className="leaderboard-table" style={{ minWidth: '600px' }}>
-          <thead>
-            <tr>
-              <th>Username</th>
-              <th>Email</th>
-              <th>Rating</th>
-              <th>Games</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.id}>
-                <td style={{ fontWeight: 600 }}>
-                  {u.username}
-                  {u.is_admin && <span style={{ color: 'var(--accent)', marginLeft: '6px', fontSize: '12px' }}>ADMIN</span>}
-                </td>
-                <td style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{u.email}</td>
-                <td className="lb-rating">{u.rating}</td>
-                <td>{u.game_count}</td>
-                <td>
-                  {u.is_banned ? (
-                    <span style={{ color: '#ef5350', fontWeight: 600, fontSize: '12px' }}>BANNED</span>
-                  ) : (
-                    <span style={{ color: 'var(--accent-text)', fontSize: '12px' }}>Active</span>
-                  )}
-                </td>
-                <td>
-                  {u.id !== user.id && (
-                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                      <button
-                        className={`btn btn-sm ${u.is_banned ? 'btn-primary' : 'btn-danger'}`}
-                        onClick={() => handleBan(u.id)}
-                        style={{ fontSize: '11px', padding: '4px 8px' }}
-                      >
-                        {u.is_banned ? 'Unban' : 'Ban'}
-                      </button>
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => handleResetRating(u.id)}
-                        style={{ fontSize: '11px', padding: '4px 8px' }}
-                      >
-                        Reset Rating
-                      </button>
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => handleDeleteUser(u.id, u.username)}
-                        style={{ fontSize: '11px', padding: '4px 8px' }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          {/* Users table */}
+          <div style={{ overflowX: 'auto', marginBottom: '32px' }}>
+            <table className="leaderboard-table" style={{ minWidth: '600px' }}>
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Rating</th>
+                  <th>Games</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.id}>
+                    <td style={{ fontWeight: 600 }}>
+                      {u.username}
+                      {u.is_admin && <span style={{ color: 'var(--accent)', marginLeft: '6px', fontSize: '12px' }}>ADMIN</span>}
+                    </td>
+                    <td style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{u.email}</td>
+                    <td className="lb-rating">{u.rating}</td>
+                    <td>{u.game_count}</td>
+                    <td>
+                      {u.is_banned ? (
+                        <span style={{ color: '#ef5350', fontWeight: 600, fontSize: '12px' }}>BANNED</span>
+                      ) : (
+                        <span style={{ color: 'var(--accent-text)', fontSize: '12px' }}>Active</span>
+                      )}
+                    </td>
+                    <td>
+                      {u.id !== user.id && (
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                          <button
+                            className={`btn btn-sm ${u.is_banned ? 'btn-primary' : 'btn-danger'}`}
+                            onClick={() => handleBan(u.id)}
+                            style={{ fontSize: '11px', padding: '4px 8px' }}
+                          >
+                            {u.is_banned ? 'Unban' : 'Ban'}
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => handleResetRating(u.id)}
+                            style={{ fontSize: '11px', padding: '4px 8px' }}
+                          >
+                            Reset Rating
+                          </button>
+                          <button
+                            className="btn btn-danger btn-sm"
+                            onClick={() => handleDeleteUser(u.id, u.username)}
+                            style={{ fontSize: '11px', padding: '4px 8px' }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {/* Withdrawals tab */}
+      {adminTab === 'withdrawals' && (
+        <div>
+          <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px' }}>Pending Withdrawal Approvals</h3>
+          {wdLoading ? (
+            <div className="spinner" style={{ margin: '20px auto' }} />
+          ) : pendingWithdrawals.length === 0 ? (
+            <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>No pending withdrawals</p>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="leaderboard-table" style={{ minWidth: '700px' }}>
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Amount</th>
+                    <th>Asset</th>
+                    <th>Address</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingWithdrawals.map((w) => (
+                    <tr key={w.id}>
+                      <td style={{ fontWeight: 600 }}>{w.username}</td>
+                      <td>{parseFloat(w.amount_tokens).toFixed(2)} tokens</td>
+                      <td>{w.asset} ({w.chain})</td>
+                      <td style={{ fontSize: '11px', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{w.to_address}</td>
+                      <td style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{new Date(w.created_at).toLocaleDateString()}</td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <button className="btn btn-primary btn-sm" onClick={() => handleApproveWithdrawal(w.id)} style={{ fontSize: '11px', padding: '4px 8px' }}>
+                            Approve
+                          </button>
+                          <input
+                            className="input input-sm"
+                            placeholder="Reason"
+                            value={rejectReasons[w.id] || ''}
+                            onChange={(e) => setRejectReasons((prev) => ({ ...prev, [w.id]: e.target.value }))}
+                            style={{ width: '100px', fontSize: '11px' }}
+                          />
+                          <button className="btn btn-danger btn-sm" onClick={() => handleRejectWithdrawal(w.id)} style={{ fontSize: '11px', padding: '4px 8px' }}>
+                            Reject
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Transactions tab */}
+      {adminTab === 'transactions' && (
+        <div>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0 }}>Transaction Ledger</h3>
+            <select
+              className="input input-sm"
+              value={txFilter}
+              onChange={(e) => { setTxFilter(e.target.value); setTxPage(1); }}
+              style={{ width: '160px' }}
+            >
+              <option value="all">All Types</option>
+              <option value="deposit">Deposits</option>
+              <option value="withdrawal">Withdrawals</option>
+              <option value="wager_lock">Wager Locks</option>
+              <option value="wager_win">Wager Wins</option>
+              <option value="wager_refund">Wager Refunds</option>
+              <option value="withdrawal_refund">Withdrawal Refunds</option>
+              <option value="admin_reversal">Admin Reversals</option>
+            </select>
+          </div>
+          {txLoading ? (
+            <div className="spinner" style={{ margin: '20px auto' }} />
+          ) : transactions.length === 0 ? (
+            <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>No transactions found</p>
+          ) : (
+            <>
+              <div style={{ overflowX: 'auto' }}>
+                <table className="leaderboard-table" style={{ minWidth: '700px' }}>
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Type</th>
+                      <th>Amount</th>
+                      <th>Balance After</th>
+                      <th>Description</th>
+                      <th>Date</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {transactions.map((tx) => (
+                      <tr key={tx.id}>
+                        <td style={{ fontWeight: 600, fontSize: '13px' }}>{tx.username || 'N/A'}</td>
+                        <td style={{ fontSize: '12px' }}>
+                          <span style={{
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            background: tx.type === 'deposit' ? 'rgba(124,179,66,0.15)' : tx.type.includes('reversal') ? 'rgba(229,57,53,0.15)' : 'rgba(124,58,237,0.15)',
+                            color: tx.type === 'deposit' ? 'var(--accent-text)' : tx.type.includes('reversal') ? '#ef5350' : 'var(--accent)',
+                            fontSize: '11px',
+                          }}>
+                            {tx.type}
+                          </span>
+                        </td>
+                        <td style={{ color: parseFloat(tx.amount) >= 0 ? 'var(--accent-text)' : '#ef5350', fontWeight: 600 }}>
+                          {parseFloat(tx.amount) >= 0 ? '+' : ''}{parseFloat(tx.amount).toFixed(2)}
+                        </td>
+                        <td style={{ fontSize: '13px' }}>{tx.balance_after != null ? parseFloat(tx.balance_after).toFixed(2) : '—'}</td>
+                        <td style={{ fontSize: '11px', color: 'var(--text-secondary)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx.description}</td>
+                        <td style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{new Date(tx.created_at).toLocaleDateString()}</td>
+                        <td>
+                          {tx.type !== 'admin_reversal' && (
+                            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                              <input
+                                className="input input-sm"
+                                placeholder="Reason"
+                                value={reverseReasons[tx.id] || ''}
+                                onChange={(e) => setReverseReasons((prev) => ({ ...prev, [tx.id]: e.target.value }))}
+                                style={{ width: '80px', fontSize: '11px' }}
+                              />
+                              <button className="btn btn-danger btn-sm" onClick={() => handleReverseTransaction(tx.id)} style={{ fontSize: '11px', padding: '4px 6px' }}>
+                                Reverse
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {/* Pagination */}
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '16px' }}>
+                <button className="btn btn-ghost btn-sm" disabled={txPage <= 1} onClick={() => fetchTransactions(txPage - 1, txFilter)}>
+                  Prev
+                </button>
+                <span style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '32px' }}>
+                  Page {txPage} of {Math.max(1, Math.ceil(txTotal / 50))}
+                </span>
+                <button className="btn btn-ghost btn-sm" disabled={txPage * 50 >= txTotal} onClick={() => fetchTransactions(txPage + 1, txFilter)}>
+                  Next
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Stress Test Section */}
-      <div style={{ borderTop: '1px solid var(--border)', paddingTop: '24px' }}>
+      {adminTab === 'stress' && (
+      <div>
         <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '16px' }}>Stress Test</h3>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px', marginBottom: '16px' }}>
@@ -433,6 +692,7 @@ const AdminPage = () => {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 };

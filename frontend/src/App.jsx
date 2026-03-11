@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
+import BottomNav from './components/BottomNav.jsx';
 import LobbyPage from './pages/LobbyPage.jsx';
 import LeaderboardPage from './pages/LeaderboardPage.jsx';
 import PlayerProfilePage from './pages/PlayerProfilePage.jsx';
@@ -35,6 +36,7 @@ const App = () => {
           <Route path="/auth/lichess/callback" element={<LichessCallbackPage />} />
         </Routes>
       </Suspense>
+      <BottomNav />
     </>
   );
 };
