@@ -67,7 +67,7 @@ describe('SettingsModal — Animation Speed', () => {
     // localStorage should be updated
     expect(localStorage.getItem('chess_animation_speed')).toBe('fast');
     // updateProfile should be called with animation_speed as 4th arg
-    expect(updateProfile).toHaveBeenCalledWith('Test', 'default', 'default', 'fast');
+    expect(updateProfile).toHaveBeenCalledWith('Test', 'default', 'default', 'fast', true);
   });
 
   it('defaults to normal speed when no setting exists', () => {

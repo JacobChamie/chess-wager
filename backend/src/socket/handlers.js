@@ -3,6 +3,11 @@ import { checkWagerGates } from '../wager/gateCheck.js';
 
 const rateLimiter = createRateLimiter(15, 1000); // 15 events per second
 
+// Global chat buffer (in-memory, last 100 messages)
+const globalChatMessages = [];
+const MAX_GLOBAL_MESSAGES = 100;
+let globalMsgCounter = 0;
+
 // Cheer cooldowns
 const cheerCooldowns = new Map(); // sessionId -> timestamp
 const CHEER_COOLDOWN_MS = 15000;
@@ -510,6 +515,51 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     if (msg) {
       io.to(gameId).emit('spectator:chat:message', msg);
     }
+  });
+
+  // --- Global Chat ---
+
+  socket.on('global:chat:history', () => {
+    if (!checkRate()) return;
+    socket.emit('global:chat:history', globalChatMessages);
+  });
+
+  socket.on('global:chat:send', ({ message }) => {
+    if (!checkRate()) return;
+    if (!authUser?.id) {
+      socket.emit('global:chat:error', { message: 'You must be signed in to chat' });
+      return;
+    }
+    if (!authUser.email_verified) {
+      socket.emit('global:chat:error', { message: 'Please verify your email to chat' });
+      return;
+    }
+    if (!message || typeof message !== 'string') return;
+    const trimmed = message.trim().slice(0, 500);
+    if (!trimmed) return;
+
+    // HTML-escape
+    const escaped = trimmed
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+
+    const msg = {
+      id: ++globalMsgCounter,
+      sender: authUser.id,
+      senderName: authUser.username,
+      message: escaped,
+      timestamp: Date.now(),
+      isPremium: authUser.is_premium || false,
+    };
+
+    globalChatMessages.push(msg);
+    if (globalChatMessages.length > MAX_GLOBAL_MESSAGES) {
+      globalChatMessages.shift();
+    }
+
+    io.emit('global:chat:message', msg);
   });
 
   // --- Disconnect ---

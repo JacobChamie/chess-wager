@@ -97,7 +97,7 @@ router.post('/login', async (req, res) => {
 router.get('/me', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, username, email, rating, avatar_id, is_admin, email_verified, token_balance, board_theme, animation_speed, is_premium, premium_expires_at, created_at FROM users WHERE id = $1',
+      'SELECT id, username, email, rating, avatar_id, is_admin, email_verified, token_balance, board_theme, animation_speed, is_premium, premium_expires_at, profanity_filter, created_at FROM users WHERE id = $1',
       [req.user.id]
     );
     if (!result.rows[0]) {
@@ -122,7 +122,7 @@ const VALID_ANIMATION_SPEEDS = ['instant', 'fast', 'normal', 'slow'];
 
 router.put('/profile', authMiddleware, async (req, res) => {
   try {
-    const { username, avatar_id, board_theme, animation_speed } = req.body;
+    const { username, avatar_id, board_theme, animation_speed, profanity_filter } = req.body;
     if (!username || username.length < 3 || username.length > 32) {
       return res.status(400).json({ error: 'Username must be 3-32 characters' });
     }
@@ -135,13 +135,17 @@ router.put('/profile', authMiddleware, async (req, res) => {
     if (animation_speed && !VALID_ANIMATION_SPEEDS.includes(animation_speed)) {
       return res.status(400).json({ error: 'Invalid animation speed' });
     }
+    if (profanity_filter !== undefined && typeof profanity_filter !== 'boolean') {
+      return res.status(400).json({ error: 'Invalid profanity filter value' });
+    }
 
     const avatarValue = avatar_id || 'default';
     const themeValue = board_theme || 'default';
     const speedValue = animation_speed || 'normal';
+    const profanityValue = typeof profanity_filter === 'boolean' ? profanity_filter : true;
     const result = await pool.query(
-      'UPDATE users SET username = $1, avatar_id = $2, board_theme = $3, animation_speed = $4 WHERE id = $5 RETURNING id, username, email, rating, avatar_id, board_theme, animation_speed, is_premium, premium_expires_at, created_at',
-      [username.trim(), avatarValue, themeValue, speedValue, req.user.id]
+      'UPDATE users SET username = $1, avatar_id = $2, board_theme = $3, animation_speed = $4, profanity_filter = $5 WHERE id = $6 RETURNING id, username, email, rating, avatar_id, board_theme, animation_speed, is_premium, premium_expires_at, profanity_filter, created_at',
+      [username.trim(), avatarValue, themeValue, speedValue, profanityValue, req.user.id]
     );
     if (!result.rows[0]) {
       return res.status(404).json({ error: 'User not found' });

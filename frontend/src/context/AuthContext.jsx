@@ -67,12 +67,13 @@ export const AuthProvider = ({ children }) => {
     updateSocketAuth(null);
   }, []);
 
-  const updateProfile = useCallback(async (username, avatar_id, board_theme, animation_speed) => {
+  const updateProfile = useCallback(async (username, avatar_id, board_theme, animation_speed, profanity_filter) => {
     const token = localStorage.getItem('chess_token');
     const body = { username };
     if (avatar_id) body.avatar_id = avatar_id;
     if (board_theme) body.board_theme = board_theme;
     if (animation_speed) body.animation_speed = animation_speed;
+    if (typeof profanity_filter === 'boolean') body.profanity_filter = profanity_filter;
     const res = await fetch(`${API_URL}/api/auth/profile`, {
       method: 'PUT',
       headers: {

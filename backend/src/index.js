@@ -87,7 +87,7 @@ io.on('connection', async (socket) => {
   // Check if user is banned + fetch premium status
   if (authUser?.id) {
     try {
-      const userCheck = await pool.query('SELECT is_banned, is_premium FROM users WHERE id = $1', [authUser.id]);
+      const userCheck = await pool.query('SELECT is_banned, is_premium, email_verified, username FROM users WHERE id = $1', [authUser.id]);
       if (userCheck.rows[0]?.is_banned) {
         socket.emit('auth:banned');
         socket.disconnect(true);
@@ -95,6 +95,8 @@ io.on('connection', async (socket) => {
       }
       if (userCheck.rows[0]) {
         authUser.is_premium = userCheck.rows[0].is_premium || authUser.is_admin || false;
+        authUser.email_verified = userCheck.rows[0].email_verified || false;
+        authUser.username = userCheck.rows[0].username;
       }
     } catch (err) {
       console.error('User check error:', err.message);

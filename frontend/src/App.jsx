@@ -1,7 +1,8 @@
 import React, { lazy, Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import BottomNav from './components/BottomNav.jsx';
+import GlobalChat from './components/GlobalChat.jsx';
 import LobbyPage from './pages/LobbyPage.jsx';
 import LeaderboardPage from './pages/LeaderboardPage.jsx';
 import PlayerProfilePage from './pages/PlayerProfilePage.jsx';
@@ -21,6 +22,10 @@ const PageFallback = () => (
 );
 
 const App = () => {
+  const location = useLocation();
+  // Show floating chat on non-lobby pages (lobby has inline chat)
+  const isLobby = location.pathname === '/';
+
   return (
     <>
       <Navbar />
@@ -38,6 +43,7 @@ const App = () => {
           <Route path="/auth/lichess/callback" element={<LichessCallbackPage />} />
         </Routes>
       </Suspense>
+      {!isLobby && <GlobalChat floating />}
       <BottomNav />
     </>
   );

@@ -23,6 +23,12 @@ const SettingsModal = ({ onClose }) => {
   const [selectedSpeed, setSelectedSpeed] = useState(
     () => localStorage.getItem('chess_animation_speed') || user?.animation_speed || 'normal'
   );
+  const [profanityFilter, setProfanityFilter] = useState(() => {
+    const stored = localStorage.getItem('chess_profanity_filter');
+    if (stored !== null) return JSON.parse(stored);
+    if (user?.profanity_filter !== undefined) return user.profanity_filter;
+    return true;
+  });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -34,11 +40,12 @@ const SettingsModal = ({ onClose }) => {
     // Always persist to localStorage for immediate use
     localStorage.setItem('chess_board_theme', selectedTheme);
     localStorage.setItem('chess_animation_speed', selectedSpeed);
+    localStorage.setItem('chess_profanity_filter', JSON.stringify(profanityFilter));
 
     if (user) {
       setSaving(true);
       try {
-        await updateProfile(displayName, selectedAvatar, selectedTheme, selectedSpeed);
+        await updateProfile(displayName, selectedAvatar, selectedTheme, selectedSpeed, profanityFilter);
         setSuccess(true);
       } catch (err) {
         setError(err.message);
@@ -166,6 +173,31 @@ const SettingsModal = ({ onClose }) => {
                 <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{speed.ms}ms</span>
               </button>
             ))}
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Profanity Filter</label>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '0 0 8px' }}>
+            Masks offensive language in chat
+          </p>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              type="button"
+              className={`btn btn-sm${profanityFilter ? ' btn-primary' : ' btn-ghost'}`}
+              onClick={() => setProfanityFilter(true)}
+              style={{ flex: 1 }}
+            >
+              On
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm${!profanityFilter ? ' btn-primary' : ' btn-ghost'}`}
+              onClick={() => setProfanityFilter(false)}
+              style={{ flex: 1 }}
+            >
+              Off
+            </button>
           </div>
         </div>
 

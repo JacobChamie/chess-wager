@@ -6,6 +6,7 @@ import OpenGamesBrowser from '../components/OpenGamesBrowser.jsx';
 import BotCard from '../components/BotCard.jsx';
 import WagerSelector from '../components/WagerSelector.jsx';
 import WagerGateSelector from '../components/WagerGateSelector.jsx';
+import GlobalChat from '../components/GlobalChat.jsx';
 
 const DEFAULT_BOT_PERSONALITIES = [
   { id: 'beginner', name: 'Woody', title: 'The Beginner', description: 'Just learning the pieces', rating: 800 },
@@ -69,11 +70,19 @@ const LobbyPage = () => {
   const [botPrivate, setBotPrivate] = useState(false);
   const [wagerAmount, setWagerAmount] = useState(0);
   const [wagerGates, setWagerGates] = useState({});
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [chatExpanded, setChatExpanded] = useState(false);
 
   const getName = useCallback(
     () => user?.username || playerName.trim() || 'Anonymous',
     [user, playerName]
   );
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     socket.connect();
@@ -207,10 +216,19 @@ const LobbyPage = () => {
         padding: '24px 16px',
       }}
     >
+      <div style={{
+        display: 'flex',
+        gap: '20px',
+        width: '100%',
+        maxWidth: isMobile ? '480px' : '820px',
+        flexDirection: isMobile ? 'column' : 'row',
+        justifyContent: 'center',
+        margin: 'auto 0',
+      }}>
       {/* Main card */}
       <div
         className="card"
-        style={{ width: '100%', maxWidth: '480px', padding: '0', margin: 'auto 0' }}
+        style={{ width: '100%', maxWidth: '480px', padding: '0', flex: isMobile ? undefined : '0 0 480px' }}
       >
         {/* Tab bar */}
         <div className="tab-bar">
@@ -753,6 +771,25 @@ const LobbyPage = () => {
             </>
           )}
         </div>
+      </div>
+
+      {/* Global Chat */}
+      {isMobile ? (
+        <div>
+          <button
+            className="btn btn-ghost"
+            onClick={() => setChatExpanded((v) => !v)}
+            style={{ width: '100%', marginBottom: chatExpanded ? '8px' : 0 }}
+          >
+            {chatExpanded ? 'Hide Lobby Chat' : 'Show Lobby Chat'}
+          </button>
+          {chatExpanded && <GlobalChat />}
+        </div>
+      ) : (
+        <div style={{ flex: '1 1 320px', minWidth: '280px', maxWidth: '340px' }}>
+          <GlobalChat />
+        </div>
+      )}
       </div>
 
       {/* Footer */}
