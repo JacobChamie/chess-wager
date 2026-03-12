@@ -94,7 +94,7 @@ io.on('connection', async (socket) => {
         return;
       }
       if (userCheck.rows[0]) {
-        authUser.is_premium = userCheck.rows[0].is_premium || false;
+        authUser.is_premium = userCheck.rows[0].is_premium || authUser.is_admin || false;
       }
     } catch (err) {
       console.error('User check error:', err.message);
