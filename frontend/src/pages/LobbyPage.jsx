@@ -206,29 +206,20 @@ const LobbyPage = () => {
     : `${Math.round(timeControl.time / 60)} min`;
 
   return (
-    <div
-      style={{
-        minHeight: 'calc(100vh - 52px)',
-        background: 'var(--bg-base)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: '24px 16px',
-      }}
-    >
-      <div style={{
-        display: 'flex',
-        gap: '20px',
-        width: '100%',
-        maxWidth: isMobile ? '480px' : '820px',
-        flexDirection: isMobile ? 'column' : 'row',
-        justifyContent: 'center',
-        margin: 'auto 0',
-      }}>
+    <div className={`lobby-layout${isMobile ? ' lobby-layout--mobile' : ''}`}>
+      {/* Global Chat — left panel on desktop, collapsible on mobile */}
+      {!isMobile && (
+        <div className="lobby-chat-panel">
+          <GlobalChat />
+        </div>
+      )}
+
+      {/* Center content */}
+      <div className="lobby-center">
       {/* Main card */}
       <div
         className="card"
-        style={{ width: '100%', maxWidth: '480px', padding: '0', flex: isMobile ? undefined : '0 0 480px' }}
+        style={{ width: '100%', maxWidth: '480px', padding: '0' }}
       >
         {/* Tab bar */}
         <div className="tab-bar">
@@ -773,25 +764,6 @@ const LobbyPage = () => {
         </div>
       </div>
 
-      {/* Global Chat */}
-      {isMobile ? (
-        <div>
-          <button
-            className="btn btn-ghost"
-            onClick={() => setChatExpanded((v) => !v)}
-            style={{ width: '100%', marginBottom: chatExpanded ? '8px' : 0 }}
-          >
-            {chatExpanded ? 'Hide Lobby Chat' : 'Show Lobby Chat'}
-          </button>
-          {chatExpanded && <GlobalChat />}
-        </div>
-      ) : (
-        <div style={{ flex: '1 1 320px', minWidth: '280px', maxWidth: '340px' }}>
-          <GlobalChat />
-        </div>
-      )}
-      </div>
-
       {/* Footer */}
       <p
         style={{
@@ -802,6 +774,21 @@ const LobbyPage = () => {
       >
         ELO Stakes v1.0
       </p>
+      </div>
+
+      {/* Mobile: collapsible chat below lobby */}
+      {isMobile && (
+        <div style={{ padding: '0 16px 16px' }}>
+          <button
+            className="btn btn-ghost"
+            onClick={() => setChatExpanded((v) => !v)}
+            style={{ width: '100%', marginBottom: chatExpanded ? '8px' : 0 }}
+          >
+            {chatExpanded ? 'Hide Lobby Chat' : 'Show Lobby Chat'}
+          </button>
+          {chatExpanded && <GlobalChat />}
+        </div>
+      )}
     </div>
   );
 };
