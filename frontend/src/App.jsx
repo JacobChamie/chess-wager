@@ -1,5 +1,5 @@
-import React, { lazy, Suspense } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import BottomNav from './components/BottomNav.jsx';
 import GlobalChat from './components/GlobalChat.jsx';
@@ -22,28 +22,51 @@ const PageFallback = () => (
 );
 
 const App = () => {
-  const location = useLocation();
-  // Show floating chat on non-lobby pages (lobby has inline chat)
-  const isLobby = location.pathname === '/';
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [chatOpen, setChatOpen] = useState(() => !isMobile);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <>
-      <Navbar />
-      <Suspense fallback={<PageFallback />}>
-        <Routes>
-          <Route path="/" element={<LobbyPage />} />
-          <Route path="/game/:gameId" element={<GamePage />} />
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
-          <Route path="/leaderboard/:username" element={<PlayerProfilePage />} />
-          <Route path="/wallet" element={<WalletPage />} />
-          <Route path="/premium" element={<PremiumPage />} />
-          <Route path="/admin" element={<AdminPage />} />
-          <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/auth/lichess/callback" element={<LichessCallbackPage />} />
-        </Routes>
-      </Suspense>
-      {!isLobby && <GlobalChat floating />}
+      <Navbar onToggleChat={() => setChatOpen((v) => !v)} chatOpen={chatOpen} />
+      <div className="app-body">
+        {chatOpen && !isMobile && (
+          <aside className="app-chat-panel">
+            <GlobalChat />
+          </aside>
+        )}
+        <main className="app-main">
+          <Suspense fallback={<PageFallback />}>
+            <Routes>
+              <Route path="/" element={<LobbyPage />} />
+              <Route path="/game/:gameId" element={<GamePage />} />
+              <Route path="/leaderboard" element={<LeaderboardPage />} />
+              <Route path="/leaderboard/:username" element={<PlayerProfilePage />} />
+              <Route path="/wallet" element={<WalletPage />} />
+              <Route path="/premium" element={<PremiumPage />} />
+              <Route path="/admin" element={<AdminPage />} />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/auth/lichess/callback" element={<LichessCallbackPage />} />
+            </Routes>
+          </Suspense>
+        </main>
+      </div>
+      {isMobile && chatOpen && (
+        <div className="app-chat-mobile-overlay" onClick={() => setChatOpen(false)}>
+          <div className="app-chat-mobile-panel" onClick={(e) => e.stopPropagation()}>
+            <GlobalChat />
+          </div>
+        </div>
+      )}
       <BottomNav />
     </>
   );

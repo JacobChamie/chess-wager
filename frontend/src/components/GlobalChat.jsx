@@ -18,19 +18,12 @@ const formatTime = (timestamp) => {
   return `${h}:${m}`;
 };
 
-/**
- * GlobalChat — renders as an inline panel (in LobbyPage) or as a floating widget (in App.jsx).
- * Props:
- *   floating — if true, renders as fixed-position floating panel with minimize/close
- */
-const GlobalChat = ({ floating = false }) => {
+const GlobalChat = () => {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [showEmojis, setShowEmojis] = useState(false);
   const [error, setError] = useState(null);
-  const [minimized, setMinimized] = useState(false);
-  const [unread, setUnread] = useState(0);
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -51,10 +44,7 @@ const GlobalChat = ({ floating = false }) => {
     socket.emit('global:chat:history');
 
     const onHistory = (history) => setMessages(history);
-    const onMessage = (msg) => {
-      setMessages((prev) => [...prev, msg]);
-      if (minimized) setUnread((c) => c + 1);
-    };
+    const onMessage = (msg) => setMessages((prev) => [...prev, msg]);
     const onError = ({ message }) => {
       setError(message);
       setTimeout(() => setError(null), 4000);
@@ -69,12 +59,11 @@ const GlobalChat = ({ floating = false }) => {
       socket.off('global:chat:message', onMessage);
       socket.off('global:chat:error', onError);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (!minimized) chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, minimized]);
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const handleSend = () => {
     const trimmed = input.trim();
@@ -102,39 +91,11 @@ const GlobalChat = ({ floating = false }) => {
     return 'Type a message';
   };
 
-  const handleExpand = () => {
-    setMinimized(false);
-    setUnread(0);
-  };
+  return (
+    <div className="global-chat">
+      <div className="global-chat-header">Lobby Chat</div>
 
-  // Floating minimized pill
-  if (floating && minimized) {
-    return (
-      <button
-        className="global-chat-fab"
-        onClick={handleExpand}
-      >
-        Lobby Chat{unread > 0 && ` (${unread})`}
-      </button>
-    );
-  }
-
-  const chatContent = (
-    <div className={floating ? 'global-chat global-chat--floating' : 'global-chat'}>
-      <div className="global-chat-header">
-        <span>Lobby Chat</span>
-        {floating && (
-          <button
-            className="global-chat-minimize"
-            onClick={() => setMinimized(true)}
-            title="Minimize"
-          >
-            &mdash;
-          </button>
-        )}
-      </div>
-
-      <div className="chatbox-messages">
+      <div className="global-chat-messages">
         {messages.length === 0 && (
           <div className="chatbox-empty">No messages yet</div>
         )}
@@ -158,15 +119,7 @@ const GlobalChat = ({ floating = false }) => {
       </div>
 
       {error && (
-        <div style={{
-          padding: '6px 12px',
-          fontSize: '12px',
-          color: '#ef5350',
-          background: 'rgba(229, 57, 53, 0.1)',
-          borderTop: '1px solid var(--border)',
-        }}>
-          {error}
-        </div>
+        <div className="global-chat-error">{error}</div>
       )}
 
       {showEmojis && canSend && (
@@ -179,7 +132,7 @@ const GlobalChat = ({ floating = false }) => {
         </div>
       )}
 
-      <div className="chatbox-input-row">
+      <div className="global-chat-input">
         <input
           ref={inputRef}
           className="input input-sm"
@@ -198,8 +151,8 @@ const GlobalChat = ({ floating = false }) => {
             className="btn btn-sm"
             style={{
               padding: '6px 8px',
-              background: showEmojis ? 'var(--accent)' : 'var(--bg-elevated)',
-              border: `1px solid ${showEmojis ? 'var(--accent)' : 'var(--border)'}`,
+              background: showEmojis ? 'var(--accent)' : 'transparent',
+              border: 'none',
               fontSize: '18px',
               lineHeight: 1,
             }}
@@ -217,8 +170,6 @@ const GlobalChat = ({ floating = false }) => {
       </div>
     </div>
   );
-
-  return chatContent;
 };
 
 export default GlobalChat;

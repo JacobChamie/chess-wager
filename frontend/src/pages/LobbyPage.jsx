@@ -6,7 +6,6 @@ import OpenGamesBrowser from '../components/OpenGamesBrowser.jsx';
 import BotCard from '../components/BotCard.jsx';
 import WagerSelector from '../components/WagerSelector.jsx';
 import WagerGateSelector from '../components/WagerGateSelector.jsx';
-import GlobalChat from '../components/GlobalChat.jsx';
 
 const DEFAULT_BOT_PERSONALITIES = [
   { id: 'beginner', name: 'Woody', title: 'The Beginner', description: 'Just learning the pieces', rating: 800 },
@@ -70,19 +69,11 @@ const LobbyPage = () => {
   const [botPrivate, setBotPrivate] = useState(false);
   const [wagerAmount, setWagerAmount] = useState(0);
   const [wagerGates, setWagerGates] = useState({});
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
-  const [chatExpanded, setChatExpanded] = useState(false);
 
   const getName = useCallback(
     () => user?.username || playerName.trim() || 'Anonymous',
     [user, playerName]
   );
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     socket.connect();
@@ -206,20 +197,19 @@ const LobbyPage = () => {
     : `${Math.round(timeControl.time / 60)} min`;
 
   return (
-    <div className={`lobby-layout${isMobile ? ' lobby-layout--mobile' : ''}`}>
-      {/* Global Chat — left panel on desktop, collapsible on mobile */}
-      {!isMobile && (
-        <div className="lobby-chat-panel">
-          <GlobalChat />
-        </div>
-      )}
-
-      {/* Center content */}
-      <div className="lobby-center">
+    <div
+      style={{
+        minHeight: 'calc(100vh - 52px)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        padding: '24px 16px',
+      }}
+    >
       {/* Main card */}
       <div
         className="card"
-        style={{ width: '100%', maxWidth: '480px', padding: '0' }}
+        style={{ width: '100%', maxWidth: '480px', padding: '0', margin: 'auto 0' }}
       >
         {/* Tab bar */}
         <div className="tab-bar">
@@ -774,21 +764,6 @@ const LobbyPage = () => {
       >
         ELO Stakes v1.0
       </p>
-      </div>
-
-      {/* Mobile: collapsible chat below lobby */}
-      {isMobile && (
-        <div style={{ padding: '0 16px 16px' }}>
-          <button
-            className="btn btn-ghost"
-            onClick={() => setChatExpanded((v) => !v)}
-            style={{ width: '100%', marginBottom: chatExpanded ? '8px' : 0 }}
-          >
-            {chatExpanded ? 'Hide Lobby Chat' : 'Show Lobby Chat'}
-          </button>
-          {chatExpanded && <GlobalChat />}
-        </div>
-      )}
     </div>
   );
 };
