@@ -257,7 +257,7 @@ export function useGameSocket(gameId, getBehaviorData) {
         try {
           const data = getBehaviorData();
           socket.emit('fairplay:behavior', { gameId, data });
-        } catch {}
+        } catch { /* ignore */ }
       }
     };
 
