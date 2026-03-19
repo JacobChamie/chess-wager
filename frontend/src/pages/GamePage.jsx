@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGameSocket } from '../hooks/useGameSocket.js';
+import { useBehaviorTracking } from '../hooks/useBehaviorTracking.js';
 import ChessboardComponent from '../components/chessboard.jsx';
 import ChatBox from '../components/chatbox.jsx';
 import Timer from '../components/timer.jsx';
@@ -8,7 +9,9 @@ import GameOverModal from '../components/GameOverModal.jsx';
 import DrawOfferBar from '../components/DrawOfferBar.jsx';
 import PromotionPicker from '../components/PromotionPicker.jsx';
 import ConfettiOverlay from '../components/ConfettiOverlay.jsx';
+import ReportModal from '../components/ReportModal.jsx';
 import { useGameTabTitle } from '../hooks/useGameTabTitle.js';
+import { useAuth } from '../context/AuthContext.jsx';
 import '../game.css';
 
 // Live countdown banner for opponent disconnect
@@ -38,6 +41,12 @@ const DisconnectBanner = ({ disconnectTime }) => {
 const GamePage = () => {
   const { gameId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [showReportModal, setShowReportModal] = useState(false);
+
+  // Initialize behavior tracking (only for active players, not spectators)
+  // We pass a placeholder and update once we know game state
+  const getBehaviorData = useBehaviorTracking(gameId, true, false);
 
   const {
     gameState,
@@ -76,7 +85,7 @@ const GamePage = () => {
     navigateLast,
     navigatePrev,
     navigateNext,
-  } = useGameSocket(gameId);
+  } = useGameSocket(gameId, getBehaviorData);
 
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' && window.innerWidth < 640
@@ -709,6 +718,16 @@ const GamePage = () => {
                     {drawOffer === myColor ? 'Draw Offered' : 'Offer Draw'}
                   </button>
                 )}
+                {user && !gameState?.isBotGame && (
+                  <button
+                    className="btn btn-ghost"
+                    onClick={() => setShowReportModal(true)}
+                    title="Report opponent"
+                    style={{ padding: '8px', minWidth: 'auto' }}
+                  >
+                    {'\u2691'}
+                  </button>
+                )}
               </div>
             )}
 
@@ -761,6 +780,19 @@ const GamePage = () => {
           </div>
           <button className="btn btn-primary btn-sm" onClick={() => navigate('/')}>
             Back to Lobby
+          </button>
+        </div>
+      )}
+
+      {/* Report button after game completes (non-fullscreen) */}
+      {isCompleted && !isSpectator && !isFullscreen && user && !gameState?.isBotGame && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => setShowReportModal(true)}
+            style={{ fontSize: '12px' }}
+          >
+            {'\u2691'} Report Opponent
           </button>
         </div>
       )}
@@ -856,6 +888,13 @@ const GamePage = () => {
             </button>
           </div>
         </div>
+      )}
+      {showReportModal && (
+        <ReportModal
+          opponentId={myColor === 'w' ? gameState.blackUserId : gameState.whiteUserId}
+          gameId={gameId}
+          onClose={() => setShowReportModal(false)}
+        />
       )}
     </div>
   );

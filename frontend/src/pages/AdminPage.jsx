@@ -37,6 +37,22 @@ const AdminPage = () => {
   const [txLoading, setTxLoading] = useState(false);
   const [reverseReasons, setReverseReasons] = useState({});
 
+  // Fair play state
+  const [fpReports, setFpReports] = useState([]);
+  const [fpReportsTotal, setFpReportsTotal] = useState(0);
+  const [fpReportsPage, setFpReportsPage] = useState(1);
+  const [fpReportsFilter, setFpReportsFilter] = useState('open');
+  const [fpReportsLoading, setFpReportsLoading] = useState(false);
+  const [fpReportNotes, setFpReportNotes] = useState({});
+  const [fpReportStatuses, setFpReportStatuses] = useState({});
+
+  const [fpFlagged, setFpFlagged] = useState([]);
+  const [fpFlaggedLoading, setFpFlaggedLoading] = useState(false);
+  const [fpExpandedUser, setFpExpandedUser] = useState(null);
+  const [fpUserProfile, setFpUserProfile] = useState(null);
+  const [fpActionNotes, setFpActionNotes] = useState({});
+  const [fpGameAnalysis, setFpGameAnalysis] = useState(null);
+
   // Stress test state
   const [stConfig, setStConfig] = useState({
     botCount: 6,
@@ -255,11 +271,99 @@ const AdminPage = () => {
     }
   };
 
+  // Fair play handlers
+  const fetchFpReports = useCallback(async (page = 1, status = 'open') => {
+    setFpReportsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/fairplay/admin/reports?page=${page}&limit=20&status=${status}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFpReports(data.reports);
+        setFpReportsTotal(data.total);
+        setFpReportsPage(data.page);
+      }
+    } catch (err) {
+      showMsg('error', err.message);
+    } finally {
+      setFpReportsLoading(false);
+    }
+  }, [token]);
+
+  const handleResolveReport = async (id) => {
+    const status = fpReportStatuses[id];
+    const note = fpReportNotes[id];
+    if (!status) { showMsg('error', 'Select a status'); return; }
+    const data = await adminAction(`${API_URL}/api/fairplay/admin/reports/${id}`, 'PUT', { status, note });
+    if (data) {
+      showMsg('success', 'Report updated');
+      fetchFpReports(fpReportsPage, fpReportsFilter);
+    }
+  };
+
+  const fetchFpFlagged = useCallback(async () => {
+    setFpFlaggedLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/fairplay/admin/flagged`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFpFlagged(data.users);
+      }
+    } catch (err) {
+      showMsg('error', err.message);
+    } finally {
+      setFpFlaggedLoading(false);
+    }
+  }, [token]);
+
+  const fetchFpUserProfile = async (userId) => {
+    try {
+      const res = await fetch(`${API_URL}/api/fairplay/admin/user/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFpUserProfile(data);
+      }
+    } catch (err) {
+      showMsg('error', err.message);
+    }
+  };
+
+  const fetchFpGameAnalysis = async (gameId) => {
+    try {
+      const res = await fetch(`${API_URL}/api/fairplay/admin/game/${gameId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFpGameAnalysis(data);
+      }
+    } catch (err) {
+      showMsg('error', err.message);
+    }
+  };
+
+  const handleFpAction = async (userId, action) => {
+    const note = fpActionNotes[userId] || '';
+    const data = await adminAction(`${API_URL}/api/fairplay/admin/action`, 'POST', { userId, action, note });
+    if (data) {
+      showMsg('success', `Action "${action}" applied`);
+      fetchFpFlagged();
+      if (fpExpandedUser === userId) fetchFpUserProfile(userId);
+    }
+  };
+
   // Fetch data when switching tabs
   useEffect(() => {
     if (adminTab === 'withdrawals') fetchPendingWithdrawals();
     if (adminTab === 'transactions') fetchTransactions(1, txFilter);
-  }, [adminTab, fetchPendingWithdrawals, fetchTransactions, txFilter]);
+    if (adminTab === 'reports') fetchFpReports(1, fpReportsFilter);
+    if (adminTab === 'fairplay') fetchFpFlagged();
+  }, [adminTab, fetchPendingWithdrawals, fetchTransactions, txFilter, fetchFpReports, fpReportsFilter, fetchFpFlagged]);
 
   if (!user?.is_admin) {
     return (
@@ -293,9 +397,9 @@ const AdminPage = () => {
 
       {/* Tab bar */}
       <div className="tab-bar" style={{ marginBottom: '20px' }}>
-        {['users', 'withdrawals', 'transactions', 'stress'].map((t) => (
+        {['users', 'reports', 'fairplay', 'withdrawals', 'transactions', 'stress'].map((t) => (
           <button key={t} className={adminTab === t ? 'active' : ''} onClick={() => setAdminTab(t)}>
-            {t === 'users' ? 'Users' : t === 'withdrawals' ? 'Withdrawals' : t === 'transactions' ? 'Transactions' : 'Stress Test'}
+            {{ users: 'Users', reports: 'Reports', fairplay: 'Fair Play', withdrawals: 'Withdrawals', transactions: 'Transactions', stress: 'Stress Test' }[t]}
           </button>
         ))}
       </div>
@@ -395,6 +499,337 @@ const AdminPage = () => {
             </table>
           </div>
         </>
+      )}
+
+      {/* Reports tab */}
+      {adminTab === 'reports' && (
+        <div>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0 }}>Player Reports</h3>
+            <select
+              className="input input-sm"
+              value={fpReportsFilter}
+              onChange={(e) => setFpReportsFilter(e.target.value)}
+              style={{ width: '140px' }}
+            >
+              <option value="all">All</option>
+              <option value="open">Open</option>
+              <option value="reviewed">Reviewed</option>
+              <option value="resolved">Resolved</option>
+              <option value="dismissed">Dismissed</option>
+            </select>
+          </div>
+          {fpReportsLoading ? (
+            <div className="spinner" style={{ margin: '20px auto' }} />
+          ) : fpReports.length === 0 ? (
+            <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>No reports found</p>
+          ) : (
+            <>
+              <div style={{ overflowX: 'auto' }}>
+                <table className="leaderboard-table" style={{ minWidth: '700px' }}>
+                  <thead>
+                    <tr>
+                      <th>Reporter</th>
+                      <th>Reported</th>
+                      <th>Reason</th>
+                      <th>Game</th>
+                      <th>Date</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fpReports.map((r) => (
+                      <tr key={r.id}>
+                        <td style={{ fontWeight: 600, fontSize: '13px' }}>{r.reporter_name}</td>
+                        <td style={{ fontWeight: 600, fontSize: '13px' }}>{r.reported_name}</td>
+                        <td style={{ fontSize: '12px' }}>
+                          <span style={{
+                            padding: '2px 6px', borderRadius: '4px',
+                            background: r.reason === 'engine_use' ? 'rgba(229,57,53,0.15)' : 'rgba(124,58,237,0.15)',
+                            color: r.reason === 'engine_use' ? '#ef5350' : 'var(--accent)',
+                            fontSize: '11px',
+                          }}>
+                            {r.reason.replace(/_/g, ' ')}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: '11px' }}>{r.game_id || '—'}</td>
+                        <td style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{new Date(r.created_at).toLocaleDateString()}</td>
+                        <td>
+                          <span style={{
+                            padding: '2px 6px', borderRadius: '4px', fontSize: '11px',
+                            background: r.status === 'open' ? 'rgba(255,193,7,0.15)' : r.status === 'resolved' ? 'rgba(124,179,66,0.15)' : 'rgba(150,150,150,0.15)',
+                            color: r.status === 'open' ? '#ffc107' : r.status === 'resolved' ? 'var(--accent-text)' : 'var(--text-secondary)',
+                          }}>
+                            {r.status}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
+                            <select
+                              className="input input-sm"
+                              value={fpReportStatuses[r.id] || ''}
+                              onChange={(e) => setFpReportStatuses(prev => ({ ...prev, [r.id]: e.target.value }))}
+                              style={{ width: '100px', fontSize: '11px' }}
+                            >
+                              <option value="">Status...</option>
+                              <option value="reviewed">Reviewed</option>
+                              <option value="resolved">Resolved</option>
+                              <option value="dismissed">Dismissed</option>
+                            </select>
+                            <input
+                              className="input input-sm"
+                              placeholder="Note"
+                              value={fpReportNotes[r.id] || ''}
+                              onChange={(e) => setFpReportNotes(prev => ({ ...prev, [r.id]: e.target.value }))}
+                              style={{ width: '80px', fontSize: '11px' }}
+                            />
+                            <button className="btn btn-primary btn-sm" onClick={() => handleResolveReport(r.id)} style={{ fontSize: '11px', padding: '4px 8px' }}>
+                              Save
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '16px' }}>
+                <button className="btn btn-ghost btn-sm" disabled={fpReportsPage <= 1} onClick={() => fetchFpReports(fpReportsPage - 1, fpReportsFilter)}>Prev</button>
+                <span style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '32px' }}>
+                  Page {fpReportsPage} of {Math.max(1, Math.ceil(fpReportsTotal / 20))}
+                </span>
+                <button className="btn btn-ghost btn-sm" disabled={fpReportsPage * 20 >= fpReportsTotal} onClick={() => fetchFpReports(fpReportsPage + 1, fpReportsFilter)}>Next</button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Fair Play tab */}
+      {adminTab === 'fairplay' && (
+        <div>
+          <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px' }}>Flagged Users</h3>
+          {fpFlaggedLoading ? (
+            <div className="spinner" style={{ margin: '20px auto' }} />
+          ) : fpFlagged.length === 0 ? (
+            <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>No flagged users</p>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="leaderboard-table" style={{ minWidth: '800px' }}>
+                <thead>
+                  <tr>
+                    <th>Username</th>
+                    <th>Rating</th>
+                    <th>Trust Score</th>
+                    <th>Avg Strength</th>
+                    <th>Avg ACPL</th>
+                    <th>Games</th>
+                    <th>Reports</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fpFlagged.map((u) => (
+                    <tr key={u.user_id} style={{ cursor: 'pointer' }} onClick={() => {
+                      if (fpExpandedUser === u.user_id) { setFpExpandedUser(null); setFpUserProfile(null); }
+                      else { setFpExpandedUser(u.user_id); fetchFpUserProfile(u.user_id); }
+                    }}>
+                      <td style={{ fontWeight: 600 }}>
+                        {u.username}
+                        {u.is_banned && <span style={{ color: '#ef5350', marginLeft: '6px', fontSize: '11px' }}>BANNED</span>}
+                      </td>
+                      <td className="lb-rating">{u.rating}</td>
+                      <td style={{ color: parseFloat(u.trust_score) < 40 ? '#ef5350' : parseFloat(u.trust_score) < 60 ? '#ffc107' : 'var(--text-primary)', fontWeight: 600 }}>
+                        {parseFloat(u.trust_score).toFixed(1)}
+                      </td>
+                      <td>{parseFloat(u.avg_strength).toFixed(1)}</td>
+                      <td>{parseFloat(u.avg_acpl).toFixed(1)}</td>
+                      <td>{u.games_analyzed}</td>
+                      <td>{u.total_reports}</td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }} onClick={e => e.stopPropagation()}>
+                          <input
+                            className="input input-sm"
+                            placeholder="Note"
+                            value={fpActionNotes[u.user_id] || ''}
+                            onChange={(e) => setFpActionNotes(prev => ({ ...prev, [u.user_id]: e.target.value }))}
+                            style={{ width: '80px', fontSize: '11px' }}
+                          />
+                          <button className="btn btn-ghost btn-sm" onClick={() => handleFpAction(u.user_id, 'warn')} style={{ fontSize: '11px', padding: '4px 6px' }}>Warn</button>
+                          <button className="btn btn-danger btn-sm" onClick={() => handleFpAction(u.user_id, 'ban')} style={{ fontSize: '11px', padding: '4px 6px' }}>Ban</button>
+                          <button className="btn btn-primary btn-sm" onClick={() => handleFpAction(u.user_id, 'clear_flag')} style={{ fontSize: '11px', padding: '4px 6px' }}>Clear</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Expanded user detail */}
+          {fpExpandedUser && fpUserProfile && (
+            <div style={{
+              marginTop: '16px', padding: '16px',
+              background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
+            }}>
+              <h4 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '12px' }}>
+                {fpUserProfile.user.username} — Detailed Profile
+              </h4>
+
+              {fpUserProfile.fairPlayScore && (
+                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '12px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                  <span>Trust: <strong style={{ color: 'var(--text-primary)' }}>{parseFloat(fpUserProfile.fairPlayScore.trust_score).toFixed(1)}</strong></span>
+                  <span>Avg Strength: <strong>{parseFloat(fpUserProfile.fairPlayScore.avg_strength).toFixed(1)}</strong></span>
+                  <span>Avg ACPL: <strong>{parseFloat(fpUserProfile.fairPlayScore.avg_acpl).toFixed(1)}</strong></span>
+                  <span>Eng Corr: <strong>{parseFloat(fpUserProfile.fairPlayScore.avg_engine_corr).toFixed(3)}</strong></span>
+                  <span>Tab Switches: <strong>{fpUserProfile.fairPlayScore.total_tab_switches}</strong></span>
+                  {fpUserProfile.fairPlayScore.external_rating && (
+                    <span>External: <strong>{fpUserProfile.fairPlayScore.external_rating} ({fpUserProfile.fairPlayScore.external_platform})</strong></span>
+                  )}
+                  {fpUserProfile.fairPlayScore.flag_reason && (
+                    <span style={{ color: '#ef5350' }}>Flag: {fpUserProfile.fairPlayScore.flag_reason}</span>
+                  )}
+                </div>
+              )}
+
+              {/* Recent game analyses */}
+              {fpUserProfile.recentAnalyses.length > 0 && (
+                <>
+                  <h5 style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>Recent Game Analyses</h5>
+                  <div style={{ overflowX: 'auto', marginBottom: '12px' }}>
+                    <table className="leaderboard-table" style={{ minWidth: '600px', fontSize: '12px' }}>
+                      <thead>
+                        <tr>
+                          <th>Game</th>
+                          <th>Side</th>
+                          <th>Strength</th>
+                          <th>ACPL</th>
+                          <th>Eng Corr</th>
+                          <th>Crit Acc</th>
+                          <th>EPR</th>
+                          <th>Result</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {fpUserProfile.recentAnalyses.map((a) => {
+                          const isWhite = a.white_user_id === fpExpandedUser;
+                          return (
+                            <tr key={a.id} style={{ cursor: 'pointer' }} onClick={() => fetchFpGameAnalysis(a.game_id)}>
+                              <td>{a.game_id}</td>
+                              <td>{isWhite ? 'W' : 'B'}</td>
+                              <td style={{ fontWeight: 600 }}>{parseFloat(isWhite ? a.white_strength_score : a.black_strength_score).toFixed(1)}</td>
+                              <td>{parseFloat(isWhite ? a.white_acpl : a.black_acpl).toFixed(1)}</td>
+                              <td>{parseFloat(isWhite ? a.white_engine_corr : a.black_engine_corr).toFixed(3)}</td>
+                              <td>{parseFloat(isWhite ? a.white_critical_accuracy : a.black_critical_accuracy).toFixed(3)}</td>
+                              <td>{isWhite ? a.white_epr : a.black_epr}</td>
+                              <td>{a.result}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+
+              {/* Game analysis detail (move-by-move) */}
+              {fpGameAnalysis && fpGameAnalysis.move_details && (
+                <>
+                  <h5 style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>
+                    Move Analysis — Game {fpGameAnalysis.game_id}
+                    <button className="btn btn-ghost btn-sm" onClick={() => setFpGameAnalysis(null)} style={{ marginLeft: '8px', fontSize: '11px' }}>Close</button>
+                  </h5>
+                  <div style={{ overflowX: 'auto', maxHeight: '300px', marginBottom: '12px' }}>
+                    <table className="leaderboard-table" style={{ minWidth: '800px', fontSize: '11px' }}>
+                      <thead>
+                        <tr>
+                          <th>Ply</th>
+                          <th>Side</th>
+                          <th>Move</th>
+                          <th>Engine #1</th>
+                          <th>Engine #2</th>
+                          <th>Engine #3</th>
+                          <th>Match</th>
+                          <th>CPL</th>
+                          <th>Cmplx</th>
+                          <th>Time</th>
+                          <th>Cat</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(typeof fpGameAnalysis.move_details === 'string' ? JSON.parse(fpGameAnalysis.move_details) : fpGameAnalysis.move_details).map((m, i) => (
+                          <tr key={i} style={{
+                            background: m.category === 'blunder' ? 'rgba(229,57,53,0.08)' :
+                                        m.category === 'brilliant' ? 'rgba(124,179,66,0.08)' : undefined,
+                          }}>
+                            <td>{m.ply}</td>
+                            <td>{m.color === 'w' ? 'W' : 'B'}</td>
+                            <td style={{ fontWeight: 600 }}>{m.san}</td>
+                            <td>{m.engineTop3?.[0]?.uci || '—'} ({m.engineTop3?.[0]?.cp ?? '—'})</td>
+                            <td>{m.engineTop3?.[1]?.uci || '—'} ({m.engineTop3?.[1]?.cp ?? '—'})</td>
+                            <td>{m.engineTop3?.[2]?.uci || '—'} ({m.engineTop3?.[2]?.cp ?? '—'})</td>
+                            <td style={{ fontWeight: 600, color: m.matchRank === 1 ? 'var(--accent-text)' : m.matchRank === 0 ? '#ef5350' : 'var(--text-secondary)' }}>
+                              {m.matchRank || '—'}
+                            </td>
+                            <td style={{ color: m.cpLoss > 100 ? '#ef5350' : m.cpLoss > 30 ? '#ffc107' : 'var(--text-secondary)' }}>{m.cpLoss}</td>
+                            <td>{m.complexity?.toFixed(2)}</td>
+                            <td>{m.timeMs ? (m.timeMs / 1000).toFixed(1) + 's' : '—'}</td>
+                            <td>
+                              <span style={{
+                                fontSize: '10px', padding: '1px 4px', borderRadius: '3px',
+                                background: m.category === 'brilliant' ? 'rgba(124,179,66,0.2)' :
+                                            m.category === 'blunder' ? 'rgba(229,57,53,0.2)' :
+                                            m.category === 'mistake' ? 'rgba(255,193,7,0.2)' : 'transparent',
+                              }}>
+                                {m.category}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+
+              {/* Behavioral data */}
+              {fpUserProfile.behavior.length > 0 && (
+                <>
+                  <h5 style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>Behavioral Data (Recent Games)</h5>
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+                    {fpUserProfile.behavior.map((b, i) => (
+                      <div key={i} style={{ display: 'flex', gap: '12px', padding: '4px 0', borderBottom: '1px solid var(--border)' }}>
+                        <span>Game: {b.game_id}</span>
+                        <span>Tabs: {b.tab_switches}</span>
+                        <span>Focus: {b.focus_losses}</span>
+                        <span>Copy: {b.copy_events}</span>
+                        <span>Paste: {b.paste_events}</span>
+                        <span>Mouse Entropy: {b.mouse_entropy ?? '—'}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Admin actions history */}
+              {fpUserProfile.actions.length > 0 && (
+                <>
+                  <h5 style={{ fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>Action History</h5>
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                    {fpUserProfile.actions.map((a, i) => (
+                      <div key={i} style={{ padding: '4px 0', borderBottom: '1px solid var(--border)' }}>
+                        <strong>{a.action}</strong> by {a.admin_name} on {new Date(a.created_at).toLocaleDateString()}
+                        {a.note && <span> — {a.note}</span>}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Withdrawals tab */}

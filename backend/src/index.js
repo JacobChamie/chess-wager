@@ -25,6 +25,9 @@ import { WagerService } from './wager/WagerService.js';
 import linkedAccountRoutes from './linkedAccounts/linkedAccountRoutes.js';
 import createPremiumRoutes from './premium/premiumRoutes.js';
 import { PremiumExpiryChecker } from './premium/PremiumExpiryChecker.js';
+import { AnalysisEngine } from './fairplay/AnalysisEngine.js';
+import { FairPlayService } from './fairplay/FairPlayService.js';
+import createFairplayRoutes from './fairplay/fairplayRoutes.js';
 
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
@@ -56,6 +59,8 @@ let depositMonitor = null;
 let withdrawalProcessor = null;
 let sweepManager = null;
 const wagerService = new WagerService(pool);
+const analysisEngine = new AnalysisEngine();
+let fairPlayService = null;
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
@@ -66,6 +71,7 @@ app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/admin', createAdminRoutes(io, botManager, gameManager));
 app.use('/api/linked', linkedAccountRoutes);
 app.use('/api/premium', createPremiumRoutes(pool));
+// Fairplay routes mounted in start() after analysis engine initialization
 // Crypto routes mounted in start() after initialization
 
 let onlineCount = 0;
@@ -108,7 +114,7 @@ io.on('connection', async (socket) => {
   io.emit('online:count', { count: onlineCount, games: activeGames });
 
   console.log(`Connected: socket=${socket.id} session=${sessionId}${authUser ? ` user=${authUser.username}` : ''}`);
-  registerHandlers(io, socket, sessionId, gameManager, lobbyManager, authUser, botGameManager, wagerService, pool);
+  registerHandlers(io, socket, sessionId, gameManager, lobbyManager, authUser, botGameManager, wagerService, pool, fairPlayService);
 
   socket.on('disconnect', () => {
     onlineCount = Math.max(0, onlineCount - 1);
@@ -130,6 +136,17 @@ async function start() {
   } catch (err) {
     console.error('Failed to initialize Stockfish:', err.message);
     console.warn('Bot games will be unavailable');
+  }
+
+  // Initialize fair-play analysis engine (separate Stockfish instance)
+  try {
+    await analysisEngine.init();
+    fairPlayService = new FairPlayService(analysisEngine);
+    app.use('/api/fairplay', createFairplayRoutes(fairPlayService));
+    console.log('Fair-play analysis engine ready');
+  } catch (err) {
+    console.error('Failed to initialize analysis engine:', err.message);
+    console.warn('Fair-play analysis will be unavailable');
   }
 
   // Start premium expiry checker

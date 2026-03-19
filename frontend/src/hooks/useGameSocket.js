@@ -4,7 +4,7 @@ import { socket } from '../socket.js';
 
 const EMPTY_SQUARES = {};
 
-export function useGameSocket(gameId) {
+export function useGameSocket(gameId, getBehaviorData) {
   const [gameState, setGameState] = useState(null);
   const [connected, setConnected] = useState(false);
   const [drawOffer, setDrawOffer] = useState(null);
@@ -252,6 +252,13 @@ export function useGameSocket(gameId) {
       // Clear premoves on game end
       premoveQueueRef.current = [];
       setPremoveSquares(EMPTY_SQUARES);
+      // Send behavioral data for fair-play analysis
+      if (getBehaviorData && myColorRef.current) {
+        try {
+          const data = getBehaviorData();
+          socket.emit('fairplay:behavior', { gameId, data });
+        } catch {}
+      }
     };
 
     const onInvalidMove = ({ message }) => {
@@ -328,7 +335,7 @@ export function useGameSocket(gameId) {
       socket.off('spectator:chat:message', onSpectatorChatMessage);
       socket.off('game:cheer_received', onCheerReceived);
     };
-  }, [gameId, _updatePremoveHighlights]);
+  }, [gameId, _updatePremoveHighlights, getBehaviorData]);
 
   // Validate move locally and optimistically update gameState
   const tryLocalMove = useCallback((from, to, promotion) => {

@@ -349,6 +349,8 @@ export class GameRoom {
       isWagerGame: this.isWagerGame,
       whiteIsPremium: this.white?.isPremium || false,
       blackIsPremium: this.black?.isPremium || false,
+      whiteUserId: this.white?.userId || null,
+      blackUserId: this.black?.userId || null,
     };
   }
 

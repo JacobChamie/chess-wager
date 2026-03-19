@@ -26,7 +26,7 @@ function broadcastLobbyState(io, lobbyManager, gameManager) {
   }
 }
 
-export function registerHandlers(io, socket, sessionId, gameManager, lobbyManager, authUser, botGameManager, wagerService, pool) {
+export function registerHandlers(io, socket, sessionId, gameManager, lobbyManager, authUser, botGameManager, wagerService, pool, fairPlayService) {
   const checkRate = () => {
     if (!rateLimiter(socket.id)) {
       console.warn(`[RateLimit] Socket ${socket.id} exceeded rate limit`);
@@ -92,7 +92,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       }
 
       _emitGameStart(io, room, player1, player2);
-      _setupGameCallbacks(io, room, gameManager, lobbyManager, wagerService);
+      _setupGameCallbacks(io, room, gameManager, lobbyManager, wagerService, fairPlayService);
     } else {
       socket.emit('lobby:queued', {});
     }
@@ -186,7 +186,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     }
 
     _emitGameStart(io, room, creator, joiner);
-    _setupGameCallbacks(io, room, gameManager, lobbyManager, wagerService);
+    _setupGameCallbacks(io, room, gameManager, lobbyManager, wagerService, fairPlayService);
     broadcastLobbyState(io, lobbyManager, gameManager);
   });
 
@@ -318,6 +318,12 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       }
       io.to(gameId).emit('game:over', result.gameOver);
       gameManager.persistGame(gameId);
+      // Trigger fair-play analysis for non-bot games
+      if (fairPlayService && !room.isBotGame && room.white?.userId && room.black?.userId) {
+        fairPlayService.analyzeGame(room.gameId).catch(err =>
+          console.error(`Fair play analysis error for ${room.gameId}:`, err.message)
+        );
+      }
       broadcastLobbyState(io, lobbyManager, gameManager);
     }
 
@@ -427,7 +433,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       gameManager.trackSession(oldWhite.sessionId, newGameId);
       gameManager.trackSession(oldBlack.sessionId, newGameId);
 
-      _setupGameCallbacks(io, newRoom, gameManager);
+      _setupGameCallbacks(io, newRoom, gameManager, lobbyManager, wagerService, fairPlayService);
 
       [oldWhite, oldBlack].forEach((player) => {
         const sock = io.sockets.sockets.get(player.socketId);
@@ -562,6 +568,31 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     io.emit('global:chat:message', msg);
   });
 
+  // --- Fair Play Events ---
+
+  socket.on('fairplay:behavior', ({ gameId, data }) => {
+    if (!checkRate()) return;
+    if (!authUser?.id || !gameId || !data) return;
+    if (fairPlayService) {
+      fairPlayService.behaviorTracker.saveBehavior(gameId, authUser.id, data).catch(err =>
+        console.error(`[FairPlay] Behavior save error:`, err.message)
+      );
+    }
+  });
+
+  socket.on('fairplay:report', async ({ reportedId, gameId, reason, details }) => {
+    if (!checkRate()) return;
+    if (!authUser?.id || !reportedId || !reason) return;
+    if (fairPlayService) {
+      try {
+        await fairPlayService.submitReport(authUser.id, reportedId, gameId, reason, details);
+        socket.emit('fairplay:report_success');
+      } catch (err) {
+        socket.emit('fairplay:report_error', { message: err.message });
+      }
+    }
+  });
+
   // --- Disconnect ---
 
   socket.on('disconnect', () => {
@@ -649,7 +680,7 @@ function _emitGameStart(io, room, playerA, playerB) {
   }
 }
 
-function _setupGameCallbacks(io, room, gameManager, lobbyManager, wagerService) {
+function _setupGameCallbacks(io, room, gameManager, lobbyManager, wagerService, fairPlayService) {
   const gameId = room.gameId;
 
   room.onClockUpdate = (times) => {
@@ -666,6 +697,12 @@ function _setupGameCallbacks(io, room, gameManager, lobbyManager, wagerService) 
 
     io.to(gameId).emit('game:over', result);
     gameManager.persistGame(gameId);
+    // Trigger fair-play analysis for non-bot games
+    if (fairPlayService && !room.isBotGame && room.white?.userId && room.black?.userId) {
+      fairPlayService.analyzeGame(room.gameId).catch(err =>
+        console.error(`Fair play analysis error for ${room.gameId}:`, err.message)
+      );
+    }
     broadcastLobbyState(io, lobbyManager, gameManager);
   };
 }
