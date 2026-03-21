@@ -8,6 +8,7 @@ import { BotGameManager } from '../../../src/bot/BotGameManager.js';
 import { registerHandlers } from '../../../src/socket/handlers.js';
 import { createMockPool } from '../../helpers/mockPool.js';
 import { WagerService } from '../../../src/wager/WagerService.js';
+import { MockFairPlayService } from '../../helpers/mockFairPlayService.js';
 
 /**
  * Mock Stockfish engine that returns the first legal move.
@@ -60,6 +61,11 @@ export async function createTestServer(opts = {}) {
     wagerService.settleWager = vi.fn().mockResolvedValue(undefined);
   }
 
+  let fairPlayService = null;
+  if (opts.enableFairPlay) {
+    fairPlayService = new MockFairPlayService();
+  }
+
   let onlineCount = 0;
 
   io.on('connection', (socket) => {
@@ -69,11 +75,14 @@ export async function createTestServer(opts = {}) {
       return;
     }
 
+    // Allow tests to pass authUser via socket handshake
+    const authUser = socket.handshake.auth?.authUser || null;
+
     onlineCount++;
     const activeGames = gameManager.getActiveGames().length;
     io.emit('online:count', { count: onlineCount, games: activeGames });
 
-    registerHandlers(io, socket, sessionId, gameManager, lobbyManager, null, botGameManager, wagerService, pool);
+    registerHandlers(io, socket, sessionId, gameManager, lobbyManager, authUser, botGameManager, wagerService, pool, fairPlayService);
 
     socket.on('disconnect', () => {
       onlineCount = Math.max(0, onlineCount - 1);
@@ -96,6 +105,7 @@ export async function createTestServer(opts = {}) {
     lobbyManager,
     botGameManager,
     wagerService,
+    fairPlayService,
     pool,
     port,
     url,

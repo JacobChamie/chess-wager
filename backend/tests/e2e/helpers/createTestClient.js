@@ -4,10 +4,12 @@ import { io as ioc } from 'socket.io-client';
  * Connect a socket.io-client to the test server.
  * Resolves with the connected socket.
  */
-export function connectClient(url, sessionId) {
+export function connectClient(url, sessionId, opts = {}) {
   return new Promise((resolve, reject) => {
+    const auth = { sessionId };
+    if (opts.authUser) auth.authUser = opts.authUser;
     const socket = ioc(url, {
-      auth: { sessionId },
+      auth,
       forceNew: true,
       transports: ['websocket'],
     });

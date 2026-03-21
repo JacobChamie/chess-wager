@@ -151,14 +151,26 @@ export class GameAnalyzer {
       const bestUci = result.moves[0].uci;
       const matched = pos.uci === bestUci;
 
+      // Calculate actual cp loss for non-top-1 moves
+      let cpLoss = 0;
+      if (!matched && result.moves[0]) {
+        const postEval = await this.engine.quickEval(pos.postFen, QUICK_SCREEN_DEPTH);
+        if (postEval && postEval.moves.length > 0) {
+          const playerCp = -postEval.moves[0].cp;
+          cpLoss = Math.abs(result.moves[0].cp - playerCp);
+        } else {
+          cpLoss = 30; // fallback
+        }
+      }
+
       if (pos.color === 'w') {
         whiteTotal++;
         if (matched) whiteMatches++;
-        else whiteCpLossSum += 30; // rough estimate for non-matches
+        else whiteCpLossSum += cpLoss;
       } else {
         blackTotal++;
         if (matched) blackMatches++;
-        else blackCpLossSum += 30;
+        else blackCpLossSum += cpLoss;
       }
     }
 

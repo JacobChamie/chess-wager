@@ -54,8 +54,9 @@ export class BehaviorTracker {
       displacements.push(Math.sqrt(dx * dx + dy * dy));
     }
 
+    if (displacements.length < 2) return 0;
     const mean = displacements.reduce((a, b) => a + b, 0) / displacements.length;
-    const variance = displacements.reduce((a, d) => a + (d - mean) ** 2, 0) / displacements.length;
+    const variance = displacements.reduce((a, d) => a + (d - mean) ** 2, 0) / (displacements.length - 1);
     return Math.round(Math.sqrt(variance) * 1000) / 1000;
   }
 }

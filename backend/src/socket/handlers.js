@@ -347,6 +347,12 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       }
       io.to(gameId).emit('game:over', result);
       gameManager.persistGame(gameId);
+      // Trigger fair-play analysis for non-bot games
+      if (fairPlayService && !room.isBotGame && room.white?.userId && room.black?.userId) {
+        fairPlayService.analyzeGame(room.gameId).catch(err =>
+          console.error(`Fair play analysis error for ${room.gameId}:`, err.message)
+        );
+      }
       broadcastLobbyState(io, lobbyManager, gameManager);
     }
   });
@@ -389,6 +395,12 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       }
       io.to(gameId).emit('game:over', result);
       gameManager.persistGame(gameId);
+      // Trigger fair-play analysis for non-bot games
+      if (fairPlayService && !room.isBotGame && room.white?.userId && room.black?.userId) {
+        fairPlayService.analyzeGame(room.gameId).catch(err =>
+          console.error(`Fair play analysis error for ${room.gameId}:`, err.message)
+        );
+      }
       broadcastLobbyState(io, lobbyManager, gameManager);
     } else if (result.declined) {
       io.to(gameId).emit('game:draw_declined', {});
