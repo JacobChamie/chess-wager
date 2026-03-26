@@ -86,6 +86,7 @@ describe('FairPlayService', () => {
         .mockResolvedValueOnce({ rows: [{ count: String(opts.totalReports) }] }) // reports
         .mockResolvedValueOnce({ rows: [{ rating: opts.rating, created_at: opts.accountAge }] }) // user
         .mockResolvedValueOnce({ rows: opts.linkedAccounts }) // linked accounts
+        .mockResolvedValueOnce({ rows: [{ is_flagged: false }] }) // prevScore check
         .mockResolvedValueOnce({ rows: [] }); // upsert
     }
 
@@ -93,7 +94,7 @@ describe('FairPlayService', () => {
       setupScoreQueryMocks({ analyses: [{ strength: 55, corr: 0.4, acpl: 35, timing: 0.2 }] });
       await service.updateFairPlayScore('u1');
 
-      const upsertCall = pool.query.mock.calls[5];
+      const upsertCall = pool.query.mock.calls[6];
       const trustScore = upsertCall[1][1];
       expect(trustScore).toBeGreaterThanOrEqual(90);
     });
@@ -103,7 +104,7 @@ describe('FairPlayService', () => {
       setupScoreQueryMocks({ analyses: [{ strength: 100, corr: 0.9, acpl: 5, timing: 0.1 }] });
       await service.updateFairPlayScore('u1');
 
-      const upsertCall = pool.query.mock.calls[5];
+      const upsertCall = pool.query.mock.calls[6];
       const trustScore = upsertCall[1][1];
       expect(trustScore).toBeLessThanOrEqual(70);
     });
@@ -112,7 +113,7 @@ describe('FairPlayService', () => {
       setupScoreQueryMocks({ analyses: [{ strength: 55, corr: 0.4, acpl: 35, timing: 0.8 }] });
       await service.updateFairPlayScore('u1');
 
-      const upsertCall = pool.query.mock.calls[5];
+      const upsertCall = pool.query.mock.calls[6];
       const trustScore = upsertCall[1][1];
       expect(trustScore).toBeLessThanOrEqual(90);
     });
@@ -121,7 +122,7 @@ describe('FairPlayService', () => {
       setupScoreQueryMocks({ totalTabs: 10 });
       await service.updateFairPlayScore('u1');
 
-      const upsertCall = pool.query.mock.calls[5];
+      const upsertCall = pool.query.mock.calls[6];
       const trustScore = upsertCall[1][1];
       expect(trustScore).toBeLessThanOrEqual(90);
     });
@@ -130,7 +131,7 @@ describe('FairPlayService', () => {
       setupScoreQueryMocks({ totalReports: 5 });
       await service.updateFairPlayScore('u1');
 
-      const upsertCall = pool.query.mock.calls[5];
+      const upsertCall = pool.query.mock.calls[6];
       const trustScore = upsertCall[1][1];
       expect(trustScore).toBeLessThanOrEqual(90);
     });
@@ -145,7 +146,7 @@ describe('FairPlayService', () => {
       });
       await service.updateFairPlayScore('u1');
 
-      const upsertCall = pool.query.mock.calls[5];
+      const upsertCall = pool.query.mock.calls[6];
       const trustScore = upsertCall[1][1];
       expect(trustScore).toBeLessThanOrEqual(92);
     });
@@ -156,7 +157,7 @@ describe('FairPlayService', () => {
       });
       await service.updateFairPlayScore('u1');
 
-      const upsertCall = pool.query.mock.calls[5];
+      const upsertCall = pool.query.mock.calls[6];
       const trustScore = upsertCall[1][1];
       expect(trustScore).toBeLessThanOrEqual(95);
     });
@@ -175,7 +176,7 @@ describe('FairPlayService', () => {
       });
       await service.updateFairPlayScore('u1');
 
-      const upsertCall = pool.query.mock.calls[5];
+      const upsertCall = pool.query.mock.calls[6];
       const trustScore = upsertCall[1][1];
       expect(trustScore).toBeGreaterThanOrEqual(0);
       expect(trustScore).toBeLessThanOrEqual(100);
@@ -194,7 +195,7 @@ describe('FairPlayService', () => {
       });
       await service.updateFairPlayScore('u1');
 
-      const upsertCall = pool.query.mock.calls[5];
+      const upsertCall = pool.query.mock.calls[6];
       const isFlagged = upsertCall[1][11];
       expect(isFlagged).toBe(true);
     });
