@@ -146,6 +146,41 @@ export async function sendWithdrawalAdminNotification({ withdrawalId, username, 
   }
 }
 
+export async function sendEngineFlagAlert({ username, userId, gameId, trustScore, avgStrength, engineCorr, acpl, flagReason }) {
+  if (!resend) { console.warn('Resend not initialized, skipping engine flag alert'); return; }
+  const appUrl = process.env.APP_URL || 'http://localhost:5173';
+
+  const { data, error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: ADMIN_EMAIL,
+    subject: `Engine Alert — ${username} flagged (trust: ${trustScore.toFixed(0)})`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #1a1a2e; color: #e0e0e0; border-radius: 12px;">
+        <h1 style="color: #e53935; margin-bottom: 24px;">Engine Assistance Detected</h1>
+        <p style="font-size: 16px; line-height: 1.5;">A player has been flagged for suspected engine use.</p>
+        <table style="width: 100%; margin: 20px 0; border-collapse: collapse;">
+          <tr><td style="padding: 8px 0; color: #999;">Player</td><td style="padding: 8px 0; text-align: right;">${username}</td></tr>
+          <tr><td style="padding: 8px 0; color: #999;">User ID</td><td style="padding: 8px 0; text-align: right; font-size: 12px;">${userId}</td></tr>
+          ${gameId ? `<tr><td style="padding: 8px 0; color: #999;">Game ID</td><td style="padding: 8px 0; text-align: right; font-size: 12px;">${gameId}</td></tr>` : ''}
+          <tr><td style="padding: 8px 0; color: #999;">Trust Score</td><td style="padding: 8px 0; text-align: right; color: #e53935; font-weight: 600;">${trustScore.toFixed(1)} / 100</td></tr>
+          <tr><td style="padding: 8px 0; color: #999;">Avg Strength</td><td style="padding: 8px 0; text-align: right;">${avgStrength.toFixed(1)}</td></tr>
+          <tr><td style="padding: 8px 0; color: #999;">Engine Correlation</td><td style="padding: 8px 0; text-align: right;">${(engineCorr * 100).toFixed(1)}%</td></tr>
+          <tr><td style="padding: 8px 0; color: #999;">Avg CPL</td><td style="padding: 8px 0; text-align: right;">${acpl.toFixed(1)}</td></tr>
+        </table>
+        <p style="font-size: 13px; color: #999;">${flagReason}</p>
+        <a href="${appUrl}/admin" style="display: inline-block; margin: 16px 0; padding: 12px 32px; background: #e53935; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
+          Review in Admin Panel
+        </a>
+      </div>
+    `,
+  });
+  if (error) {
+    console.error('Resend engine flag alert error:', JSON.stringify(error));
+  } else {
+    console.log('Engine flag alert sent to admin:', data?.id);
+  }
+}
+
 export async function sendDepositReceiptEmail(email, username, { amount, asset, chain, usdValue, tokensCredited, txHash }) {
   if (!resend) { console.warn('Resend not initialized, skipping receipt email'); return; }
 

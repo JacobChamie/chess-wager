@@ -192,24 +192,26 @@ export default function createCryptoRoutes(pool, walletManager, priceService) {
           message: feeExempt ? 'Processing immediately' : 'Submitted for admin approval',
         });
 
-        // Send email notifications for non-fee-exempt withdrawals (fire-and-forget)
-        if (!feeExempt) {
-          (async () => {
-            try {
-              const userRes = await pool.query('SELECT email, username FROM users WHERE id = $1', [req.user.id]);
-              const user = userRes.rows[0];
-              if (user) {
-                const emailDetails = { amountTokens: amount, amountCrypto, asset, chain, toAddress: to_address, fee };
-                await Promise.allSettled([
-                  sendWithdrawalPendingEmail(user.email, user.username, emailDetails),
-                  sendWithdrawalAdminNotification({ withdrawalId, username: user.username, email: user.email, ...emailDetails }),
-                ]);
+        // Send email notifications (fire-and-forget)
+        (async () => {
+          try {
+            const userRes = await pool.query('SELECT email, username FROM users WHERE id = $1', [req.user.id]);
+            const user = userRes.rows[0];
+            if (user) {
+              const emailDetails = { amountTokens: amount, amountCrypto, asset, chain, toAddress: to_address, fee };
+              const emails = [
+                sendWithdrawalAdminNotification({ withdrawalId, username: user.username, email: user.email, ...emailDetails }),
+              ];
+              // Also notify the user if their withdrawal requires approval
+              if (!feeExempt) {
+                emails.push(sendWithdrawalPendingEmail(user.email, user.username, emailDetails));
               }
-            } catch (err) {
-              console.error('Withdrawal email notification error:', err.message);
+              await Promise.allSettled(emails);
             }
-          })();
-        }
+          } catch (err) {
+            console.error('Withdrawal email notification error:', err.message);
+          }
+        })();
       } catch (err) {
         await client.query('ROLLBACK');
         throw err;

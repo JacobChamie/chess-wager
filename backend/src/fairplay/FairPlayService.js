@@ -1,6 +1,7 @@
 import { pool } from '../config/db.js';
 import { GameAnalyzer } from './GameAnalyzer.js';
 import { BehaviorTracker } from './BehaviorTracker.js';
+import { sendEngineFlagAlert } from '../email/emailService.js';
 
 /**
  * Orchestrates fair-play analysis: reports, game analysis, scoring, flagging.
@@ -145,17 +146,17 @@ export class FairPlayService {
 
     // Update aggregate scores for both players
     if (game.white_user_id) {
-      await this.updateFairPlayScore(game.white_user_id);
+      await this.updateFairPlayScore(game.white_user_id, gameId);
     }
     if (game.black_user_id) {
-      await this.updateFairPlayScore(game.black_user_id);
+      await this.updateFairPlayScore(game.black_user_id, gameId);
     }
   }
 
   /**
    * Aggregate fair play score from last 20 analyses + behavior + reports.
    */
-  async updateFairPlayScore(userId) {
+  async updateFairPlayScore(userId, triggeringGameId = null) {
     // Get last 20 game analyses for this user
     const analyses = await pool.query(`
       SELECT
@@ -259,6 +260,16 @@ export class FairPlayService {
       ? `Trust score ${trustScore.toFixed(1)} — avg strength ${avgStrength.toFixed(1)}, z-score ${zScore.toFixed(1)}, reports ${totalReports}`
       : null;
 
+    // Check if this is a newly flagged user (wasn't flagged before)
+    let wasAlreadyFlagged = false;
+    const prevScore = await pool.query(
+      'SELECT is_flagged FROM fair_play_scores WHERE user_id = $1',
+      [userId]
+    );
+    if (prevScore.rows[0]) {
+      wasAlreadyFlagged = prevScore.rows[0].is_flagged;
+    }
+
     await pool.query(`
       INSERT INTO fair_play_scores (
         user_id, trust_score, games_analyzed, avg_strength, avg_engine_corr, avg_acpl,
@@ -276,6 +287,27 @@ export class FairPlayService {
       totalTabSwitches, totalReports, externalRating, externalPlatform,
       ratingDiscrepancy, isFlagged, isFlagged ? new Date() : null, flagReason,
     ]);
+
+    // Send admin email alert for newly flagged non-admin, non-bot users
+    if (isFlagged && !wasAlreadyFlagged) {
+      const flaggedUser = await pool.query(
+        'SELECT username, is_admin, email FROM users WHERE id = $1',
+        [userId]
+      );
+      const u = flaggedUser.rows[0];
+      if (u && !u.is_admin && !u.username.startsWith('[BOT] ') && !u.email.endsWith('@stress.test')) {
+        sendEngineFlagAlert({
+          username: u.username,
+          userId,
+          gameId: triggeringGameId,
+          trustScore,
+          avgStrength,
+          engineCorr: avgCorr,
+          acpl: avgACPL,
+          flagReason,
+        }).catch(err => console.error('Engine flag alert email error:', err.message));
+      }
+    }
   }
 
   _expectedStrength(rating) {
