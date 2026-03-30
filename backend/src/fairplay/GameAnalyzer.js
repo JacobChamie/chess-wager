@@ -326,6 +326,29 @@ export class GameAnalyzer {
       timingSuspicion = Math.min(1, timingSuspicion);
     }
 
+    // Flat timing CV: low coefficient of variation = suspiciously uniform think times.
+    // Only consider moves where the player had to think (>1500ms, exclude forced recaptures).
+    const thinkMoves = playerMoves.filter(m => m.timeMs > 1500 && !m.wasCapture && !m.wasCheck);
+    let flatTimingCV = null;
+    if (thinkMoves.length >= 8) {
+      const times = thinkMoves.map(m => m.timeMs);
+      const mean = times.reduce((a, b) => a + b, 0) / times.length;
+      if (mean > 0) {
+        const variance = times.reduce((a, t) => a + (t - mean) ** 2, 0) / (times.length - 1);
+        flatTimingCV = Math.round((Math.sqrt(variance) / mean) * 1000) / 1000;
+      }
+    }
+
+    // cpLoss vs complexity correlation: normal players struggle more on complex positions.
+    // Negative correlation (better on hard than easy) is a selective-cheating red flag.
+    let cpLossComplexityCorr = null;
+    if (cpLossArray.length >= 10) {
+      const complexitiesForMoves = playerMoves.map(m => m.complexity);
+      cpLossComplexityCorr = Math.round(
+        this._pearsonCorrelation(cpLossArray, complexitiesForMoves) * 1000
+      ) / 1000;
+    }
+
     // Expected Performance Rating
     const expectedStrength = this._expectedStrengthForRating(rating, tcSeconds);
     const epr = Math.round(rating + (strengthScore - expectedStrength) * 15);
@@ -336,6 +359,8 @@ export class GameAnalyzer {
       acpl: Math.round(acpl * 10) / 10,
       criticalAccuracy: Math.round(criticalAccuracy * 1000) / 1000,
       timingSuspicion: Math.round(timingSuspicion * 1000) / 1000,
+      flatTimingCV,
+      cpLossComplexityCorr,
       epr,
       moveCount: playerMoves.length,
       top1Matches,

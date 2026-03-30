@@ -69,9 +69,18 @@ describe('FairPlayService', () => {
   });
 
   describe('updateFairPlayScore', () => {
+    // Default analysis row shape (matches the extended JOIN query)
+    const makeAnalysisRow = (overrides = {}) => ({
+      strength: 70, corr: 0.6, acpl: 25, timing: 0.3,
+      epr: 1500, flat_timing_cv: null, player_color: 'w',
+      raw_events: null, tab_switches: 0, started_at: null,
+      move_details: null, game_id: 'g1',
+      ...overrides,
+    });
+
     function setupScoreQueryMocks(overrides = {}) {
       const defaults = {
-        analyses: [{ strength: 70, corr: 0.6, acpl: 25, timing: 0.3 }],
+        analyses: [makeAnalysisRow()],
         totalTabs: 2,
         totalReports: 0,
         rating: 1500,
@@ -79,16 +88,24 @@ describe('FairPlayService', () => {
         linkedAccounts: [],
       };
       const opts = { ...defaults, ...overrides };
+      // Normalise analyses rows so every entry has the full shape
+      const analysesRows = opts.analyses.map(r =>
+        typeof r.game_id === 'undefined' ? makeAnalysisRow(r) : r
+      );
 
       pool.query
-        .mockResolvedValueOnce({ rows: opts.analyses }) // analyses
+        .mockResolvedValueOnce({ rows: analysesRows }) // analyses (call 0)
+        // Promise.all([behavior, reports, user]) — calls 1, 2, 3
         .mockResolvedValueOnce({ rows: [{ total_tabs: String(opts.totalTabs) }] }) // behavior
         .mockResolvedValueOnce({ rows: [{ count: String(opts.totalReports) }] }) // reports
         .mockResolvedValueOnce({ rows: [{ rating: opts.rating, created_at: opts.accountAge }] }) // user
-        .mockResolvedValueOnce({ rows: opts.linkedAccounts }) // linked accounts
-        .mockResolvedValueOnce({ rows: [{ is_flagged: false }] }) // prevScore check
-        .mockResolvedValueOnce({ rows: [] }); // upsert
+        .mockResolvedValueOnce({ rows: opts.linkedAccounts }) // linked accounts (call 4)
+        .mockResolvedValueOnce({ rows: [{ is_flagged: false, confirmed_flag: false }] }) // prevScore (call 5)
+        .mockResolvedValueOnce({ rows: [] }); // upsert (call 6)
     }
+
+    // isFlagged is now the 15th parameter ($15, index 14 in the params array)
+    const IS_FLAGGED_IDX = 14;
 
     it('should not deduct for normal play', async () => {
       setupScoreQueryMocks({ analyses: [{ strength: 55, corr: 0.4, acpl: 35, timing: 0.2 }] });
@@ -196,7 +213,7 @@ describe('FairPlayService', () => {
       await service.updateFairPlayScore('u1');
 
       const upsertCall = pool.query.mock.calls[6];
-      const isFlagged = upsertCall[1][11];
+      const isFlagged = upsertCall[1][IS_FLAGGED_IDX];
       expect(isFlagged).toBe(true);
     });
   });
