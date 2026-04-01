@@ -227,10 +227,21 @@ describe('E2E: Premium Features', () => {
 
     await Promise.all([start1, start2]);
 
-    // Observer requests lobby state
-    const statePromise = waitForEvent(c3, 'lobby:state_update');
-    c3.emit('lobby:get_state');
-    const state = await statePromise;
+    // Observer requests lobby state — keep polling until the active game is visible.
+    // Stale broadcastLobbyState calls from previous-test disconnect handlers can
+    // deliver a 0-game snapshot before the response to our explicit get_state arrives.
+    const state = await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('Timeout waiting for active game in lobby state')), 5000);
+      const handler = (s) => {
+        if (s.activeGames && s.activeGames.length >= 1) {
+          clearTimeout(timer);
+          c3.off('lobby:state_update', handler);
+          resolve(s);
+        }
+      };
+      c3.on('lobby:state_update', handler);
+      c3.emit('lobby:get_state');
+    });
 
     expect(state.activeGames.length).toBeGreaterThanOrEqual(1);
     const game = state.activeGames[0];
