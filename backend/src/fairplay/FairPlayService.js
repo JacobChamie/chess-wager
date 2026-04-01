@@ -1,6 +1,7 @@
 import { pool } from '../config/db.js';
 import { GameAnalyzer } from './GameAnalyzer.js';
 import { BehaviorTracker } from './BehaviorTracker.js';
+import { LiveCheatDetector } from './LiveCheatDetector.js';
 import { sendEngineFlagAlert } from '../email/emailService.js';
 
 /**
@@ -10,6 +11,7 @@ export class FairPlayService {
   constructor(analysisEngine) {
     this.analyzer = new GameAnalyzer(analysisEngine);
     this.behaviorTracker = new BehaviorTracker();
+    this.liveDetector = new LiveCheatDetector(analysisEngine);
   }
 
   // --- Reports ---
@@ -157,6 +159,68 @@ export class FairPlayService {
     if (game.black_user_id) {
       await this.updateFairPlayScore(game.black_user_id, gameId);
     }
+
+    // Resolve any live flag raised during this game now that deep analysis is done
+    await this._resolveLiveFlag(gameId, game.white_user_id, game.black_user_id);
+  }
+
+  /**
+   * Resolve live cheat flags for a game after post-game deep analysis completes.
+   * If both players' trust scores are clean (≥ 60), mark flags as 'cleared'.
+   * Otherwise mark as 'confirmed' so the wager stays held for admin review.
+   */
+  async _resolveLiveFlag(gameId, whiteUserId, blackUserId) {
+    // Check whether a live flag exists for this game
+    const flagRes = await pool.query(
+      `SELECT id FROM live_cheat_flags WHERE game_id = $1 AND resolved = false LIMIT 1`,
+      [gameId]
+    );
+    if (flagRes.rows.length === 0) return; // No active flag — nothing to do
+
+    // Read both players' freshly-computed trust scores
+    const userIds = [whiteUserId, blackUserId].filter(Boolean);
+    const scoreRes = await pool.query(
+      `SELECT user_id, trust_score, is_flagged FROM fair_play_scores WHERE user_id = ANY($1)`,
+      [userIds]
+    );
+
+    const anyFlagged = scoreRes.rows.some(r => r.is_flagged || r.trust_score < 60);
+    const resolution = anyFlagged ? 'confirmed' : 'cleared';
+
+    await pool.query(
+      `UPDATE live_cheat_flags
+       SET resolved = true, resolved_at = NOW(), resolution = $1
+       WHERE game_id = $2 AND resolved = false`,
+      [resolution, gameId]
+    );
+
+    // If analysis cleared the flag, release the wager hold so handlers.js can settle it
+    if (resolution === 'cleared') {
+      await pool.query(
+        `UPDATE games SET wager_status = 'locked' WHERE id = $1 AND wager_status = 'held'`,
+        [gameId]
+      );
+    }
+
+    console.log(`[FairPlay] Live flag for game ${gameId} resolved as '${resolution}'`);
+  }
+
+  /**
+   * Returns the resolution of any live flag for a game.
+   * Called by handlers.js after analyzeGame() to decide whether to settle or hold.
+   * @returns {'cleared'|'confirmed'|'pending'|null}
+   */
+  async getGameLiveFlagResolution(gameId) {
+    const res = await pool.query(
+      `SELECT resolved, resolution FROM live_cheat_flags
+       WHERE game_id = $1
+       ORDER BY flagged_at DESC LIMIT 1`,
+      [gameId]
+    );
+    if (res.rows.length === 0) return null;
+    const { resolved, resolution } = res.rows[0];
+    if (!resolved) return 'pending';
+    return resolution; // 'cleared' | 'confirmed' | 'admin_review'
   }
 
   /**

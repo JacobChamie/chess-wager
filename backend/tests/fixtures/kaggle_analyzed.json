@@ -1,0 +1,2905 @@
+{
+  "games": [
+    {
+      "gameId": "kaggle_0",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1896,
+      "eloBlack": 1907,
+      "white": {
+        "engineCorr": 1.0,
+        "acpl": 0.0,
+        "strengthScore": 150.0,
+        "timingSuspicion": 0.0,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": null,
+        "criticalAccuracy": 0.0,
+        "epr": 3068,
+        "moveCount": 1
+      },
+      "black": {
+        "engineCorr": 1.0,
+        "acpl": 0.0,
+        "strengthScore": 150.0,
+        "timingSuspicion": 0.0,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": null,
+        "criticalAccuracy": 0.0,
+        "epr": 3074,
+        "moveCount": 1
+      }
+    },
+    {
+      "gameId": "kaggle_1",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1338,
+      "eloBlack": 1397,
+      "white": {
+        "engineCorr": 0.5,
+        "acpl": 4.5,
+        "strengthScore": 145.3,
+        "timingSuspicion": 0.0,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": null,
+        "criticalAccuracy": 0.0,
+        "epr": 2671,
+        "moveCount": 2
+      },
+      "black": {
+        "engineCorr": 0.0,
+        "acpl": 134.0,
+        "strengthScore": 0.0,
+        "timingSuspicion": 0.0,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": null,
+        "criticalAccuracy": 0.0,
+        "epr": 528,
+        "moveCount": 1
+      }
+    },
+    {
+      "gameId": "kaggle_2",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1410,
+      "eloBlack": 1403,
+      "white": {
+        "engineCorr": 0.325,
+        "acpl": 63.2,
+        "strengthScore": 61.9,
+        "timingSuspicion": 0.707,
+        "flatTimingCV": 1.535,
+        "cpLossComplexityCorr": -0.057,
+        "criticalAccuracy": 0.0,
+        "epr": 1465,
+        "moveCount": 40
+      },
+      "black": {
+        "engineCorr": 0.5,
+        "acpl": 120.8,
+        "strengthScore": 117.6,
+        "timingSuspicion": 0.51,
+        "flatTimingCV": 0.753,
+        "cpLossComplexityCorr": -0.416,
+        "criticalAccuracy": 0.875,
+        "epr": 2296,
+        "moveCount": 40
+      }
+    },
+    {
+      "gameId": "kaggle_3",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1815,
+      "eloBlack": 1843,
+      "white": {
+        "engineCorr": 0.355,
+        "acpl": 60.3,
+        "strengthScore": 68.2,
+        "timingSuspicion": 0.275,
+        "flatTimingCV": 0.879,
+        "cpLossComplexityCorr": -0.091,
+        "criticalAccuracy": 0.167,
+        "epr": 1796,
+        "moveCount": 62
+      },
+      "black": {
+        "engineCorr": 0.452,
+        "acpl": 59.1,
+        "strengthScore": 93.4,
+        "timingSuspicion": 0.807,
+        "flatTimingCV": 0.706,
+        "cpLossComplexityCorr": -0.111,
+        "criticalAccuracy": 0.7,
+        "epr": 2190,
+        "moveCount": 62
+      }
+    },
+    {
+      "gameId": "kaggle_4",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1500,
+      "eloBlack": 1997,
+      "white": {
+        "engineCorr": 0.452,
+        "acpl": 27.4,
+        "strengthScore": 109.6,
+        "timingSuspicion": 0.598,
+        "flatTimingCV": 1.116,
+        "cpLossComplexityCorr": 0.345,
+        "criticalAccuracy": 0.714,
+        "epr": 2236,
+        "moveCount": 31
+      },
+      "black": {
+        "engineCorr": 0.645,
+        "acpl": 36.9,
+        "strengthScore": 102.2,
+        "timingSuspicion": 1,
+        "flatTimingCV": 0.618,
+        "cpLossComplexityCorr": 0.07,
+        "criticalAccuracy": 0.0,
+        "epr": 2406,
+        "moveCount": 31
+      }
+    },
+    {
+      "gameId": "kaggle_5",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1625,
+      "eloBlack": 1605,
+      "white": {
+        "engineCorr": 0.389,
+        "acpl": 64.1,
+        "strengthScore": 92.6,
+        "timingSuspicion": 0.194,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": -0.355,
+        "criticalAccuracy": 0.857,
+        "epr": 2058,
+        "moveCount": 18
+      },
+      "black": {
+        "engineCorr": 0.412,
+        "acpl": 53.7,
+        "strengthScore": 87.3,
+        "timingSuspicion": 0.257,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": 0.096,
+        "criticalAccuracy": 0.8,
+        "epr": 1968,
+        "moveCount": 17
+      }
+    },
+    {
+      "gameId": "kaggle_6",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1255,
+      "eloBlack": 1246,
+      "white": {
+        "engineCorr": 0.235,
+        "acpl": 95.9,
+        "strengthScore": 39.2,
+        "timingSuspicion": 0.366,
+        "flatTimingCV": 0.628,
+        "cpLossComplexityCorr": 0.03,
+        "criticalAccuracy": 0.0,
+        "epr": 1028,
+        "moveCount": 17
+      },
+      "black": {
+        "engineCorr": 0.647,
+        "acpl": 22.6,
+        "strengthScore": 121.1,
+        "timingSuspicion": 0.895,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": -0.214,
+        "criticalAccuracy": 0.833,
+        "epr": 2250,
+        "moveCount": 17
+      }
+    },
+    {
+      "gameId": "kaggle_7",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1856,
+      "eloBlack": 1852,
+      "white": {
+        "engineCorr": 0.643,
+        "acpl": 32.7,
+        "strengthScore": 90.2,
+        "timingSuspicion": 1,
+        "flatTimingCV": 0.545,
+        "cpLossComplexityCorr": 0.338,
+        "criticalAccuracy": 0.0,
+        "epr": 2149,
+        "moveCount": 28
+      },
+      "black": {
+        "engineCorr": 0.464,
+        "acpl": 109.1,
+        "strengthScore": 91.1,
+        "timingSuspicion": 0.394,
+        "flatTimingCV": 1.734,
+        "cpLossComplexityCorr": -0.114,
+        "criticalAccuracy": 0.4,
+        "epr": 2161,
+        "moveCount": 28
+      }
+    },
+    {
+      "gameId": "kaggle_8",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 2018,
+      "eloBlack": 1998,
+      "white": {
+        "engineCorr": 0.381,
+        "acpl": 60.9,
+        "strengthScore": 93.0,
+        "timingSuspicion": 0.932,
+        "flatTimingCV": 1.016,
+        "cpLossComplexityCorr": 0.255,
+        "criticalAccuracy": 0.625,
+        "epr": 2281,
+        "moveCount": 21
+      },
+      "black": {
+        "engineCorr": 0.55,
+        "acpl": 66.6,
+        "strengthScore": 91.3,
+        "timingSuspicion": 0.435,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": 0.275,
+        "criticalAccuracy": 0.25,
+        "epr": 2243,
+        "moveCount": 20
+      }
+    },
+    {
+      "gameId": "kaggle_9",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1765,
+      "eloBlack": 1938,
+      "white": {
+        "engineCorr": 0.591,
+        "acpl": 18.8,
+        "strengthScore": 118.3,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.642,
+        "cpLossComplexityCorr": -0.013,
+        "criticalAccuracy": 0.833,
+        "epr": 2520,
+        "moveCount": 22
+      },
+      "black": {
+        "engineCorr": 0.429,
+        "acpl": 54.3,
+        "strengthScore": 84.5,
+        "timingSuspicion": 1,
+        "flatTimingCV": 0.592,
+        "cpLossComplexityCorr": -0.253,
+        "criticalAccuracy": 0.0,
+        "epr": 2109,
+        "moveCount": 21
+      }
+    },
+    {
+      "gameId": "kaggle_10",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1882,
+      "eloBlack": 1886,
+      "white": {
+        "engineCorr": 0.438,
+        "acpl": 29.9,
+        "strengthScore": 92.4,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.483,
+        "cpLossComplexityCorr": -0.147,
+        "criticalAccuracy": 1.0,
+        "epr": 2197,
+        "moveCount": 16
+      },
+      "black": {
+        "engineCorr": 0.2,
+        "acpl": 128.8,
+        "strengthScore": 35.2,
+        "timingSuspicion": 0.692,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": 0.399,
+        "criticalAccuracy": 0.333,
+        "epr": 1341,
+        "moveCount": 15
+      }
+    },
+    {
+      "gameId": "kaggle_11",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1859,
+      "eloBlack": 1861,
+      "white": {
+        "engineCorr": 0.379,
+        "acpl": 78.2,
+        "strengthScore": 82.8,
+        "timingSuspicion": 0.329,
+        "flatTimingCV": 0.814,
+        "cpLossComplexityCorr": -0.223,
+        "criticalAccuracy": 0.0,
+        "epr": 2039,
+        "moveCount": 58
+      },
+      "black": {
+        "engineCorr": 0.579,
+        "acpl": 42.6,
+        "strengthScore": 94.2,
+        "timingSuspicion": 0.342,
+        "flatTimingCV": 0.897,
+        "cpLossComplexityCorr": 0.264,
+        "criticalAccuracy": 0.667,
+        "epr": 2212,
+        "moveCount": 57
+      }
+    },
+    {
+      "gameId": "kaggle_12",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1739,
+      "eloBlack": 1727,
+      "white": {
+        "engineCorr": 0.452,
+        "acpl": 33.6,
+        "strengthScore": 76.8,
+        "timingSuspicion": 0.755,
+        "flatTimingCV": 1.047,
+        "cpLossComplexityCorr": -0.098,
+        "criticalAccuracy": 0.0,
+        "epr": 1884,
+        "moveCount": 42
+      },
+      "black": {
+        "engineCorr": 0.488,
+        "acpl": 30.0,
+        "strengthScore": 86.4,
+        "timingSuspicion": 0.796,
+        "flatTimingCV": 1.032,
+        "cpLossComplexityCorr": -0.096,
+        "criticalAccuracy": 0.667,
+        "epr": 2021,
+        "moveCount": 41
+      }
+    },
+    {
+      "gameId": "kaggle_13",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1869,
+      "eloBlack": 1856,
+      "white": {
+        "engineCorr": 0.541,
+        "acpl": 21.8,
+        "strengthScore": 92.8,
+        "timingSuspicion": 0.598,
+        "flatTimingCV": 0.789,
+        "cpLossComplexityCorr": 0.055,
+        "criticalAccuracy": 0.857,
+        "epr": 2194,
+        "moveCount": 61
+      },
+      "black": {
+        "engineCorr": 0.45,
+        "acpl": 31.7,
+        "strengthScore": 101.8,
+        "timingSuspicion": 0.916,
+        "flatTimingCV": 0.824,
+        "cpLossComplexityCorr": -0.168,
+        "criticalAccuracy": 0.75,
+        "epr": 2323,
+        "moveCount": 60
+      }
+    },
+    {
+      "gameId": "kaggle_14",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1438,
+      "eloBlack": 1503,
+      "white": {
+        "engineCorr": 0.519,
+        "acpl": 34.8,
+        "strengthScore": 99.4,
+        "timingSuspicion": 0.586,
+        "flatTimingCV": 0.59,
+        "cpLossComplexityCorr": -0.023,
+        "criticalAccuracy": 0.75,
+        "epr": 2044,
+        "moveCount": 52
+      },
+      "black": {
+        "engineCorr": 0.346,
+        "acpl": 92.0,
+        "strengthScore": 86.1,
+        "timingSuspicion": 0.805,
+        "flatTimingCV": 0.982,
+        "cpLossComplexityCorr": -0.309,
+        "criticalAccuracy": 0.833,
+        "epr": 1885,
+        "moveCount": 52
+      }
+    },
+    {
+      "gameId": "kaggle_15",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1462,
+      "eloBlack": 1440,
+      "white": {
+        "engineCorr": 0.5,
+        "acpl": 37.3,
+        "strengthScore": 80.9,
+        "timingSuspicion": 0.444,
+        "flatTimingCV": 0.966,
+        "cpLossComplexityCorr": -0.058,
+        "criticalAccuracy": 0.667,
+        "epr": 1782,
+        "moveCount": 58
+      },
+      "black": {
+        "engineCorr": 0.448,
+        "acpl": 106.8,
+        "strengthScore": 107.7,
+        "timingSuspicion": 0.332,
+        "flatTimingCV": 1.456,
+        "cpLossComplexityCorr": -0.407,
+        "criticalAccuracy": 0.818,
+        "epr": 2170,
+        "moveCount": 58
+      }
+    },
+    {
+      "gameId": "kaggle_16",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1869,
+      "eloBlack": 1867,
+      "white": {
+        "engineCorr": 0.528,
+        "acpl": 98.5,
+        "strengthScore": 107.7,
+        "timingSuspicion": 0.372,
+        "flatTimingCV": 1.021,
+        "cpLossComplexityCorr": -0.172,
+        "criticalAccuracy": 0.706,
+        "epr": 2419,
+        "moveCount": 36
+      },
+      "black": {
+        "engineCorr": 0.6,
+        "acpl": 100.3,
+        "strengthScore": 105.3,
+        "timingSuspicion": 0.669,
+        "flatTimingCV": 0.862,
+        "cpLossComplexityCorr": -0.187,
+        "criticalAccuracy": 1.0,
+        "epr": 2381,
+        "moveCount": 35
+      }
+    },
+    {
+      "gameId": "kaggle_17",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1789,
+      "eloBlack": 1794,
+      "white": {
+        "engineCorr": 0.292,
+        "acpl": 70.2,
+        "strengthScore": 57.2,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.671,
+        "cpLossComplexityCorr": -0.173,
+        "criticalAccuracy": 0.0,
+        "epr": 1617,
+        "moveCount": 48
+      },
+      "black": {
+        "engineCorr": 0.417,
+        "acpl": 86.6,
+        "strengthScore": 99.7,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.698,
+        "cpLossComplexityCorr": -0.225,
+        "criticalAccuracy": 0.75,
+        "epr": 2257,
+        "moveCount": 48
+      }
+    },
+    {
+      "gameId": "kaggle_18",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1525,
+      "eloBlack": 1547,
+      "white": {
+        "engineCorr": 0.423,
+        "acpl": 23.4,
+        "strengthScore": 101.4,
+        "timingSuspicion": 0.291,
+        "flatTimingCV": 0.489,
+        "cpLossComplexityCorr": -0.437,
+        "criticalAccuracy": 0.889,
+        "epr": 2130,
+        "moveCount": 26
+      },
+      "black": {
+        "engineCorr": 0.44,
+        "acpl": 74.3,
+        "strengthScore": 78.2,
+        "timingSuspicion": 0.271,
+        "flatTimingCV": 0.713,
+        "cpLossComplexityCorr": -0.225,
+        "criticalAccuracy": 0.667,
+        "epr": 1795,
+        "moveCount": 25
+      }
+    },
+    {
+      "gameId": "kaggle_19",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1819,
+      "eloBlack": 1831,
+      "white": {
+        "engineCorr": 0.348,
+        "acpl": 28.5,
+        "strengthScore": 82.8,
+        "timingSuspicion": 1,
+        "flatTimingCV": 0.818,
+        "cpLossComplexityCorr": -0.096,
+        "criticalAccuracy": 0.0,
+        "epr": 2018,
+        "moveCount": 23
+      },
+      "black": {
+        "engineCorr": 0.227,
+        "acpl": 43.7,
+        "strengthScore": 65.5,
+        "timingSuspicion": 0.999,
+        "flatTimingCV": 0.699,
+        "cpLossComplexityCorr": -0.21,
+        "criticalAccuracy": 1.0,
+        "epr": 1764,
+        "moveCount": 22
+      }
+    },
+    {
+      "gameId": "kaggle_20",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1828,
+      "eloBlack": 1817,
+      "white": {
+        "engineCorr": 0.444,
+        "acpl": 24.0,
+        "strengthScore": 89.0,
+        "timingSuspicion": 0.322,
+        "flatTimingCV": 1.247,
+        "cpLossComplexityCorr": -0.16,
+        "criticalAccuracy": 0.0,
+        "epr": 2115,
+        "moveCount": 54
+      },
+      "black": {
+        "engineCorr": 0.333,
+        "acpl": 33.6,
+        "strengthScore": 60.6,
+        "timingSuspicion": 0.688,
+        "flatTimingCV": 0.976,
+        "cpLossComplexityCorr": 0.274,
+        "criticalAccuracy": 0.667,
+        "epr": 1683,
+        "moveCount": 54
+      }
+    },
+    {
+      "gameId": "kaggle_21",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1756,
+      "eloBlack": 1752,
+      "white": {
+        "engineCorr": 0.167,
+        "acpl": 71.5,
+        "strengthScore": 36.2,
+        "timingSuspicion": 1,
+        "flatTimingCV": 1.46,
+        "cpLossComplexityCorr": 0.055,
+        "criticalAccuracy": 0.0,
+        "epr": 1284,
+        "moveCount": 12
+      },
+      "black": {
+        "engineCorr": 0.545,
+        "acpl": 31.0,
+        "strengthScore": 89.1,
+        "timingSuspicion": 1,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": 0.101,
+        "criticalAccuracy": 0.0,
+        "epr": 2075,
+        "moveCount": 11
+      }
+    },
+    {
+      "gameId": "kaggle_22",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1897,
+      "eloBlack": 1902,
+      "white": {
+        "engineCorr": 0.447,
+        "acpl": 52.9,
+        "strengthScore": 96.3,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.922,
+        "cpLossComplexityCorr": -0.137,
+        "criticalAccuracy": 1.0,
+        "epr": 2263,
+        "moveCount": 47
+      },
+      "black": {
+        "engineCorr": 0.66,
+        "acpl": 59.6,
+        "strengthScore": 109.7,
+        "timingSuspicion": 0.559,
+        "flatTimingCV": 1.045,
+        "cpLossComplexityCorr": -0.033,
+        "criticalAccuracy": 0.833,
+        "epr": 2466,
+        "moveCount": 47
+      }
+    },
+    {
+      "gameId": "kaggle_23",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1839,
+      "eloBlack": 1920,
+      "white": {
+        "engineCorr": 0.404,
+        "acpl": 29.4,
+        "strengthScore": 88.7,
+        "timingSuspicion": 0.037,
+        "flatTimingCV": 0.673,
+        "cpLossComplexityCorr": -0.059,
+        "criticalAccuracy": 0.833,
+        "epr": 2118,
+        "moveCount": 57
+      },
+      "black": {
+        "engineCorr": 0.643,
+        "acpl": 29.2,
+        "strengthScore": 90.8,
+        "timingSuspicion": 0.141,
+        "flatTimingCV": 0.62,
+        "cpLossComplexityCorr": -0.038,
+        "criticalAccuracy": 0.0,
+        "epr": 2193,
+        "moveCount": 56
+      }
+    },
+    {
+      "gameId": "kaggle_24",
+      "cheatingWhite": 0,
+      "cheatingBlack": 0,
+      "eloWhite": 1988,
+      "eloBlack": 1919,
+      "white": {
+        "engineCorr": 0.314,
+        "acpl": 160.6,
+        "strengthScore": 78.6,
+        "timingSuspicion": 0.411,
+        "flatTimingCV": 1.012,
+        "cpLossComplexityCorr": -0.237,
+        "criticalAccuracy": 0.357,
+        "epr": 2047,
+        "moveCount": 51
+      },
+      "black": {
+        "engineCorr": 0.42,
+        "acpl": 74.2,
+        "strengthScore": 59.5,
+        "timingSuspicion": 0.113,
+        "flatTimingCV": 1.204,
+        "cpLossComplexityCorr": 0.035,
+        "criticalAccuracy": 0.25,
+        "epr": 1723,
+        "moveCount": 50
+      }
+    },
+    {
+      "gameId": "kaggle_25",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1807,
+      "eloBlack": 1767,
+      "white": {
+        "engineCorr": 0.431,
+        "acpl": 57.0,
+        "strengthScore": 89.5,
+        "timingSuspicion": 0.352,
+        "flatTimingCV": 0.097,
+        "cpLossComplexityCorr": -0.11,
+        "criticalAccuracy": 0.75,
+        "epr": 2111,
+        "moveCount": 51
+      },
+      "black": {
+        "engineCorr": 0.28,
+        "acpl": 70.4,
+        "strengthScore": 84.0,
+        "timingSuspicion": 0.879,
+        "flatTimingCV": 1.038,
+        "cpLossComplexityCorr": -0.177,
+        "criticalAccuracy": 1.0,
+        "epr": 2007,
+        "moveCount": 50
+      }
+    },
+    {
+      "gameId": "kaggle_26",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1840,
+      "eloBlack": 1808,
+      "white": {
+        "engineCorr": 0.556,
+        "acpl": 16.4,
+        "strengthScore": 111.5,
+        "timingSuspicion": 0.544,
+        "flatTimingCV": 0.135,
+        "cpLossComplexityCorr": -0.187,
+        "criticalAccuracy": 0.5,
+        "epr": 2459,
+        "moveCount": 27
+      },
+      "black": {
+        "engineCorr": 0.269,
+        "acpl": 41.9,
+        "strengthScore": 57.4,
+        "timingSuspicion": 0.244,
+        "flatTimingCV": 1.095,
+        "cpLossComplexityCorr": 0.378,
+        "criticalAccuracy": 0.0,
+        "epr": 1631,
+        "moveCount": 26
+      }
+    },
+    {
+      "gameId": "kaggle_27",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 2085,
+      "eloBlack": 1993,
+      "white": {
+        "engineCorr": 1.0,
+        "acpl": 0.0,
+        "strengthScore": 150.0,
+        "timingSuspicion": 0.0,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": null,
+        "criticalAccuracy": 0.0,
+        "epr": 3178,
+        "moveCount": 2
+      },
+      "black": {
+        "engineCorr": 1.0,
+        "acpl": 0.0,
+        "strengthScore": 150.0,
+        "timingSuspicion": 0.0,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": null,
+        "criticalAccuracy": 0.0,
+        "epr": 3121,
+        "moveCount": 1
+      }
+    },
+    {
+      "gameId": "kaggle_28",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1610,
+      "eloBlack": 1641,
+      "white": {
+        "engineCorr": 0.632,
+        "acpl": 18.8,
+        "strengthScore": 125.0,
+        "timingSuspicion": 1,
+        "flatTimingCV": 0.088,
+        "cpLossComplexityCorr": -0.393,
+        "criticalAccuracy": 1.0,
+        "epr": 2535,
+        "moveCount": 19
+      },
+      "black": {
+        "engineCorr": 0.556,
+        "acpl": 54.1,
+        "strengthScore": 110.6,
+        "timingSuspicion": 0.761,
+        "flatTimingCV": 0.444,
+        "cpLossComplexityCorr": -0.472,
+        "criticalAccuracy": 0.857,
+        "epr": 2337,
+        "moveCount": 18
+      }
+    },
+    {
+      "gameId": "kaggle_29",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1966,
+      "eloBlack": 1968,
+      "white": {
+        "engineCorr": 0.65,
+        "acpl": 62.0,
+        "strengthScore": 112.1,
+        "timingSuspicion": 0.764,
+        "flatTimingCV": 0.125,
+        "cpLossComplexityCorr": 0.034,
+        "criticalAccuracy": 0.833,
+        "epr": 2538,
+        "moveCount": 20
+      },
+      "black": {
+        "engineCorr": 0.263,
+        "acpl": 113.2,
+        "strengthScore": 63.9,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.892,
+        "cpLossComplexityCorr": 0.098,
+        "criticalAccuracy": 0.667,
+        "epr": 1816,
+        "moveCount": 19
+      }
+    },
+    {
+      "gameId": "kaggle_30",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1832,
+      "eloBlack": 1874,
+      "white": {
+        "engineCorr": 0.762,
+        "acpl": 15.2,
+        "strengthScore": 134.5,
+        "timingSuspicion": 1,
+        "flatTimingCV": 0.11,
+        "cpLossComplexityCorr": 0.26,
+        "criticalAccuracy": 0.778,
+        "epr": 2800,
+        "moveCount": 21
+      },
+      "black": {
+        "engineCorr": 0.35,
+        "acpl": 67.7,
+        "strengthScore": 66.6,
+        "timingSuspicion": 1,
+        "flatTimingCV": 0.639,
+        "cpLossComplexityCorr": -0.086,
+        "criticalAccuracy": 0.0,
+        "epr": 1805,
+        "moveCount": 20
+      }
+    },
+    {
+      "gameId": "kaggle_31",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1758,
+      "eloBlack": 1693,
+      "white": {
+        "engineCorr": 0.5,
+        "acpl": 21.2,
+        "strengthScore": 106.5,
+        "timingSuspicion": 0.342,
+        "flatTimingCV": 0.071,
+        "cpLossComplexityCorr": -0.125,
+        "criticalAccuracy": 1.0,
+        "epr": 2340,
+        "moveCount": 12
+      },
+      "black": {
+        "engineCorr": 0.273,
+        "acpl": 134.4,
+        "strengthScore": 33.8,
+        "timingSuspicion": 0,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": 0.198,
+        "criticalAccuracy": 0.0,
+        "epr": 1213,
+        "moveCount": 11
+      }
+    },
+    {
+      "gameId": "kaggle_32",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1938,
+      "eloBlack": 2223,
+      "white": {
+        "engineCorr": 0.567,
+        "acpl": 15.1,
+        "strengthScore": 117.9,
+        "timingSuspicion": 0.216,
+        "flatTimingCV": 0.118,
+        "cpLossComplexityCorr": 0.042,
+        "criticalAccuracy": 0.875,
+        "epr": 2610,
+        "moveCount": 30
+      },
+      "black": {
+        "engineCorr": 0.414,
+        "acpl": 65.4,
+        "strengthScore": 93.1,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.74,
+        "cpLossComplexityCorr": -0.475,
+        "criticalAccuracy": 1.0,
+        "epr": 2411,
+        "moveCount": 29
+      }
+    },
+    {
+      "gameId": "kaggle_33",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1330,
+      "eloBlack": 1348,
+      "white": {
+        "engineCorr": 0.645,
+        "acpl": 56.2,
+        "strengthScore": 106.5,
+        "timingSuspicion": 0.294,
+        "flatTimingCV": 0.118,
+        "cpLossComplexityCorr": 0.159,
+        "criticalAccuracy": 0.667,
+        "epr": 2083,
+        "moveCount": 31
+      },
+      "black": {
+        "engineCorr": 0.258,
+        "acpl": 127.9,
+        "strengthScore": 76.9,
+        "timingSuspicion": 0,
+        "flatTimingCV": 1.315,
+        "cpLossComplexityCorr": -0.297,
+        "criticalAccuracy": 0.833,
+        "epr": 1651,
+        "moveCount": 31
+      }
+    },
+    {
+      "gameId": "kaggle_34",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1671,
+      "eloBlack": 1657,
+      "white": {
+        "engineCorr": 0.568,
+        "acpl": 33.6,
+        "strengthScore": 111.1,
+        "timingSuspicion": 0.301,
+        "flatTimingCV": 0.102,
+        "cpLossComplexityCorr": 0.063,
+        "criticalAccuracy": 1.0,
+        "epr": 2361,
+        "moveCount": 44
+      },
+      "black": {
+        "engineCorr": 0.442,
+        "acpl": 46.3,
+        "strengthScore": 80.8,
+        "timingSuspicion": 0.57,
+        "flatTimingCV": 0.587,
+        "cpLossComplexityCorr": 0.186,
+        "criticalAccuracy": 0.333,
+        "epr": 1898,
+        "moveCount": 43
+      }
+    },
+    {
+      "gameId": "kaggle_35",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1883,
+      "eloBlack": 1753,
+      "white": {
+        "engineCorr": 0.481,
+        "acpl": 34.0,
+        "strengthScore": 100.5,
+        "timingSuspicion": 0.688,
+        "flatTimingCV": 0.094,
+        "cpLossComplexityCorr": -0.27,
+        "criticalAccuracy": 0.875,
+        "epr": 2317,
+        "moveCount": 27
+      },
+      "black": {
+        "engineCorr": 0.269,
+        "acpl": 75.0,
+        "strengthScore": 53.3,
+        "timingSuspicion": 0.182,
+        "flatTimingCV": 1.255,
+        "cpLossComplexityCorr": 0.09,
+        "criticalAccuracy": 0.0,
+        "epr": 1539,
+        "moveCount": 26
+      }
+    },
+    {
+      "gameId": "kaggle_36",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1710,
+      "eloBlack": 1713,
+      "white": {
+        "engineCorr": 0.909,
+        "acpl": 0.7,
+        "strengthScore": 146.7,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.061,
+        "cpLossComplexityCorr": -0.318,
+        "criticalAccuracy": 1.0,
+        "epr": 2915,
+        "moveCount": 11
+      },
+      "black": {
+        "engineCorr": 0.3,
+        "acpl": 126.7,
+        "strengthScore": 36.0,
+        "timingSuspicion": 0,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": 0.204,
+        "criticalAccuracy": 0.0,
+        "epr": 1258,
+        "moveCount": 10
+      }
+    },
+    {
+      "gameId": "kaggle_37",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1370,
+      "eloBlack": 1344,
+      "white": {
+        "engineCorr": 0.8,
+        "acpl": 6.6,
+        "strengthScore": 138.5,
+        "timingSuspicion": 1,
+        "flatTimingCV": 0.097,
+        "cpLossComplexityCorr": -0.232,
+        "criticalAccuracy": 1.0,
+        "epr": 2588,
+        "moveCount": 25
+      },
+      "black": {
+        "engineCorr": 0.208,
+        "acpl": 48.8,
+        "strengthScore": 35.0,
+        "timingSuspicion": 0.907,
+        "flatTimingCV": 0.481,
+        "cpLossComplexityCorr": -0.033,
+        "criticalAccuracy": 0.0,
+        "epr": 1021,
+        "moveCount": 24
+      }
+    },
+    {
+      "gameId": "kaggle_38",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1595,
+      "eloBlack": 1703,
+      "white": {
+        "engineCorr": 0.589,
+        "acpl": 36.8,
+        "strengthScore": 117.9,
+        "timingSuspicion": 0.703,
+        "flatTimingCV": 0.111,
+        "cpLossComplexityCorr": -0.153,
+        "criticalAccuracy": 0.0,
+        "epr": 2421,
+        "moveCount": 56
+      },
+      "black": {
+        "engineCorr": 0.491,
+        "acpl": 48.6,
+        "strengthScore": 91.0,
+        "timingSuspicion": 0.363,
+        "flatTimingCV": 0.731,
+        "cpLossComplexityCorr": -0.099,
+        "criticalAccuracy": 0.75,
+        "epr": 2076,
+        "moveCount": 55
+      }
+    },
+    {
+      "gameId": "kaggle_39",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1489,
+      "eloBlack": 1489,
+      "white": {
+        "engineCorr": 0.63,
+        "acpl": 74.8,
+        "strengthScore": 112.4,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.097,
+        "cpLossComplexityCorr": -0.157,
+        "criticalAccuracy": 1.0,
+        "epr": 2271,
+        "moveCount": 27
+      },
+      "black": {
+        "engineCorr": 0.538,
+        "acpl": 71.3,
+        "strengthScore": 95.7,
+        "timingSuspicion": 0.535,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": 0.033,
+        "criticalAccuracy": 0.0,
+        "epr": 2021,
+        "moveCount": 26
+      }
+    },
+    {
+      "gameId": "kaggle_40",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1827,
+      "eloBlack": 1806,
+      "white": {
+        "engineCorr": 0.733,
+        "acpl": 24.7,
+        "strengthScore": 124.9,
+        "timingSuspicion": 0.473,
+        "flatTimingCV": 0.083,
+        "cpLossComplexityCorr": 0.102,
+        "criticalAccuracy": 0.818,
+        "epr": 2653,
+        "moveCount": 30
+      },
+      "black": {
+        "engineCorr": 0.517,
+        "acpl": 62.2,
+        "strengthScore": 67.5,
+        "timingSuspicion": 0.001,
+        "flatTimingCV": 0.907,
+        "cpLossComplexityCorr": 0.122,
+        "criticalAccuracy": 0.0,
+        "epr": 1781,
+        "moveCount": 29
+      }
+    },
+    {
+      "gameId": "kaggle_41",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1736,
+      "eloBlack": 1755,
+      "white": {
+        "engineCorr": 0.646,
+        "acpl": 30.6,
+        "strengthScore": 119.2,
+        "timingSuspicion": 0.489,
+        "flatTimingCV": 0.08,
+        "cpLossComplexityCorr": -0.139,
+        "criticalAccuracy": 0.667,
+        "epr": 2517,
+        "moveCount": 65
+      },
+      "black": {
+        "engineCorr": 0.422,
+        "acpl": 49.1,
+        "strengthScore": 83.8,
+        "timingSuspicion": 0.315,
+        "flatTimingCV": 0.591,
+        "cpLossComplexityCorr": -0.192,
+        "criticalAccuracy": 0.833,
+        "epr": 1998,
+        "moveCount": 64
+      }
+    },
+    {
+      "gameId": "kaggle_42",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1927,
+      "eloBlack": 2080,
+      "white": {
+        "engineCorr": 0.526,
+        "acpl": 55.4,
+        "strengthScore": 103.3,
+        "timingSuspicion": 0.823,
+        "flatTimingCV": 0.103,
+        "cpLossComplexityCorr": -0.058,
+        "criticalAccuracy": 0.769,
+        "epr": 2384,
+        "moveCount": 57
+      },
+      "black": {
+        "engineCorr": 0.321,
+        "acpl": 70.2,
+        "strengthScore": 75.3,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.748,
+        "cpLossComplexityCorr": -0.051,
+        "criticalAccuracy": 0.6,
+        "epr": 2055,
+        "moveCount": 56
+      }
+    },
+    {
+      "gameId": "kaggle_43",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1744,
+      "eloBlack": 1927,
+      "white": {
+        "engineCorr": 0.773,
+        "acpl": 25.8,
+        "strengthScore": 132.4,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.097,
+        "cpLossComplexityCorr": 0.386,
+        "criticalAccuracy": 0.8,
+        "epr": 2719,
+        "moveCount": 22
+      },
+      "black": {
+        "engineCorr": 0.333,
+        "acpl": 78.0,
+        "strengthScore": 62.9,
+        "timingSuspicion": 0.961,
+        "flatTimingCV": 0.888,
+        "cpLossComplexityCorr": 0.035,
+        "criticalAccuracy": 0.0,
+        "epr": 1779,
+        "moveCount": 21
+      }
+    },
+    {
+      "gameId": "kaggle_44",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1980,
+      "eloBlack": 1877,
+      "white": {
+        "engineCorr": 0.765,
+        "acpl": 10.2,
+        "strengthScore": 132.7,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.076,
+        "cpLossComplexityCorr": 0.032,
+        "criticalAccuracy": 0.917,
+        "epr": 2855,
+        "moveCount": 34
+      },
+      "black": {
+        "engineCorr": 0.333,
+        "acpl": 70.1,
+        "strengthScore": 77.1,
+        "timingSuspicion": 0.409,
+        "flatTimingCV": 0.686,
+        "cpLossComplexityCorr": -0.215,
+        "criticalAccuracy": 0.5,
+        "epr": 1963,
+        "moveCount": 33
+      }
+    },
+    {
+      "gameId": "kaggle_45",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1642,
+      "eloBlack": 1665,
+      "white": {
+        "engineCorr": 0.667,
+        "acpl": 10.4,
+        "strengthScore": 125.3,
+        "timingSuspicion": 0.0,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": null,
+        "criticalAccuracy": 1.0,
+        "epr": 2557,
+        "moveCount": 9
+      },
+      "black": {
+        "engineCorr": 0.375,
+        "acpl": 136.8,
+        "strengthScore": 77.4,
+        "timingSuspicion": 0.0,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": null,
+        "criticalAccuracy": 0.0,
+        "epr": 1851,
+        "moveCount": 8
+      }
+    },
+    {
+      "gameId": "kaggle_46",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1784,
+      "eloBlack": 1770,
+      "white": {
+        "engineCorr": 0.548,
+        "acpl": 24.2,
+        "strengthScore": 95.0,
+        "timingSuspicion": 0.1,
+        "flatTimingCV": 0.11,
+        "cpLossComplexityCorr": -0.147,
+        "criticalAccuracy": 1.0,
+        "epr": 2181,
+        "moveCount": 31
+      },
+      "black": {
+        "engineCorr": 0.4,
+        "acpl": 47.1,
+        "strengthScore": 94.7,
+        "timingSuspicion": 0.456,
+        "flatTimingCV": 0.774,
+        "cpLossComplexityCorr": -0.332,
+        "criticalAccuracy": 0.0,
+        "epr": 2169,
+        "moveCount": 30
+      }
+    },
+    {
+      "gameId": "kaggle_47",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1941,
+      "eloBlack": 1981,
+      "white": {
+        "engineCorr": 0.465,
+        "acpl": 48.1,
+        "strengthScore": 98.9,
+        "timingSuspicion": 0.431,
+        "flatTimingCV": 0.093,
+        "cpLossComplexityCorr": -0.124,
+        "criticalAccuracy": 0.667,
+        "epr": 2325,
+        "moveCount": 43
+      },
+      "black": {
+        "engineCorr": 0.452,
+        "acpl": 35.2,
+        "strengthScore": 86.6,
+        "timingSuspicion": 0,
+        "flatTimingCV": 1.664,
+        "cpLossComplexityCorr": -0.103,
+        "criticalAccuracy": 0.0,
+        "epr": 2164,
+        "moveCount": 42
+      }
+    },
+    {
+      "gameId": "kaggle_48",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1443,
+      "eloBlack": 1437,
+      "white": {
+        "engineCorr": 0.447,
+        "acpl": 97.0,
+        "strengthScore": 87.9,
+        "timingSuspicion": 0.512,
+        "flatTimingCV": 0.099,
+        "cpLossComplexityCorr": -0.132,
+        "criticalAccuracy": 0.6,
+        "epr": 1876,
+        "moveCount": 47
+      },
+      "black": {
+        "engineCorr": 0.304,
+        "acpl": 72.5,
+        "strengthScore": 65.8,
+        "timingSuspicion": 0.229,
+        "flatTimingCV": 0.974,
+        "cpLossComplexityCorr": -0.267,
+        "criticalAccuracy": 0.0,
+        "epr": 1540,
+        "moveCount": 46
+      }
+    },
+    {
+      "gameId": "kaggle_49",
+      "cheatingWhite": 1,
+      "cheatingBlack": 0,
+      "eloWhite": 1708,
+      "eloBlack": 1707,
+      "white": {
+        "engineCorr": 0.556,
+        "acpl": 9.9,
+        "strengthScore": 111.2,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.066,
+        "cpLossComplexityCorr": -0.184,
+        "criticalAccuracy": 1.0,
+        "epr": 2382,
+        "moveCount": 18
+      },
+      "black": {
+        "engineCorr": 0.176,
+        "acpl": 72.3,
+        "strengthScore": 32.3,
+        "timingSuspicion": 1,
+        "flatTimingCV": 1.153,
+        "cpLossComplexityCorr": 0.233,
+        "criticalAccuracy": 0.0,
+        "epr": 1199,
+        "moveCount": 17
+      }
+    },
+    {
+      "gameId": "kaggle_50",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1861,
+      "eloBlack": 1732,
+      "white": {
+        "engineCorr": 0.667,
+        "acpl": 5.4,
+        "strengthScore": 130.2,
+        "timingSuspicion": 0.0,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": null,
+        "criticalAccuracy": 0.75,
+        "epr": 2752,
+        "moveCount": 9
+      },
+      "black": {
+        "engineCorr": 0.375,
+        "acpl": 150.8,
+        "strengthScore": 49.2,
+        "timingSuspicion": 0.0,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": null,
+        "criticalAccuracy": 0.0,
+        "epr": 1465,
+        "moveCount": 8
+      }
+    },
+    {
+      "gameId": "kaggle_51",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1500,
+      "eloBlack": 1570,
+      "white": {
+        "engineCorr": 0.2,
+        "acpl": 22.1,
+        "strengthScore": 79.3,
+        "timingSuspicion": 0.373,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": 0.068,
+        "criticalAccuracy": 0.5,
+        "epr": 1783,
+        "moveCount": 15
+      },
+      "black": {
+        "engineCorr": 0.4,
+        "acpl": 15.7,
+        "strengthScore": 99.2,
+        "timingSuspicion": 0.307,
+        "flatTimingCV": 0.115,
+        "cpLossComplexityCorr": -0.234,
+        "criticalAccuracy": 1.0,
+        "epr": 2124,
+        "moveCount": 15
+      }
+    },
+    {
+      "gameId": "kaggle_52",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 2026,
+      "eloBlack": 1990,
+      "white": {
+        "engineCorr": 0.447,
+        "acpl": 102.4,
+        "strengthScore": 99.6,
+        "timingSuspicion": 0.255,
+        "flatTimingCV": 0.785,
+        "cpLossComplexityCorr": -0.193,
+        "criticalAccuracy": 0.375,
+        "epr": 2386,
+        "moveCount": 47
+      },
+      "black": {
+        "engineCorr": 0.674,
+        "acpl": 37.5,
+        "strengthScore": 97.9,
+        "timingSuspicion": 0.407,
+        "flatTimingCV": 0.102,
+        "cpLossComplexityCorr": 0.449,
+        "criticalAccuracy": 0.0,
+        "epr": 2338,
+        "moveCount": 46
+      }
+    },
+    {
+      "gameId": "kaggle_53",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1866,
+      "eloBlack": 1623,
+      "white": {
+        "engineCorr": 0.5,
+        "acpl": 40.5,
+        "strengthScore": 66.2,
+        "timingSuspicion": 0.477,
+        "flatTimingCV": 0.901,
+        "cpLossComplexityCorr": 0.08,
+        "criticalAccuracy": 0.0,
+        "epr": 1795,
+        "moveCount": 34
+      },
+      "black": {
+        "engineCorr": 0.529,
+        "acpl": 20.8,
+        "strengthScore": 119.8,
+        "timingSuspicion": 0.869,
+        "flatTimingCV": 0.109,
+        "cpLossComplexityCorr": -0.227,
+        "criticalAccuracy": 0.667,
+        "epr": 2465,
+        "moveCount": 34
+      }
+    },
+    {
+      "gameId": "kaggle_54",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1695,
+      "eloBlack": 1676,
+      "white": {
+        "engineCorr": 0.536,
+        "acpl": 57.0,
+        "strengthScore": 97.1,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.915,
+        "cpLossComplexityCorr": -0.021,
+        "criticalAccuracy": 0.667,
+        "epr": 2164,
+        "moveCount": 28
+      },
+      "black": {
+        "engineCorr": 0.556,
+        "acpl": 90.0,
+        "strengthScore": 92.5,
+        "timingSuspicion": 0.083,
+        "flatTimingCV": 0.108,
+        "cpLossComplexityCorr": 0.409,
+        "criticalAccuracy": 0.4,
+        "epr": 2084,
+        "moveCount": 27
+      }
+    },
+    {
+      "gameId": "kaggle_55",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1990,
+      "eloBlack": 1932,
+      "white": {
+        "engineCorr": 0.417,
+        "acpl": 57.9,
+        "strengthScore": 73.5,
+        "timingSuspicion": 0.346,
+        "flatTimingCV": 0.413,
+        "cpLossComplexityCorr": 0.282,
+        "criticalAccuracy": 0.333,
+        "epr": 1971,
+        "moveCount": 24
+      },
+      "black": {
+        "engineCorr": 0.667,
+        "acpl": 23.3,
+        "strengthScore": 123.4,
+        "timingSuspicion": 0.302,
+        "flatTimingCV": 0.126,
+        "cpLossComplexityCorr": 0.465,
+        "criticalAccuracy": 0.857,
+        "epr": 2689,
+        "moveCount": 24
+      }
+    },
+    {
+      "gameId": "kaggle_56",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1612,
+      "eloBlack": 1602,
+      "white": {
+        "engineCorr": 0.488,
+        "acpl": 32.5,
+        "strengthScore": 91.8,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.787,
+        "cpLossComplexityCorr": -0.114,
+        "criticalAccuracy": 1.0,
+        "epr": 2039,
+        "moveCount": 41
+      },
+      "black": {
+        "engineCorr": 0.634,
+        "acpl": 51.1,
+        "strengthScore": 115.9,
+        "timingSuspicion": 0.688,
+        "flatTimingCV": 0.097,
+        "cpLossComplexityCorr": -0.162,
+        "criticalAccuracy": 0.9,
+        "epr": 2395,
+        "moveCount": 41
+      }
+    },
+    {
+      "gameId": "kaggle_57",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1766,
+      "eloBlack": 1780,
+      "white": {
+        "engineCorr": 0.462,
+        "acpl": 37.7,
+        "strengthScore": 93.2,
+        "timingSuspicion": 0.907,
+        "flatTimingCV": 1.091,
+        "cpLossComplexityCorr": 0.067,
+        "criticalAccuracy": 0.667,
+        "epr": 2144,
+        "moveCount": 39
+      },
+      "black": {
+        "engineCorr": 0.667,
+        "acpl": 22.8,
+        "strengthScore": 125.7,
+        "timingSuspicion": 0.9,
+        "flatTimingCV": 0.114,
+        "cpLossComplexityCorr": -0.095,
+        "criticalAccuracy": 1.0,
+        "epr": 2639,
+        "moveCount": 39
+      }
+    },
+    {
+      "gameId": "kaggle_58",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1627,
+      "eloBlack": 1657,
+      "white": {
+        "engineCorr": 0.789,
+        "acpl": 8.2,
+        "strengthScore": 127.0,
+        "timingSuspicion": 0.647,
+        "flatTimingCV": 0.468,
+        "cpLossComplexityCorr": -0.023,
+        "criticalAccuracy": 0.8,
+        "epr": 2576,
+        "moveCount": 19
+      },
+      "black": {
+        "engineCorr": 0.278,
+        "acpl": 78.2,
+        "strengthScore": 71.6,
+        "timingSuspicion": 0.824,
+        "flatTimingCV": 0.085,
+        "cpLossComplexityCorr": -0.438,
+        "criticalAccuracy": 0.0,
+        "epr": 1760,
+        "moveCount": 18
+      }
+    },
+    {
+      "gameId": "kaggle_59",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1886,
+      "eloBlack": 1788,
+      "white": {
+        "engineCorr": 0.462,
+        "acpl": 112.8,
+        "strengthScore": 85.0,
+        "timingSuspicion": 0.805,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": -0.168,
+        "criticalAccuracy": 0.0,
+        "epr": 2087,
+        "moveCount": 13
+      },
+      "black": {
+        "engineCorr": 0.769,
+        "acpl": 44.8,
+        "strengthScore": 124.5,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.117,
+        "cpLossComplexityCorr": 0.33,
+        "criticalAccuracy": 0.8,
+        "epr": 2626,
+        "moveCount": 13
+      }
+    },
+    {
+      "gameId": "kaggle_60",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1962,
+      "eloBlack": 1962,
+      "white": {
+        "engineCorr": 0.553,
+        "acpl": 62.6,
+        "strengthScore": 108.3,
+        "timingSuspicion": 0.939,
+        "flatTimingCV": 0.754,
+        "cpLossComplexityCorr": -0.315,
+        "criticalAccuracy": 1.0,
+        "epr": 2479,
+        "moveCount": 38
+      },
+      "black": {
+        "engineCorr": 0.486,
+        "acpl": 33.4,
+        "strengthScore": 100.7,
+        "timingSuspicion": 0.126,
+        "flatTimingCV": 0.082,
+        "cpLossComplexityCorr": -0.126,
+        "criticalAccuracy": 0.333,
+        "epr": 2365,
+        "moveCount": 37
+      }
+    },
+    {
+      "gameId": "kaggle_61",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1739,
+      "eloBlack": 1728,
+      "white": {
+        "engineCorr": 0.459,
+        "acpl": 22.4,
+        "strengthScore": 100.1,
+        "timingSuspicion": 0.553,
+        "flatTimingCV": 0.768,
+        "cpLossComplexityCorr": 0.021,
+        "criticalAccuracy": 0.8,
+        "epr": 2234,
+        "moveCount": 37
+      },
+      "black": {
+        "engineCorr": 0.389,
+        "acpl": 36.4,
+        "strengthScore": 76.8,
+        "timingSuspicion": 0.95,
+        "flatTimingCV": 0.085,
+        "cpLossComplexityCorr": -0.081,
+        "criticalAccuracy": 0.0,
+        "epr": 1877,
+        "moveCount": 36
+      }
+    },
+    {
+      "gameId": "kaggle_62",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1966,
+      "eloBlack": 1897,
+      "white": {
+        "engineCorr": 0.314,
+        "acpl": 74.4,
+        "strengthScore": 51.5,
+        "timingSuspicion": 0.717,
+        "flatTimingCV": 1.215,
+        "cpLossComplexityCorr": 0.331,
+        "criticalAccuracy": 0.4,
+        "epr": 1629,
+        "moveCount": 51
+      },
+      "black": {
+        "engineCorr": 0.647,
+        "acpl": 51.4,
+        "strengthScore": 102.6,
+        "timingSuspicion": 0.213,
+        "flatTimingCV": 0.093,
+        "cpLossComplexityCorr": 0.147,
+        "criticalAccuracy": 0.571,
+        "epr": 2357,
+        "moveCount": 51
+      }
+    },
+    {
+      "gameId": "kaggle_63",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1675,
+      "eloBlack": 1654,
+      "white": {
+        "engineCorr": 0.481,
+        "acpl": 71.9,
+        "strengthScore": 93.4,
+        "timingSuspicion": 0.344,
+        "flatTimingCV": 1.313,
+        "cpLossComplexityCorr": -0.102,
+        "criticalAccuracy": 1.0,
+        "epr": 2098,
+        "moveCount": 27
+      },
+      "black": {
+        "engineCorr": 0.741,
+        "acpl": 23.1,
+        "strengthScore": 132.4,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.084,
+        "cpLossComplexityCorr": -0.166,
+        "criticalAccuracy": 0.9,
+        "epr": 2671,
+        "moveCount": 27
+      }
+    },
+    {
+      "gameId": "kaggle_64",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1907,
+      "eloBlack": 1954,
+      "white": {
+        "engineCorr": 0.35,
+        "acpl": 90.8,
+        "strengthScore": 68.2,
+        "timingSuspicion": 0.406,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": -0.131,
+        "criticalAccuracy": 0.0,
+        "epr": 1847,
+        "moveCount": 20
+      },
+      "black": {
+        "engineCorr": 0.8,
+        "acpl": 5.5,
+        "strengthScore": 129.8,
+        "timingSuspicion": 0.875,
+        "flatTimingCV": 0.077,
+        "cpLossComplexityCorr": -0.182,
+        "criticalAccuracy": 0.0,
+        "epr": 2796,
+        "moveCount": 20
+      }
+    },
+    {
+      "gameId": "kaggle_65",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1436,
+      "eloBlack": 1519,
+      "white": {
+        "engineCorr": 0.292,
+        "acpl": 54.6,
+        "strengthScore": 64.8,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.594,
+        "cpLossComplexityCorr": -0.133,
+        "criticalAccuracy": 0.0,
+        "epr": 1524,
+        "moveCount": 24
+      },
+      "black": {
+        "engineCorr": 0.833,
+        "acpl": 2.8,
+        "strengthScore": 138.6,
+        "timingSuspicion": 0.237,
+        "flatTimingCV": 0.108,
+        "cpLossComplexityCorr": -0.32,
+        "criticalAccuracy": 1.0,
+        "epr": 2683,
+        "moveCount": 24
+      }
+    },
+    {
+      "gameId": "kaggle_66",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1905,
+      "eloBlack": 1935,
+      "white": {
+        "engineCorr": 0.297,
+        "acpl": 46.2,
+        "strengthScore": 63.1,
+        "timingSuspicion": 0.82,
+        "flatTimingCV": 0.946,
+        "cpLossComplexityCorr": -0.114,
+        "criticalAccuracy": 0.0,
+        "epr": 1770,
+        "moveCount": 37
+      },
+      "black": {
+        "engineCorr": 0.757,
+        "acpl": 8.6,
+        "strengthScore": 135.9,
+        "timingSuspicion": 0.135,
+        "flatTimingCV": 0.114,
+        "cpLossComplexityCorr": -0.089,
+        "criticalAccuracy": 0.75,
+        "epr": 2878,
+        "moveCount": 37
+      }
+    },
+    {
+      "gameId": "kaggle_67",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1785,
+      "eloBlack": 1788,
+      "white": {
+        "engineCorr": 0.538,
+        "acpl": 33.4,
+        "strengthScore": 105.9,
+        "timingSuspicion": 0.037,
+        "flatTimingCV": 0.728,
+        "cpLossComplexityCorr": -0.096,
+        "criticalAccuracy": 0.714,
+        "epr": 2345,
+        "moveCount": 26
+      },
+      "black": {
+        "engineCorr": 0.808,
+        "acpl": 33.2,
+        "strengthScore": 125.1,
+        "timingSuspicion": 0.64,
+        "flatTimingCV": 0.119,
+        "cpLossComplexityCorr": 0.362,
+        "criticalAccuracy": 0.667,
+        "epr": 2636,
+        "moveCount": 26
+      }
+    },
+    {
+      "gameId": "kaggle_68",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1703,
+      "eloBlack": 1682,
+      "white": {
+        "engineCorr": 0.435,
+        "acpl": 80.7,
+        "strengthScore": 93.7,
+        "timingSuspicion": 0.141,
+        "flatTimingCV": 0.635,
+        "cpLossComplexityCorr": -0.22,
+        "criticalAccuracy": 0.571,
+        "epr": 2117,
+        "moveCount": 46
+      },
+      "black": {
+        "engineCorr": 0.435,
+        "acpl": 68.8,
+        "strengthScore": 90.0,
+        "timingSuspicion": 0.49,
+        "flatTimingCV": 0.096,
+        "cpLossComplexityCorr": -0.238,
+        "criticalAccuracy": 0.333,
+        "epr": 2051,
+        "moveCount": 46
+      }
+    },
+    {
+      "gameId": "kaggle_69",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1725,
+      "eloBlack": 1695,
+      "white": {
+        "engineCorr": 0.403,
+        "acpl": 56.4,
+        "strengthScore": 83.8,
+        "timingSuspicion": 0.501,
+        "flatTimingCV": 0.673,
+        "cpLossComplexityCorr": -0.065,
+        "criticalAccuracy": 0.8,
+        "epr": 1981,
+        "moveCount": 62
+      },
+      "black": {
+        "engineCorr": 0.629,
+        "acpl": 67.4,
+        "strengthScore": 93.8,
+        "timingSuspicion": 0.469,
+        "flatTimingCV": 0.091,
+        "cpLossComplexityCorr": 0.134,
+        "criticalAccuracy": 0.857,
+        "epr": 2115,
+        "moveCount": 62
+      }
+    },
+    {
+      "gameId": "kaggle_70",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1827,
+      "eloBlack": 1811,
+      "white": {
+        "engineCorr": 0.486,
+        "acpl": 45.6,
+        "strengthScore": 93.3,
+        "timingSuspicion": 0.678,
+        "flatTimingCV": 0.764,
+        "cpLossComplexityCorr": -0.205,
+        "criticalAccuracy": 1.0,
+        "epr": 2179,
+        "moveCount": 37
+      },
+      "black": {
+        "engineCorr": 0.459,
+        "acpl": 78.1,
+        "strengthScore": 108.2,
+        "timingSuspicion": 0.654,
+        "flatTimingCV": 0.073,
+        "cpLossComplexityCorr": -0.365,
+        "criticalAccuracy": 1.0,
+        "epr": 2394,
+        "moveCount": 37
+      }
+    },
+    {
+      "gameId": "kaggle_71",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1715,
+      "eloBlack": 1768,
+      "white": {
+        "engineCorr": 0.562,
+        "acpl": 68.9,
+        "strengthScore": 103.8,
+        "timingSuspicion": 1,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": -0.241,
+        "criticalAccuracy": 1.0,
+        "epr": 2276,
+        "moveCount": 16
+      },
+      "black": {
+        "engineCorr": 0.875,
+        "acpl": 7.9,
+        "strengthScore": 138.9,
+        "timingSuspicion": 0.814,
+        "flatTimingCV": 0.119,
+        "cpLossComplexityCorr": -0.067,
+        "criticalAccuracy": 1.0,
+        "epr": 2831,
+        "moveCount": 16
+      }
+    },
+    {
+      "gameId": "kaggle_72",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1848,
+      "eloBlack": 1855,
+      "white": {
+        "engineCorr": 0.359,
+        "acpl": 89.5,
+        "strengthScore": 70.6,
+        "timingSuspicion": 0.443,
+        "flatTimingCV": 1.176,
+        "cpLossComplexityCorr": -0.263,
+        "criticalAccuracy": 0.6,
+        "epr": 1850,
+        "moveCount": 64
+      },
+      "black": {
+        "engineCorr": 0.492,
+        "acpl": 73.3,
+        "strengthScore": 103.0,
+        "timingSuspicion": 0.487,
+        "flatTimingCV": 0.101,
+        "cpLossComplexityCorr": -0.209,
+        "criticalAccuracy": 0.6,
+        "epr": 2341,
+        "moveCount": 63
+      }
+    },
+    {
+      "gameId": "kaggle_73",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1420,
+      "eloBlack": 1460,
+      "white": {
+        "engineCorr": 0.367,
+        "acpl": 74.9,
+        "strengthScore": 62.1,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.863,
+        "cpLossComplexityCorr": 0.071,
+        "criticalAccuracy": 0.667,
+        "epr": 1473,
+        "moveCount": 49
+      },
+      "black": {
+        "engineCorr": 0.51,
+        "acpl": 100.9,
+        "strengthScore": 106.0,
+        "timingSuspicion": 0.697,
+        "flatTimingCV": 0.098,
+        "cpLossComplexityCorr": -0.172,
+        "criticalAccuracy": 0.667,
+        "epr": 2157,
+        "moveCount": 49
+      }
+    },
+    {
+      "gameId": "kaggle_74",
+      "cheatingWhite": 0,
+      "cheatingBlack": 1,
+      "eloWhite": 1725,
+      "eloBlack": 1721,
+      "white": {
+        "engineCorr": 0.467,
+        "acpl": 89.1,
+        "strengthScore": 69.1,
+        "timingSuspicion": 1,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": 0.314,
+        "criticalAccuracy": 0.0,
+        "epr": 1760,
+        "moveCount": 15
+      },
+      "black": {
+        "engineCorr": 0.6,
+        "acpl": 4.1,
+        "strengthScore": 125.1,
+        "timingSuspicion": 1,
+        "flatTimingCV": 0.092,
+        "cpLossComplexityCorr": -0.232,
+        "criticalAccuracy": 1.0,
+        "epr": 2598,
+        "moveCount": 15
+      }
+    },
+    {
+      "gameId": "kaggle_75",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1584,
+      "eloBlack": 1587,
+      "white": {
+        "engineCorr": 0.409,
+        "acpl": 55.4,
+        "strengthScore": 83.9,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.113,
+        "cpLossComplexityCorr": 0.286,
+        "criticalAccuracy": 0.0,
+        "epr": 1904,
+        "moveCount": 22
+      },
+      "black": {
+        "engineCorr": 0.524,
+        "acpl": 62.6,
+        "strengthScore": 100.0,
+        "timingSuspicion": 1,
+        "flatTimingCV": 0.079,
+        "cpLossComplexityCorr": 0.25,
+        "criticalAccuracy": 0.75,
+        "epr": 2146,
+        "moveCount": 21
+      }
+    },
+    {
+      "gameId": "kaggle_76",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1840,
+      "eloBlack": 1882,
+      "white": {
+        "engineCorr": 0.333,
+        "acpl": 49.5,
+        "strengthScore": 69.8,
+        "timingSuspicion": 0.427,
+        "flatTimingCV": 0.093,
+        "cpLossComplexityCorr": 0.022,
+        "criticalAccuracy": 0.444,
+        "epr": 1834,
+        "moveCount": 66
+      },
+      "black": {
+        "engineCorr": 0.415,
+        "acpl": 49.5,
+        "strengthScore": 91.4,
+        "timingSuspicion": 0.401,
+        "flatTimingCV": 0.084,
+        "cpLossComplexityCorr": -0.173,
+        "criticalAccuracy": 0.0,
+        "epr": 2182,
+        "moveCount": 65
+      }
+    },
+    {
+      "gameId": "kaggle_77",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1457,
+      "eloBlack": 2051,
+      "white": {
+        "engineCorr": 0.48,
+        "acpl": 110.1,
+        "strengthScore": 95.7,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.101,
+        "cpLossComplexityCorr": 0.049,
+        "criticalAccuracy": 0.714,
+        "epr": 2000,
+        "moveCount": 25
+      },
+      "black": {
+        "engineCorr": 0.417,
+        "acpl": 96.3,
+        "strengthScore": 77.5,
+        "timingSuspicion": 1,
+        "flatTimingCV": 0.11,
+        "cpLossComplexityCorr": 0.428,
+        "criticalAccuracy": 0.333,
+        "epr": 2069,
+        "moveCount": 24
+      }
+    },
+    {
+      "gameId": "kaggle_78",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1987,
+      "eloBlack": 1967,
+      "white": {
+        "engineCorr": 0.75,
+        "acpl": 3.6,
+        "strengthScore": 133.2,
+        "timingSuspicion": 0.162,
+        "flatTimingCV": 0.116,
+        "cpLossComplexityCorr": -0.129,
+        "criticalAccuracy": 0.857,
+        "epr": 2866,
+        "moveCount": 32
+      },
+      "black": {
+        "engineCorr": 0.452,
+        "acpl": 43.1,
+        "strengthScore": 96.2,
+        "timingSuspicion": 0.11,
+        "flatTimingCV": 0.101,
+        "cpLossComplexityCorr": -0.11,
+        "criticalAccuracy": 0.0,
+        "epr": 2300,
+        "moveCount": 31
+      }
+    },
+    {
+      "gameId": "kaggle_79",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1629,
+      "eloBlack": 1622,
+      "white": {
+        "engineCorr": 0.522,
+        "acpl": 9.7,
+        "strengthScore": 116.8,
+        "timingSuspicion": 1,
+        "flatTimingCV": 0.14,
+        "cpLossComplexityCorr": -0.179,
+        "criticalAccuracy": 1.0,
+        "epr": 2423,
+        "moveCount": 23
+      },
+      "black": {
+        "engineCorr": 0.545,
+        "acpl": 49.8,
+        "strengthScore": 95.8,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.084,
+        "cpLossComplexityCorr": -0.117,
+        "criticalAccuracy": 0.0,
+        "epr": 2105,
+        "moveCount": 22
+      }
+    },
+    {
+      "gameId": "kaggle_80",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 2331,
+      "eloBlack": 1907,
+      "white": {
+        "engineCorr": 0.45,
+        "acpl": 36.5,
+        "strengthScore": 86.7,
+        "timingSuspicion": 1,
+        "flatTimingCV": 0.054,
+        "cpLossComplexityCorr": 0.29,
+        "criticalAccuracy": 0.5,
+        "epr": 2382,
+        "moveCount": 20
+      },
+      "black": {
+        "engineCorr": 0.474,
+        "acpl": 49.4,
+        "strengthScore": 77.4,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.075,
+        "cpLossComplexityCorr": -0.183,
+        "criticalAccuracy": 0.0,
+        "epr": 1985,
+        "moveCount": 19
+      }
+    },
+    {
+      "gameId": "kaggle_81",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1661,
+      "eloBlack": 1641,
+      "white": {
+        "engineCorr": 0.375,
+        "acpl": 57.3,
+        "strengthScore": 72.6,
+        "timingSuspicion": 1,
+        "flatTimingCV": 0.095,
+        "cpLossComplexityCorr": -0.09,
+        "criticalAccuracy": 0.0,
+        "epr": 1777,
+        "moveCount": 24
+      },
+      "black": {
+        "engineCorr": 0.792,
+        "acpl": 4.8,
+        "strengthScore": 131.1,
+        "timingSuspicion": 0.016,
+        "flatTimingCV": 0.131,
+        "cpLossComplexityCorr": -0.214,
+        "criticalAccuracy": 1.0,
+        "epr": 2644,
+        "moveCount": 24
+      }
+    },
+    {
+      "gameId": "kaggle_82",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1838,
+      "eloBlack": 1812,
+      "white": {
+        "engineCorr": 0.639,
+        "acpl": 83.8,
+        "strengthScore": 118.3,
+        "timingSuspicion": 0.935,
+        "flatTimingCV": 0.068,
+        "cpLossComplexityCorr": -0.232,
+        "criticalAccuracy": 0.875,
+        "epr": 2560,
+        "moveCount": 36
+      },
+      "black": {
+        "engineCorr": 0.629,
+        "acpl": 74.3,
+        "strengthScore": 104.8,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.118,
+        "cpLossComplexityCorr": 0.414,
+        "criticalAccuracy": 0.6,
+        "epr": 2344,
+        "moveCount": 35
+      }
+    },
+    {
+      "gameId": "kaggle_83",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1754,
+      "eloBlack": 1815,
+      "white": {
+        "engineCorr": 0.538,
+        "acpl": 44.5,
+        "strengthScore": 110.4,
+        "timingSuspicion": 0.007,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": 0.323,
+        "criticalAccuracy": 0.8,
+        "epr": 2396,
+        "moveCount": 13
+      },
+      "black": {
+        "engineCorr": 0.333,
+        "acpl": 156.7,
+        "strengthScore": 43.0,
+        "timingSuspicion": 0.68,
+        "flatTimingCV": null,
+        "cpLossComplexityCorr": 0.333,
+        "criticalAccuracy": 0.0,
+        "epr": 1418,
+        "moveCount": 12
+      }
+    },
+    {
+      "gameId": "kaggle_84",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1753,
+      "eloBlack": 1810,
+      "white": {
+        "engineCorr": 0.75,
+        "acpl": 33.8,
+        "strengthScore": 133.9,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.091,
+        "cpLossComplexityCorr": -0.124,
+        "criticalAccuracy": 0.833,
+        "epr": 2747,
+        "moveCount": 44
+      },
+      "black": {
+        "engineCorr": 0.581,
+        "acpl": 40.4,
+        "strengthScore": 114.0,
+        "timingSuspicion": 0.241,
+        "flatTimingCV": 0.089,
+        "cpLossComplexityCorr": -0.177,
+        "criticalAccuracy": 0.8,
+        "epr": 2481,
+        "moveCount": 43
+      }
+    },
+    {
+      "gameId": "kaggle_85",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1881,
+      "eloBlack": 1903,
+      "white": {
+        "engineCorr": 0.553,
+        "acpl": 73.0,
+        "strengthScore": 96.8,
+        "timingSuspicion": 0.392,
+        "flatTimingCV": 0.073,
+        "cpLossComplexityCorr": 0.194,
+        "criticalAccuracy": 0.5,
+        "epr": 2262,
+        "moveCount": 38
+      },
+      "black": {
+        "engineCorr": 0.579,
+        "acpl": 55.7,
+        "strengthScore": 89.7,
+        "timingSuspicion": 0.954,
+        "flatTimingCV": 0.103,
+        "cpLossComplexityCorr": 0.189,
+        "criticalAccuracy": 0.75,
+        "epr": 2167,
+        "moveCount": 38
+      }
+    },
+    {
+      "gameId": "kaggle_86",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1877,
+      "eloBlack": 1880,
+      "white": {
+        "engineCorr": 0.459,
+        "acpl": 49.4,
+        "strengthScore": 96.8,
+        "timingSuspicion": 0.488,
+        "flatTimingCV": 0.103,
+        "cpLossComplexityCorr": -0.314,
+        "criticalAccuracy": 0.0,
+        "epr": 2259,
+        "moveCount": 37
+      },
+      "black": {
+        "engineCorr": 0.622,
+        "acpl": 15.1,
+        "strengthScore": 113.4,
+        "timingSuspicion": 0.689,
+        "flatTimingCV": 0.107,
+        "cpLossComplexityCorr": -0.054,
+        "criticalAccuracy": 0.714,
+        "epr": 2510,
+        "moveCount": 37
+      }
+    },
+    {
+      "gameId": "kaggle_87",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1500,
+      "eloBlack": 1946,
+      "white": {
+        "engineCorr": 0.661,
+        "acpl": 30.9,
+        "strengthScore": 124.2,
+        "timingSuspicion": 0.184,
+        "flatTimingCV": 0.12,
+        "cpLossComplexityCorr": -0.233,
+        "criticalAccuracy": 0.786,
+        "epr": 2456,
+        "moveCount": 56
+      },
+      "black": {
+        "engineCorr": 0.545,
+        "acpl": 20.7,
+        "strengthScore": 90.9,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.064,
+        "cpLossComplexityCorr": -0.104,
+        "criticalAccuracy": 0.0,
+        "epr": 2208,
+        "moveCount": 55
+      }
+    },
+    {
+      "gameId": "kaggle_88",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1872,
+      "eloBlack": 1872,
+      "white": {
+        "engineCorr": 0.4,
+        "acpl": 154.5,
+        "strengthScore": 102.8,
+        "timingSuspicion": 0.027,
+        "flatTimingCV": 0.096,
+        "cpLossComplexityCorr": -0.505,
+        "criticalAccuracy": 1.0,
+        "epr": 2347,
+        "moveCount": 40
+      },
+      "black": {
+        "engineCorr": 0.385,
+        "acpl": 45.1,
+        "strengthScore": 84.9,
+        "timingSuspicion": 1,
+        "flatTimingCV": 0.088,
+        "cpLossComplexityCorr": -0.02,
+        "criticalAccuracy": 1.0,
+        "epr": 2078,
+        "moveCount": 39
+      }
+    },
+    {
+      "gameId": "kaggle_89",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1830,
+      "eloBlack": 1803,
+      "white": {
+        "engineCorr": 0.29,
+        "acpl": 19.2,
+        "strengthScore": 79.1,
+        "timingSuspicion": 0.759,
+        "flatTimingCV": 0.106,
+        "cpLossComplexityCorr": 0.21,
+        "criticalAccuracy": 0.75,
+        "epr": 1968,
+        "moveCount": 62
+      },
+      "black": {
+        "engineCorr": 0.492,
+        "acpl": 16.6,
+        "strengthScore": 92.6,
+        "timingSuspicion": 0.499,
+        "flatTimingCV": 0.118,
+        "cpLossComplexityCorr": 0.244,
+        "criticalAccuracy": 0.5,
+        "epr": 2156,
+        "moveCount": 61
+      }
+    },
+    {
+      "gameId": "kaggle_90",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1958,
+      "eloBlack": 1933,
+      "white": {
+        "engineCorr": 0.477,
+        "acpl": 8.1,
+        "strengthScore": 97.7,
+        "timingSuspicion": 0.061,
+        "flatTimingCV": 0.116,
+        "cpLossComplexityCorr": -0.127,
+        "criticalAccuracy": 0.0,
+        "epr": 2317,
+        "moveCount": 44
+      },
+      "black": {
+        "engineCorr": 0.465,
+        "acpl": 21.7,
+        "strengthScore": 88.4,
+        "timingSuspicion": 0.114,
+        "flatTimingCV": 0.098,
+        "cpLossComplexityCorr": -0.14,
+        "criticalAccuracy": 0.0,
+        "epr": 2165,
+        "moveCount": 43
+      }
+    },
+    {
+      "gameId": "kaggle_91",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1373,
+      "eloBlack": 1375,
+      "white": {
+        "engineCorr": 0.543,
+        "acpl": 40.9,
+        "strengthScore": 103.7,
+        "timingSuspicion": 0.852,
+        "flatTimingCV": 0.09,
+        "cpLossComplexityCorr": -0.253,
+        "criticalAccuracy": 1.0,
+        "epr": 2069,
+        "moveCount": 46
+      },
+      "black": {
+        "engineCorr": 0.378,
+        "acpl": 38.2,
+        "strengthScore": 69.2,
+        "timingSuspicion": 0.497,
+        "flatTimingCV": 0.107,
+        "cpLossComplexityCorr": -0.133,
+        "criticalAccuracy": 0.0,
+        "epr": 1553,
+        "moveCount": 45
+      }
+    },
+    {
+      "gameId": "kaggle_92",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1041,
+      "eloBlack": 1154,
+      "white": {
+        "engineCorr": 0.676,
+        "acpl": 31.5,
+        "strengthScore": 129.1,
+        "timingSuspicion": 0.803,
+        "flatTimingCV": 0.086,
+        "cpLossComplexityCorr": -0.173,
+        "criticalAccuracy": 0.889,
+        "epr": 2272,
+        "moveCount": 37
+      },
+      "black": {
+        "engineCorr": 0.556,
+        "acpl": 40.3,
+        "strengthScore": 113.9,
+        "timingSuspicion": 1,
+        "flatTimingCV": 0.092,
+        "cpLossComplexityCorr": -0.087,
+        "criticalAccuracy": 0.7,
+        "epr": 2093,
+        "moveCount": 36
+      }
+    },
+    {
+      "gameId": "kaggle_93",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1750,
+      "eloBlack": 1751,
+      "white": {
+        "engineCorr": 0.391,
+        "acpl": 7.4,
+        "strengthScore": 91.7,
+        "timingSuspicion": 0.596,
+        "flatTimingCV": 0.1,
+        "cpLossComplexityCorr": 0.53,
+        "criticalAccuracy": 0.5,
+        "epr": 2112,
+        "moveCount": 64
+      },
+      "black": {
+        "engineCorr": 0.609,
+        "acpl": 3.1,
+        "strengthScore": 120.6,
+        "timingSuspicion": 0.66,
+        "flatTimingCV": 0.099,
+        "cpLossComplexityCorr": 0.25,
+        "criticalAccuracy": 1.0,
+        "epr": 2547,
+        "moveCount": 64
+      }
+    },
+    {
+      "gameId": "kaggle_94",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1650,
+      "eloBlack": 1553,
+      "white": {
+        "engineCorr": 0.647,
+        "acpl": 17.8,
+        "strengthScore": 123.9,
+        "timingSuspicion": 1,
+        "flatTimingCV": 0.088,
+        "cpLossComplexityCorr": -0.488,
+        "criticalAccuracy": 1.0,
+        "epr": 2541,
+        "moveCount": 17
+      },
+      "black": {
+        "engineCorr": 0.312,
+        "acpl": 86.2,
+        "strengthScore": 58.5,
+        "timingSuspicion": 0.259,
+        "flatTimingCV": 0.121,
+        "cpLossComplexityCorr": -0.076,
+        "criticalAccuracy": 0.0,
+        "epr": 1502,
+        "moveCount": 16
+      }
+    },
+    {
+      "gameId": "kaggle_95",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1579,
+      "eloBlack": 1606,
+      "white": {
+        "engineCorr": 0.7,
+        "acpl": 20.6,
+        "strengthScore": 119.7,
+        "timingSuspicion": 0.518,
+        "flatTimingCV": 0.138,
+        "cpLossComplexityCorr": 0.048,
+        "criticalAccuracy": 0.727,
+        "epr": 2438,
+        "moveCount": 30
+      },
+      "black": {
+        "engineCorr": 0.517,
+        "acpl": 58.4,
+        "strengthScore": 90.4,
+        "timingSuspicion": 1,
+        "flatTimingCV": 0.078,
+        "cpLossComplexityCorr": 0.086,
+        "criticalAccuracy": 0.667,
+        "epr": 2014,
+        "moveCount": 29
+      }
+    },
+    {
+      "gameId": "kaggle_96",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1928,
+      "eloBlack": 1928,
+      "white": {
+        "engineCorr": 0.486,
+        "acpl": 2.8,
+        "strengthScore": 86.5,
+        "timingSuspicion": 0.439,
+        "flatTimingCV": 0.072,
+        "cpLossComplexityCorr": 0.215,
+        "criticalAccuracy": 0.0,
+        "epr": 2132,
+        "moveCount": 35
+      },
+      "black": {
+        "engineCorr": 0.824,
+        "acpl": 1.1,
+        "strengthScore": 129.6,
+        "timingSuspicion": 0.694,
+        "flatTimingCV": 0.101,
+        "cpLossComplexityCorr": -0.095,
+        "criticalAccuracy": 1.0,
+        "epr": 2779,
+        "moveCount": 34
+      }
+    },
+    {
+      "gameId": "kaggle_97",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1695,
+      "eloBlack": 1709,
+      "white": {
+        "engineCorr": 0.424,
+        "acpl": 36.8,
+        "strengthScore": 66.8,
+        "timingSuspicion": 0.498,
+        "flatTimingCV": 0.087,
+        "cpLossComplexityCorr": -0.201,
+        "criticalAccuracy": 0.0,
+        "epr": 1709,
+        "moveCount": 33
+      },
+      "black": {
+        "engineCorr": 0.606,
+        "acpl": 10.8,
+        "strengthScore": 107.5,
+        "timingSuspicion": 0.43,
+        "flatTimingCV": 0.124,
+        "cpLossComplexityCorr": -0.078,
+        "criticalAccuracy": 0.8,
+        "epr": 2327,
+        "moveCount": 33
+      }
+    },
+    {
+      "gameId": "kaggle_98",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1054,
+      "eloBlack": 1500,
+      "white": {
+        "engineCorr": 0.379,
+        "acpl": 72.8,
+        "strengthScore": 83.6,
+        "timingSuspicion": 0.104,
+        "flatTimingCV": 0.118,
+        "cpLossComplexityCorr": -0.203,
+        "criticalAccuracy": 0.333,
+        "epr": 1595,
+        "moveCount": 29
+      },
+      "black": {
+        "engineCorr": 0.655,
+        "acpl": 34.6,
+        "strengthScore": 115.1,
+        "timingSuspicion": 0.697,
+        "flatTimingCV": 0.11,
+        "cpLossComplexityCorr": -0.178,
+        "criticalAccuracy": 1.0,
+        "epr": 2319,
+        "moveCount": 29
+      }
+    },
+    {
+      "gameId": "kaggle_99",
+      "cheatingWhite": 1,
+      "cheatingBlack": 1,
+      "eloWhite": 1830,
+      "eloBlack": 1803,
+      "white": {
+        "engineCorr": 0.344,
+        "acpl": 22.0,
+        "strengthScore": 90.3,
+        "timingSuspicion": 0,
+        "flatTimingCV": 0.091,
+        "cpLossComplexityCorr": -0.046,
+        "criticalAccuracy": 1.0,
+        "epr": 2135,
+        "moveCount": 32
+      },
+      "black": {
+        "engineCorr": 0.484,
+        "acpl": 62.6,
+        "strengthScore": 91.0,
+        "timingSuspicion": 0.728,
+        "flatTimingCV": 0.102,
+        "cpLossComplexityCorr": -0.068,
+        "criticalAccuracy": 0.75,
+        "epr": 2132,
+        "moveCount": 31
+      }
+    }
+  ],
+  "total": 100
+}

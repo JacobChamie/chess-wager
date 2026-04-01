@@ -5,17 +5,31 @@ const Timer = memo(({ timeMs, player, active, resultIcon, isPremium }) => {
   const [displayTime, setDisplayTime] = useState(timeMs);
   const baseRef = useRef(timeMs);
   const syncRef = useRef(Date.now());
+  const activeRef = useRef(active);
+  const timeMsRef = useRef(timeMs);
 
-  // Sync base when server sends new time
+  // Keep timeMsRef current. Only snap refs/display when the timer is not actively
+  // counting — avoids visible jumps from periodic server clock_update events.
   useEffect(() => {
-    baseRef.current = timeMs;
-    syncRef.current = Date.now();
-    setDisplayTime(timeMs);
+    timeMsRef.current = timeMs;
+    if (!activeRef.current) {
+      baseRef.current = timeMs;
+      syncRef.current = Date.now();
+      setDisplayTime(timeMs);
+    }
   }, [timeMs]);
 
-  // Stable countdown interval — only recreated when active changes
+  // Countdown interval — only recreated when active changes.
   useEffect(() => {
-    if (!active) return;
+    activeRef.current = active;
+    if (!active) {
+      // Snap to authoritative server time when turn ends.
+      setDisplayTime(timeMsRef.current);
+      return;
+    }
+    // On turn start the timeMs effect (runs first) already set baseRef.
+    // Reset sync so elapsed starts at 0.
+    syncRef.current = Date.now();
     const interval = setInterval(() => {
       const elapsed = Date.now() - syncRef.current;
       setDisplayTime(Math.max(0, baseRef.current - elapsed));

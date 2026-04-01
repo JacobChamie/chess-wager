@@ -107,6 +107,10 @@ describe('E2E: Premium Features', () => {
   afterEach(async () => {
     await disconnectAll(clients);
     clients = [];
+    for (const [, room] of server.gameManager.games) {
+      room.destroy();
+    }
+    server.gameManager.games.clear();
   });
 
   afterAll(async () => {

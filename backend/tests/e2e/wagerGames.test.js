@@ -13,6 +13,11 @@ describe('E2E: Wager Games', () => {
   afterEach(async () => {
     await disconnectAll(clients);
     clients = [];
+    // Destroy game rooms to clear clock intervals accumulated from previous tests
+    for (const [, room] of server.gameManager.games) {
+      room.destroy();
+    }
+    server.gameManager.games.clear();
   });
 
   afterAll(async () => {

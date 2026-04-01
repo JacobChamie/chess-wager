@@ -92,7 +92,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       }
 
       _emitGameStart(io, room, player1, player2);
-      _setupGameCallbacks(io, room, gameManager, lobbyManager, wagerService, fairPlayService);
+      _setupGameCallbacks(io, room, gameManager, lobbyManager, wagerService, fairPlayService, pool);
     } else {
       socket.emit('lobby:queued', {});
     }
@@ -186,7 +186,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     }
 
     _emitGameStart(io, room, creator, joiner);
-    _setupGameCallbacks(io, room, gameManager, lobbyManager, wagerService, fairPlayService);
+    _setupGameCallbacks(io, room, gameManager, lobbyManager, wagerService, fairPlayService, pool);
     broadcastLobbyState(io, lobbyManager, gameManager);
   });
 
@@ -292,6 +292,8 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     const room = gameManager.getGame(gameId);
     if (!room) return;
 
+    // Capture pre-move FEN before tryMove applies the move in-place
+    const preFen = room.chess.fen();
     const result = room.tryMove(socket.id, { from, to, promotion });
 
     if (!result.valid) {
@@ -310,19 +312,45 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       moves: result.moves,
     });
 
+    // Fire live cheat detection — non-blocking, never delays game:move_made
+    if (fairPlayService?.liveDetector && !room.isBotGame && room.white?.userId && room.black?.userId) {
+      const color = room.white.socketId === socket.id ? 'w' : 'b';
+      const userId = color === 'w' ? room.white.userId : room.black.userId;
+      const plyNumber = room.chess.history().length;
+      const uci = from + to + (promotion || '');
+      const lastEntry = room.moveHistory[room.moveHistory.length - 1];
+      const moveTimeMs = (color === 'w' ? lastEntry?.white?.timeMs : lastEntry?.black?.timeMs) ?? 0;
+
+      fairPlayService.liveDetector
+        .checkMove(gameId, userId, preFen, uci, moveTimeMs, color, plyNumber)
+        .then(flag => {
+          if (flag) {
+            io.to('admin').emit('fairplay:live_flag', flag);
+            io.to(gameId).emit('fairplay:game_under_review', {
+              gameId,
+              message: 'This game has been flagged for review. Wager payout is pending.',
+            });
+          }
+        })
+        .catch(err => console.error('[LiveDetect]', err.message));
+    }
+
     if (result.gameOver) {
-      if (room.isWagerGame && room.wagerAmount > 0 && wagerService) {
+      const wagerHeld = fairPlayService ? await _isWagerHeld(room.gameId, pool) : false;
+      if (room.isWagerGame && room.wagerAmount > 0 && wagerService && !wagerHeld) {
         await _settleGameWager(room, result.gameOver, wagerService);
+        result.gameOver.wagerHeld = false;
+      } else if (wagerHeld) {
+        result.gameOver.wagerHeld = true;
+      }
+      if (room.isWagerGame && room.wagerAmount > 0) {
         result.gameOver.wagerAmount = room.wagerAmount;
         result.gameOver.isWagerGame = true;
       }
       io.to(gameId).emit('game:over', result.gameOver);
       gameManager.persistGame(gameId);
-      // Trigger fair-play analysis for non-bot games
       if (fairPlayService && !room.isBotGame && room.white?.userId && room.black?.userId) {
-        fairPlayService.analyzeGame(room.gameId).catch(err =>
-          console.error(`Fair play analysis error for ${room.gameId}:`, err.message)
-        );
+        _triggerAnalysis(io, room, result.gameOver, wagerHeld, fairPlayService, wagerService);
       }
       broadcastLobbyState(io, lobbyManager, gameManager);
     }
@@ -340,18 +368,21 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
 
     const result = room.resign(socket.id);
     if (result) {
-      if (room.isWagerGame && room.wagerAmount > 0 && wagerService) {
+      const wagerHeld = fairPlayService ? await _isWagerHeld(room.gameId, pool) : false;
+      if (room.isWagerGame && room.wagerAmount > 0 && wagerService && !wagerHeld) {
         await _settleGameWager(room, result, wagerService);
+        result.wagerHeld = false;
+      } else if (wagerHeld) {
+        result.wagerHeld = true;
+      }
+      if (room.isWagerGame && room.wagerAmount > 0) {
         result.wagerAmount = room.wagerAmount;
         result.isWagerGame = true;
       }
       io.to(gameId).emit('game:over', result);
       gameManager.persistGame(gameId);
-      // Trigger fair-play analysis for non-bot games
       if (fairPlayService && !room.isBotGame && room.white?.userId && room.black?.userId) {
-        fairPlayService.analyzeGame(room.gameId).catch(err =>
-          console.error(`Fair play analysis error for ${room.gameId}:`, err.message)
-        );
+        _triggerAnalysis(io, room, result, wagerHeld, fairPlayService, wagerService);
       }
       broadcastLobbyState(io, lobbyManager, gameManager);
     }
@@ -388,18 +419,21 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     if (!result) return;
 
     if (result.result) {
-      if (room.isWagerGame && room.wagerAmount > 0 && wagerService) {
+      const wagerHeld = fairPlayService ? await _isWagerHeld(room.gameId, pool) : false;
+      if (room.isWagerGame && room.wagerAmount > 0 && wagerService && !wagerHeld) {
         await _settleGameWager(room, result, wagerService);
+        result.wagerHeld = false;
+      } else if (wagerHeld) {
+        result.wagerHeld = true;
+      }
+      if (room.isWagerGame && room.wagerAmount > 0) {
         result.wagerAmount = room.wagerAmount;
         result.isWagerGame = true;
       }
       io.to(gameId).emit('game:over', result);
       gameManager.persistGame(gameId);
-      // Trigger fair-play analysis for non-bot games
       if (fairPlayService && !room.isBotGame && room.white?.userId && room.black?.userId) {
-        fairPlayService.analyzeGame(room.gameId).catch(err =>
-          console.error(`Fair play analysis error for ${room.gameId}:`, err.message)
-        );
+        _triggerAnalysis(io, room, result, wagerHeld, fairPlayService, wagerService);
       }
       broadcastLobbyState(io, lobbyManager, gameManager);
     } else if (result.declined) {
@@ -445,7 +479,7 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
       gameManager.trackSession(oldWhite.sessionId, newGameId);
       gameManager.trackSession(oldBlack.sessionId, newGameId);
 
-      _setupGameCallbacks(io, newRoom, gameManager, lobbyManager, wagerService, fairPlayService);
+      _setupGameCallbacks(io, newRoom, gameManager, lobbyManager, wagerService, fairPlayService, pool);
 
       [oldWhite, oldBlack].forEach((player) => {
         const sock = io.sockets.sockets.get(player.socketId);
@@ -692,7 +726,61 @@ function _emitGameStart(io, room, playerA, playerB) {
   }
 }
 
-function _setupGameCallbacks(io, room, gameManager, lobbyManager, wagerService, fairPlayService) {
+/**
+ * Check whether the game's wager is currently on hold (flagged mid-game).
+ */
+async function _isWagerHeld(gameId, pool) {
+  try {
+    const res = await pool.query('SELECT wager_status FROM games WHERE id = $1', [gameId]);
+    return res.rows[0]?.wager_status === 'held';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fire post-game analysis and, when a wager was held, settle or confirm hold
+ * based on the deep-analysis result.
+ */
+function _triggerAnalysis(io, room, gameOverResult, wagerWasHeld, fairPlayService, wagerService) {
+  // Snapshot the room fields we need — the room object may be mutated later
+  const savedGameId = room.gameId;
+  const savedRoom = {
+    gameId: room.gameId,
+    white: room.white,
+    black: room.black,
+    wagerAmount: room.wagerAmount,
+    isWagerGame: room.isWagerGame,
+  };
+
+  fairPlayService.analyzeGame(savedGameId)
+    .then(async () => {
+      fairPlayService.liveDetector?.cleanup(savedGameId);
+
+      if (!wagerWasHeld || !savedRoom.isWagerGame || !savedRoom.wagerAmount || !wagerService) return;
+
+      // Post-analysis: check how the live flag was resolved
+      const resolution = await fairPlayService.getGameLiveFlagResolution(savedGameId);
+
+      if (resolution === 'cleared') {
+        // Deep analysis came back clean — settle now
+        await _settleGameWager(savedRoom, gameOverResult, wagerService);
+        io.to(savedGameId).emit('fairplay:payout_released', {
+          gameId: savedGameId,
+          wagerAmount: savedRoom.wagerAmount,
+        });
+      } else {
+        // Confirmed cheat or still pending — hold for admin
+        io.to(savedGameId).emit('fairplay:payout_held', {
+          gameId: savedGameId,
+          message: 'Payout held pending admin review.',
+        });
+      }
+    })
+    .catch(err => console.error(`[FairPlay] Analysis error for ${savedGameId}:`, err.message));
+}
+
+function _setupGameCallbacks(io, room, gameManager, lobbyManager, wagerService, fairPlayService, pool) {
   const gameId = room.gameId;
 
   room.onClockUpdate = (times) => {
@@ -700,20 +788,22 @@ function _setupGameCallbacks(io, room, gameManager, lobbyManager, wagerService, 
   };
 
   room.onGameOver = async (result) => {
-    // Settle wager if applicable
-    if (room.isWagerGame && room.wagerAmount > 0 && wagerService) {
+    const wagerHeld = (fairPlayService && pool) ? await _isWagerHeld(room.gameId, pool) : false;
+    if (room.isWagerGame && room.wagerAmount > 0 && wagerService && !wagerHeld) {
       await _settleGameWager(room, result, wagerService);
+      result.wagerHeld = false;
+    } else if (wagerHeld) {
+      result.wagerHeld = true;
+    }
+    if (room.isWagerGame && room.wagerAmount > 0) {
       result.wagerAmount = room.wagerAmount;
       result.isWagerGame = true;
     }
 
     io.to(gameId).emit('game:over', result);
     gameManager.persistGame(gameId);
-    // Trigger fair-play analysis for non-bot games
     if (fairPlayService && !room.isBotGame && room.white?.userId && room.black?.userId) {
-      fairPlayService.analyzeGame(room.gameId).catch(err =>
-        console.error(`Fair play analysis error for ${room.gameId}:`, err.message)
-      );
+      _triggerAnalysis(io, room, result, wagerHeld, fairPlayService, wagerService);
     }
     broadcastLobbyState(io, lobbyManager, gameManager);
   };
