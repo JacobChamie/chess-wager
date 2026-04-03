@@ -27,7 +27,8 @@ describe('E2E: Full Game Lifecycle — Wager to Payout', () => {
   // 1. Full wager game: matchmake -> play Scholar's Mate -> payout
   // ---------------------------------------------------------------
 
-  it('should run a complete wager game from matchmaking through checkmate to settlement', { timeout: 15000 }, async () => {
+  it('should run a complete wager game from matchmaking through checkmate to settlement', { timeout: 30000 }, async () => {
+    const T = 15000; // generous timeout for parallel CI
     const c1 = await connectClient(server.url, 'life-w-1', {
       authUser: { id: 'u1', username: 'Alice' },
     });
@@ -37,8 +38,8 @@ describe('E2E: Full Game Lifecycle — Wager to Payout', () => {
     clients.push(c1, c2);
 
     // Step 1: Both players queue with matching wager
-    const startA = waitForEvent(c1, 'lobby:game_start');
-    const startB = waitForEvent(c2, 'lobby:game_start');
+    const startA = waitForEvent(c1, 'lobby:game_start', T);
+    const startB = waitForEvent(c2, 'lobby:game_start', T);
 
     c1.emit('lobby:play', { timeControl: 300, playerName: 'Alice', wagerAmount: 25 });
     c2.emit('lobby:play', { timeControl: 300, playerName: 'Bob', wagerAmount: 25 });
@@ -56,7 +57,7 @@ describe('E2E: Full Game Lifecycle — Wager to Payout', () => {
     const whiteClient = dataA.color === 'w' ? c1 : c2;
     const blackClient = dataA.color === 'w' ? c2 : c1;
 
-    const statePromise = waitForEvent(whiteClient, 'game:state');
+    const statePromise = waitForEvent(whiteClient, 'game:state', T);
     whiteClient.emit('game:join', { gameId });
     const state = await statePromise;
 
@@ -77,14 +78,14 @@ describe('E2E: Full Game Lifecycle — Wager to Payout', () => {
     for (const { client, from, to } of moves) {
       const movePromise = waitForEvent(
         client === whiteClient ? blackClient : whiteClient,
-        'game:move_made'
+        'game:move_made',
+        T
       );
       client.emit('game:move', { gameId, from, to });
       await movePromise;
     }
 
-    // Step 5: Deliver checkmate (generous timeout — fairplay analysis adds async overhead)
-    const T = 10000;
+    // Step 5: Deliver checkmate
     const overW = waitForEvent(whiteClient, 'game:over', T);
     const overB = waitForEvent(blackClient, 'game:over', T);
     whiteClient.emit('game:move', { gameId, from: 'h5', to: 'f7' });

@@ -148,19 +148,25 @@ export default function createCryptoRoutes(pool, walletManager, priceService) {
       const usdValue = netAmount; // net after rake
       const amountCrypto = usdValue / price;
 
-      // Deduct from balance in a transaction
+      // Deduct from balance in a transaction with row-level lock
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
 
-        const balRes = await client.query(
-          'UPDATE users SET token_balance = token_balance - $1 WHERE id = $2 AND token_balance >= $1 RETURNING token_balance',
-          [totalDeduction, req.user.id]
+        // Lock user row first to prevent concurrent withdrawals/wagers racing
+        const lockRes = await client.query(
+          'SELECT token_balance FROM users WHERE id = $1 FOR UPDATE',
+          [req.user.id]
         );
-        if (!balRes.rows[0]) {
+        if (!lockRes.rows[0] || parseFloat(lockRes.rows[0].token_balance) < totalDeduction) {
           await client.query('ROLLBACK');
           return res.status(400).json({ error: 'Insufficient balance' });
         }
+
+        const balRes = await client.query(
+          'UPDATE users SET token_balance = token_balance - $1 WHERE id = $2 RETURNING token_balance',
+          [totalDeduction, req.user.id]
+        );
         const newBalance = balRes.rows[0].token_balance;
 
         // Create withdrawal record — premium/admin skip awaiting_approval

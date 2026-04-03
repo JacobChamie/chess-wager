@@ -13,6 +13,10 @@ const cheerCooldowns = new Map(); // sessionId -> timestamp
 const CHEER_COOLDOWN_MS = 15000;
 const LOW_TIME_MS = 30000;
 
+// In-memory guard: prevents concurrent settlement of the same game from
+// multiple async paths (checkmate move handler + onGameOver timeout callback).
+const _settlingGames = new Set();
+
 function broadcastLobbyState(io, lobbyManager, gameManager) {
   const activeGames = lobbyManager.getActiveGames();
   io.emit('lobby:state_update', {
@@ -89,6 +93,8 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
           broadcastLobbyState(io, lobbyManager, gameManager);
           return;
         }
+        // Persist game row with wager_status='locked' so settleWager CAS works
+        gameManager.persistGame(room.gameId).catch(() => {});
       }
 
       _emitGameStart(io, room, player1, player2);
@@ -183,6 +189,8 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
         broadcastLobbyState(io, lobbyManager, gameManager);
         return;
       }
+      // Persist game row with wager_status='locked' so settleWager CAS works
+      gameManager.persistGame(room.gameId).catch(() => {});
     }
 
     _emitGameStart(io, room, creator, joiner);
@@ -675,22 +683,31 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
 // --- Helpers ---
 
 async function _settleGameWager(room, result, wagerService) {
+  const gameId = room.gameId;
+
+  // In-memory guard: if another async path is already settling this game, skip.
+  // The DB-level CAS in settleWager is the authoritative idempotency gate,
+  // but this avoids even hitting the DB in the common concurrent-callback case.
+  if (_settlingGames.has(gameId)) return;
+  _settlingGames.add(gameId);
+
   try {
     const isDraw = result.result === '1/2-1/2';
     if (isDraw) {
-      // Refund both — pass white as "winner" and black as "loser" (both get refunded)
       await wagerService.settleWager(
-        room.gameId, room.white?.userId, room.black?.userId, room.wagerAmount, true
+        gameId, room.white?.userId, room.black?.userId, room.wagerAmount, true
       );
     } else {
       const winnerUserId = result.winner === 'w' ? room.white?.userId : room.black?.userId;
       const loserUserId = result.winner === 'w' ? room.black?.userId : room.white?.userId;
       await wagerService.settleWager(
-        room.gameId, winnerUserId, loserUserId, room.wagerAmount, false
+        gameId, winnerUserId, loserUserId, room.wagerAmount, false
       );
     }
   } catch (err) {
-    console.error(`Wager settlement error for game ${room.gameId}:`, err.message);
+    console.error(`Wager settlement error for game ${gameId}:`, err.message);
+  } finally {
+    _settlingGames.delete(gameId);
   }
 }
 

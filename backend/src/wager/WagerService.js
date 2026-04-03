@@ -2,6 +2,12 @@
  * Handles wager escrow for chess games.
  * - lockWager: deducts tokens from both players at game start
  * - settleWager: credits winner (2x) or refunds both on draw
+ *
+ * Security invariants:
+ * 1. lockWager uses SELECT ... FOR UPDATE to prevent concurrent balance reads
+ * 2. settleWager atomically claims the game via CAS on wager_status = 'locked'
+ *    so duplicate calls are no-ops (idempotent)
+ * 3. All balance mutations + ledger entries happen inside a single DB transaction
  */
 export class WagerService {
   constructor(pool) {
@@ -10,7 +16,7 @@ export class WagerService {
 
   /**
    * Lock wager tokens from both players at game start.
-   * Uses a DB transaction to ensure atomicity.
+   * Uses SELECT ... FOR UPDATE to prevent concurrent balance reads (TOCTOU).
    * Returns { success: true } or { success: false, error: string }
    */
   async lockWager(gameId, whiteUserId, blackUserId, amount) {
@@ -23,25 +29,46 @@ export class WagerService {
     try {
       await client.query('BEGIN');
 
-      // Deduct from white
-      const whiteRes = await client.query(
-        'UPDATE users SET token_balance = token_balance - $1 WHERE id = $2 AND token_balance >= $1 RETURNING token_balance',
-        [amount, whiteUserId]
+      // Lock both user rows to prevent concurrent balance modifications.
+      // Consistent ordering (lower UUID first) prevents deadlocks.
+      const [firstId, secondId] = whiteUserId < blackUserId
+        ? [whiteUserId, blackUserId]
+        : [blackUserId, whiteUserId];
+
+      const lockRes = await client.query(
+        'SELECT id, token_balance FROM users WHERE id IN ($1, $2) ORDER BY id FOR UPDATE',
+        [firstId, secondId]
       );
-      if (!whiteRes.rows[0]) {
+
+      const balances = {};
+      for (const row of lockRes.rows) {
+        balances[row.id] = parseFloat(row.token_balance);
+      }
+
+      if (balances[whiteUserId] == null || balances[blackUserId] == null) {
+        await client.query('ROLLBACK');
+        return { success: false, error: 'Player not found' };
+      }
+      if (balances[whiteUserId] < amount) {
         await client.query('ROLLBACK');
         return { success: false, error: 'White player has insufficient balance' };
       }
-
-      // Deduct from black
-      const blackRes = await client.query(
-        'UPDATE users SET token_balance = token_balance - $1 WHERE id = $2 AND token_balance >= $1 RETURNING token_balance',
-        [amount, blackUserId]
-      );
-      if (!blackRes.rows[0]) {
+      if (balances[blackUserId] < amount) {
         await client.query('ROLLBACK');
         return { success: false, error: 'Black player has insufficient balance' };
       }
+
+      // Deduct from white
+      const whiteRes = await client.query(
+        'UPDATE users SET token_balance = token_balance - $1 WHERE id = $2 RETURNING token_balance',
+        [amount, whiteUserId]
+      );
+
+      // Deduct from black
+      const blackRes = await client.query(
+        'UPDATE users SET token_balance = token_balance - $1 WHERE id = $2 RETURNING token_balance',
+        [amount, blackUserId]
+      );
 
       // Ledger entries
       await client.query(
@@ -70,6 +97,10 @@ export class WagerService {
    * Settle a wager after game over.
    * - Win: winner gets 2x amount
    * - Draw: both get refunded
+   *
+   * IDEMPOTENCY: Atomically claims the game by setting wager_status from
+   * 'locked' to 'settled'. If the CAS fails (already settled or held),
+   * the call is a no-op — prevents double-payout from concurrent paths.
    */
   async settleWager(gameId, winnerUserId, loserUserId, amount, isDraw) {
     if (!amount || amount <= 0) return;
@@ -78,15 +109,28 @@ export class WagerService {
     try {
       await client.query('BEGIN');
 
+      // Atomic claim: only proceed if wager_status is currently 'locked'.
+      // This is the sole idempotency gate — if two settlement paths race,
+      // only the first one will match and proceed; the second sees 0 rows.
+      const claim = await client.query(
+        "UPDATE games SET wager_status = 'settling' WHERE id = $1 AND wager_status = 'locked' RETURNING id",
+        [gameId]
+      );
+      if (claim.rows.length === 0) {
+        await client.query('ROLLBACK');
+        console.log(`Wager settlement skipped for game ${gameId}: already settled or held`);
+        return;
+      }
+
       if (isDraw) {
         // Refund both players
         const whiteRes = await client.query(
           'UPDATE users SET token_balance = token_balance + $1 WHERE id = $2 RETURNING token_balance',
-          [amount, winnerUserId] // in draw case, winnerUserId is white
+          [amount, winnerUserId]
         );
         const blackRes = await client.query(
           'UPDATE users SET token_balance = token_balance + $1 WHERE id = $2 RETURNING token_balance',
-          [amount, loserUserId] // in draw case, loserUserId is black
+          [amount, loserUserId]
         );
 
         await client.query(
@@ -113,7 +157,7 @@ export class WagerService {
         );
       }
 
-      // Update game wager status
+      // Finalize wager status
       await client.query(
         "UPDATE games SET wager_status = 'settled' WHERE id = $1",
         [gameId]

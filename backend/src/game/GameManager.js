@@ -76,7 +76,11 @@ export class GameManager {
           status = $2, fen = $8, moves = $9, result = $10, result_reason = $11,
           white_time_remaining = $12, black_time_remaining = $13, ended_at = $15,
           white_user_id = $16, black_user_id = $17, is_bot_game = $18, bot_personality = $19,
-          wager_amount = $20, is_wager_game = $21, wager_status = $22`,
+          wager_amount = $20, is_wager_game = $21,
+          wager_status = CASE
+            WHEN games.wager_status IN ('settling', 'settled', 'held') THEN games.wager_status
+            ELSE COALESCE($22, games.wager_status)
+          END`,
         [
           room.gameId,
           room.status,
@@ -99,7 +103,7 @@ export class GameManager {
           room.botPersonality?.id || null,
           room.wagerAmount || 0,
           room.isWagerGame || false,
-          room.isWagerGame ? (room.status === 'completed' ? 'settled' : 'locked') : null,
+          room.isWagerGame ? 'locked' : null,
         ]
       );
 

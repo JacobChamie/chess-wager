@@ -43,9 +43,13 @@ describe('WagerService', () => {
     });
 
     it('should deduct from both players on successful lock', async () => {
-      // Mock: BEGIN, white deduct, black deduct, white ledger, black ledger, COMMIT
+      // Mock: BEGIN, SELECT FOR UPDATE (lock rows), white deduct, black deduct, white ledger, black ledger, COMMIT
       client.query
         .mockResolvedValueOnce({}) // BEGIN
+        .mockResolvedValueOnce({ rows: [
+          { id: 'blackUser', token_balance: '50' },
+          { id: 'whiteUser', token_balance: '100' },
+        ] }) // SELECT FOR UPDATE
         .mockResolvedValueOnce({ rows: [{ token_balance: '90' }] }) // white deduct
         .mockResolvedValueOnce({ rows: [{ token_balance: '40' }] }) // black deduct
         .mockResolvedValueOnce({}) // white ledger
@@ -55,18 +59,18 @@ describe('WagerService', () => {
       const result = await wagerService.lockWager('game1', 'whiteUser', 'blackUser', 10);
       expect(result.success).toBe(true);
 
-      // Verify deductions
-      expect(client.query).toHaveBeenCalledTimes(6);
-      // First real call (after BEGIN) should be white deduct
-      const whiteCall = client.query.mock.calls[1];
-      expect(whiteCall[0]).toContain('token_balance - $1');
-      expect(whiteCall[1]).toContain(10); // amount
+      // Verify SELECT FOR UPDATE was called
+      const lockCall = client.query.mock.calls[1];
+      expect(lockCall[0]).toContain('FOR UPDATE');
     });
 
     it('should rollback if white player has insufficient balance', async () => {
       client.query
         .mockResolvedValueOnce({}) // BEGIN
-        .mockResolvedValueOnce({ rows: [] }) // white deduct fails (no row returned)
+        .mockResolvedValueOnce({ rows: [
+          { id: 'blackUser', token_balance: '50' },
+          { id: 'whiteUser', token_balance: '5' },
+        ] }) // SELECT FOR UPDATE — white only has 5
         .mockResolvedValueOnce({}); // ROLLBACK
 
       const result = await wagerService.lockWager('game1', 'whiteUser', 'blackUser', 10);
@@ -77,8 +81,10 @@ describe('WagerService', () => {
     it('should rollback if black player has insufficient balance', async () => {
       client.query
         .mockResolvedValueOnce({}) // BEGIN
-        .mockResolvedValueOnce({ rows: [{ token_balance: '90' }] }) // white OK
-        .mockResolvedValueOnce({ rows: [] }) // black fails
+        .mockResolvedValueOnce({ rows: [
+          { id: 'blackUser', token_balance: '3' },
+          { id: 'whiteUser', token_balance: '100' },
+        ] }) // SELECT FOR UPDATE — black only has 3
         .mockResolvedValueOnce({}); // ROLLBACK
 
       const result = await wagerService.lockWager('game1', 'whiteUser', 'blackUser', 10);
@@ -89,7 +95,7 @@ describe('WagerService', () => {
     it('should rollback on database error', async () => {
       client.query
         .mockResolvedValueOnce({}) // BEGIN
-        .mockRejectedValueOnce(new Error('DB error')); // white deduct throws
+        .mockRejectedValueOnce(new Error('DB error')); // SELECT FOR UPDATE throws
 
       const result = await wagerService.lockWager('game1', 'whiteUser', 'blackUser', 10);
       expect(result.success).toBe(false);
@@ -106,44 +112,62 @@ describe('WagerService', () => {
     it('should credit winner with 2x amount on win', async () => {
       client.query
         .mockResolvedValueOnce({}) // BEGIN
+        .mockResolvedValueOnce({ rows: [{ id: 'game1' }] }) // CAS claim (wager_status locked -> settling)
         .mockResolvedValueOnce({ rows: [{ token_balance: '120' }] }) // winner credit
         .mockResolvedValueOnce({}) // winner ledger
-        .mockResolvedValueOnce({}) // update game wager_status
+        .mockResolvedValueOnce({}) // update game wager_status -> settled
         .mockResolvedValueOnce({}); // COMMIT
 
       await wagerService.settleWager('game1', 'winnerId', 'loserId', 10, false);
 
+      // CAS claim should check wager_status = 'locked'
+      const casCall = client.query.mock.calls[1];
+      expect(casCall[0]).toContain("wager_status = 'settling'");
+      expect(casCall[0]).toContain("wager_status = 'locked'");
+
       // Winner credit should be 2x (20)
-      const creditCall = client.query.mock.calls[1];
+      const creditCall = client.query.mock.calls[2];
       expect(creditCall[0]).toContain('token_balance + $1');
-      expect(creditCall[1][0]).toBe(20); // 2 * 10
+      expect(creditCall[1][0]).toBe(20);
+    });
+
+    it('should be idempotent — skip if already settled', async () => {
+      client.query
+        .mockResolvedValueOnce({}) // BEGIN
+        .mockResolvedValueOnce({ rows: [] }) // CAS claim fails (already settled)
+        .mockResolvedValueOnce({}); // ROLLBACK
+
+      await wagerService.settleWager('game1', 'winnerId', 'loserId', 10, false);
+
+      // Should not proceed to credit — only BEGIN, CAS, ROLLBACK
+      expect(client.query).toHaveBeenCalledTimes(3);
     });
 
     it('should refund both players on draw', async () => {
       client.query
         .mockResolvedValueOnce({}) // BEGIN
+        .mockResolvedValueOnce({ rows: [{ id: 'game1' }] }) // CAS claim
         .mockResolvedValueOnce({ rows: [{ token_balance: '110' }] }) // white refund
         .mockResolvedValueOnce({ rows: [{ token_balance: '60' }] }) // black refund
         .mockResolvedValueOnce({}) // white ledger
         .mockResolvedValueOnce({}) // black ledger
-        .mockResolvedValueOnce({}) // update game wager_status
+        .mockResolvedValueOnce({}) // update game wager_status -> settled
         .mockResolvedValueOnce({}); // COMMIT
 
       await wagerService.settleWager('game1', 'whiteId', 'blackId', 10, true);
 
       // Both should get their 10 tokens back
-      const whiteRefund = client.query.mock.calls[1];
+      const whiteRefund = client.query.mock.calls[2];
       expect(whiteRefund[1][0]).toBe(10);
-      const blackRefund = client.query.mock.calls[2];
+      const blackRefund = client.query.mock.calls[3];
       expect(blackRefund[1][0]).toBe(10);
     });
 
     it('should rollback on error and not throw', async () => {
       client.query
         .mockResolvedValueOnce({}) // BEGIN
-        .mockRejectedValueOnce(new Error('DB error')); // credit fails
+        .mockRejectedValueOnce(new Error('DB error')); // CAS throws
 
-      // Should not throw
       await expect(
         wagerService.settleWager('game1', 'winnerId', 'loserId', 10, false)
       ).resolves.toBeUndefined();

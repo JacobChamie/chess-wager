@@ -163,6 +163,7 @@ describe('Crypto Routes', () => {
       const mockClient = {
         query: vi.fn()
           .mockResolvedValueOnce({}) // BEGIN
+          .mockResolvedValueOnce({ rows: [{ token_balance: '200' }] }) // SELECT FOR UPDATE
           .mockResolvedValueOnce({ rows: [{ token_balance: '90' }] }) // deduct
           .mockResolvedValueOnce({ rows: [{ id: 'w-123' }] }) // insert withdrawal
           .mockResolvedValueOnce({}) // ledger
