@@ -484,6 +484,9 @@ body {
   height: 52px;
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border);
+  /* Own compositing layer so page repaints don't affect navbar */
+  will-change: transform;
+  contain: layout style;
 }
 
 .navbar-logo {
@@ -615,7 +618,7 @@ body {
 
 .open-game-row--joinable:hover {
   border-color: var(--accent);
-  box-shadow: 0 0 12px rgba(124, 179, 66, 0.1);
+  /* box-shadow removed: expensive repaint on every hover */
 }
 
 .open-game-info {
@@ -1231,6 +1234,7 @@ body {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  contain: layout paint;
 }
 
 .chatbox-tabs {
@@ -1620,6 +1624,11 @@ body {
 /* ═══════════════════════════════════════════════════════ */
 /*  Footer link hover                                     */
 /* ═══════════════════════════════════════════════════════ */
+
+footer {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 200px;
+}
 
 footer a:hover {
   color: var(--accent-text) !important;

@@ -129,7 +129,16 @@
   gap: 8px;
   width: 340px;
   flex-shrink: 0;
+  /* Bound sidebar to viewport so chatbox flex:1 doesn't push buttons off-screen */
+  height: calc(100vh - 52px - 36px);
+  max-height: calc(100vh - 52px - 36px);
   overflow: hidden;
+}
+
+/* Invisible spacer keeps board in position when sidebar is hidden */
+.game-sidebar-spacer {
+  width: 340px;
+  flex-shrink: 0;
 }
 
 .game-sidebar-header {

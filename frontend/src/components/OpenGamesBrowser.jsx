@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { socket, sessionId } from '../socket.js';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -18,7 +18,7 @@ const colorPrefIcon = (pref) => {
   return '\uD83C\uDFB2';
 };
 
-const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
+const OpenGamesBrowser = memo(({ onEditGame, onCancelSeeking, onEditSeeking }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [openGames, setOpenGames] = useState([]);
@@ -78,6 +78,19 @@ const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
 
   const hasContent = openGames.length > 0 || seekers.length > 0 || activeGames.length > 0;
 
+  const sortedOpenGames = useMemo(
+    () => [...openGames].sort((a, b) => (b.isPremium ? 1 : 0) - (a.isPremium ? 1 : 0) || (b.wagerAmount || 0) - (a.wagerAmount || 0)),
+    [openGames]
+  );
+  const sortedSeekers = useMemo(
+    () => [...seekers].sort((a, b) => (b.isPremium ? 1 : 0) - (a.isPremium ? 1 : 0) || (b.wagerAmount || 0) - (a.wagerAmount || 0)),
+    [seekers]
+  );
+  const sortedActiveGames = useMemo(
+    () => [...activeGames].sort((a, b) => ((b.whiteIsPremium || b.blackIsPremium) ? 1 : 0) - ((a.whiteIsPremium || a.blackIsPremium) ? 1 : 0) || (b.wagerAmount || 0) - (a.wagerAmount || 0)),
+    [activeGames]
+  );
+
   return (
     <div>
       {!hasContent && (
@@ -93,7 +106,7 @@ const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
 
       {openGames.length > 0 && (
         <div className="open-games-list">
-          {[...openGames].sort((a, b) => (b.isPremium ? 1 : 0) - (a.isPremium ? 1 : 0) || (b.wagerAmount || 0) - (a.wagerAmount || 0)).map((game) => {
+          {sortedOpenGames.map((game) => {
             const isMine = game.creatorSessionId === sessionId;
             return (
               <div
@@ -156,7 +169,7 @@ const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
             Players Seeking
           </div>
           <div className="open-games-list">
-            {[...seekers].sort((a, b) => (b.isPremium ? 1 : 0) - (a.isPremium ? 1 : 0) || (b.wagerAmount || 0) - (a.wagerAmount || 0)).map((seeker, i) => {
+            {sortedSeekers.map((seeker, i) => {
               const isMine = seeker.sessionId === sessionId;
               return (
                 <div
@@ -224,7 +237,7 @@ const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
             Live Games
           </div>
           <div className="open-games-list">
-            {[...activeGames].sort((a, b) => ((b.whiteIsPremium || b.blackIsPremium) ? 1 : 0) - ((a.whiteIsPremium || a.blackIsPremium) ? 1 : 0) || (b.wagerAmount || 0) - (a.wagerAmount || 0)).map((game) => (
+            {sortedActiveGames.map((game) => (
               <div
                 key={game.gameId}
                 className="open-game-row open-game-row--joinable"
@@ -281,6 +294,8 @@ const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
       )}
     </div>
   );
-};
+});
+
+OpenGamesBrowser.displayName = 'OpenGamesBrowser';
 
 export default OpenGamesBrowser;

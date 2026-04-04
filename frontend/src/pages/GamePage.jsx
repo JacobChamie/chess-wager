@@ -663,15 +663,17 @@ const GamePage = () => {
           </div>
         )}
 
-        {/* Desktop sidebar toggle when hidden */}
+        {/* Desktop sidebar toggle when hidden — spacer keeps board in place */}
         {!isFullscreen && !isMobile && !sidebarOpen && (
-          <button
-            className="btn btn-ghost btn-sm game-panel-toggle"
-            onClick={() => setSidebarOpen(true)}
-            title="Show panel"
-          >
-            {'\u25C0'} Panel
-          </button>
+          <div className="game-sidebar-spacer">
+            <button
+              className="btn btn-ghost btn-sm game-panel-toggle"
+              onClick={() => setSidebarOpen(true)}
+              title="Show panel"
+            >
+              {'\u25C0'} Panel
+            </button>
+          </div>
         )}
 
         {/* Desktop chat + actions */}

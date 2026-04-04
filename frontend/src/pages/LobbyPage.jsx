@@ -75,6 +75,24 @@ const LobbyPage = () => {
     [user, playerName]
   );
 
+  const handleEditGame = useCallback(() => {
+    setPendingGameId(null);
+    setStatus('idle');
+    setTab('quick');
+  }, []);
+
+  const handleCancelSeeking = useCallback(() => {
+    setStatus('idle');
+  }, []);
+
+  const handleEditSeeking = useCallback((tc) => {
+    setStatus('idle');
+    if (tc && typeof tc === 'object') {
+      setTimeControl({ time: tc.time, increment: tc.increment || 0 });
+    }
+    setTab('quick');
+  }, []);
+
   useEffect(() => {
     socket.connect();
 
@@ -583,21 +601,9 @@ const LobbyPage = () => {
 
           {tab === 'open' && (
             <OpenGamesBrowser
-              onEditGame={() => {
-                setPendingGameId(null);
-                setStatus('idle');
-                setTab('quick');
-              }}
-              onCancelSeeking={() => {
-                setStatus('idle');
-              }}
-              onEditSeeking={(tc) => {
-                setStatus('idle');
-                if (tc && typeof tc === 'object') {
-                  setTimeControl({ time: tc.time, increment: tc.increment || 0 });
-                }
-                setTab('quick');
-              }}
+              onEditGame={handleEditGame}
+              onCancelSeeking={handleCancelSeeking}
+              onEditSeeking={handleEditSeeking}
             />
           )}
 

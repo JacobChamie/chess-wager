@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { socket } from '../socket.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { filterProfanity } from '../utils/profanityFilter.js';
@@ -18,7 +18,7 @@ const formatTime = (timestamp) => {
   return `${h}:${m}`;
 };
 
-const GlobalChat = () => {
+const GlobalChat = memo(() => {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -174,6 +174,8 @@ const GlobalChat = () => {
       </div>
     </div>
   );
-};
+});
+
+GlobalChat.displayName = 'GlobalChat';
 
 export default GlobalChat;
