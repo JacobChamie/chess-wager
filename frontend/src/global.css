@@ -484,9 +484,6 @@ body {
   height: 52px;
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border);
-  /* Own compositing layer so page repaints don't affect navbar */
-  will-change: transform;
-  contain: layout style;
 }
 
 .navbar-logo {
@@ -1234,7 +1231,7 @@ body {
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  contain: layout paint;
+  contain: paint;
 }
 
 .chatbox-tabs {
@@ -1624,11 +1621,6 @@ body {
 /* ═══════════════════════════════════════════════════════ */
 /*  Footer link hover                                     */
 /* ═══════════════════════════════════════════════════════ */
-
-footer {
-  content-visibility: auto;
-  contain-intrinsic-size: 0 200px;
-}
 
 footer a:hover {
   color: var(--accent-text) !important;
