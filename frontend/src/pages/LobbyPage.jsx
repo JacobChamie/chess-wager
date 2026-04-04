@@ -6,6 +6,7 @@ import OpenGamesBrowser from '../components/OpenGamesBrowser.jsx';
 import BotCard from '../components/BotCard.jsx';
 import WagerSelector from '../components/WagerSelector.jsx';
 import WagerGateSelector from '../components/WagerGateSelector.jsx';
+import Footer from '../components/Footer.jsx';
 
 const DEFAULT_BOT_PERSONALITIES = [
   { id: 'beginner', name: 'Woody', title: 'The Beginner', description: 'Just learning the pieces', rating: 800 },
@@ -203,7 +204,7 @@ const LobbyPage = () => {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        padding: '24px 16px',
+        padding: '24px 16px 0',
       }}
     >
       {/* Main card */}
@@ -754,16 +755,34 @@ const LobbyPage = () => {
         </div>
       </div>
 
-      {/* Footer */}
-      <p
-        style={{
-          marginTop: '32px',
-          fontSize: '12px',
-          color: 'var(--text-muted)',
-        }}
-      >
-        ELO Stakes v1.0
-      </p>
+      {/* Trust indicators */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        gap: '20px',
+        marginTop: '24px',
+        flexWrap: 'wrap',
+      }}>
+        {[
+          { icon: '\uD83D\uDEE1\uFE0F', text: 'Anti-Cheat' },
+          { icon: '\uD83D\uDD12', text: 'Secure Funds' },
+          { icon: '\u26A1', text: 'Instant Match' },
+        ].map((item) => (
+          <div key={item.text} style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '12px',
+            color: 'var(--text-muted)',
+            fontWeight: 600,
+          }}>
+            <span>{item.icon}</span>
+            <span>{item.text}</span>
+          </div>
+        ))}
+      </div>
+
+      <Footer />
     </div>
   );
 };

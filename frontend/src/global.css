@@ -1571,3 +1571,46 @@ body {
   font-weight: 600;
   margin-left: 4px;
 }
+
+/* ═══════════════════════════════════════════════════════ */
+/*  Footer link hover                                     */
+/* ═══════════════════════════════════════════════════════ */
+
+footer a:hover {
+  color: var(--accent-text) !important;
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/*  Page transition                                       */
+/* ═══════════════════════════════════════════════════════ */
+
+.app-main {
+  animation: pageEnter 200ms ease;
+}
+
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/*  Card hover for interactive cards                      */
+/* ═══════════════════════════════════════════════════════ */
+
+.card-interactive {
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.card-interactive:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/*  Selection color                                       */
+/* ═══════════════════════════════════════════════════════ */
+
+::selection {
+  background: rgba(124, 179, 66, 0.3);
+  color: #fff;
+}

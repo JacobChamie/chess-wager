@@ -72,6 +72,9 @@ const Navbar = ({ onToggleChat, chatOpen }) => {
             <Link to="/leaderboard" className="navbar-icon-btn" title="Leaderboard">
               {'\uD83C\uDFC6'}
             </Link>
+            <Link to="/faq" className="navbar-icon-btn" title="FAQ">
+              ?
+            </Link>
             <button
               className="navbar-icon-btn"
               onClick={() => setShowSettings(true)}

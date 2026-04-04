@@ -203,6 +203,22 @@ const WithdrawForm = ({ onBalanceChange }) => {
         </div>
       )}
 
+      <div style={{
+        marginBottom: '16px',
+        padding: '12px 16px',
+        background: 'rgba(255, 152, 0, 0.08)',
+        border: '1px solid rgba(255, 152, 0, 0.2)',
+        borderRadius: 'var(--radius)',
+        fontSize: '13px',
+        lineHeight: 1.6,
+        color: 'var(--text-secondary)',
+      }}>
+        <span style={{ fontWeight: 700, color: '#ffa726' }}>Withdrawal Fee Notice:</span>{' '}
+        A 3% fee is deducted from all withdrawals to cover network gas costs and platform operations.
+        Premium members are exempt from this fee.{' '}
+        <a href="/faq" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Learn more</a>
+      </div>
+
       <button
         className="btn btn-primary"
         onClick={handleWithdraw}

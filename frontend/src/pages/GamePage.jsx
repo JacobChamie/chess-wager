@@ -10,6 +10,7 @@ import DrawOfferBar from '../components/DrawOfferBar.jsx';
 import PromotionPicker from '../components/PromotionPicker.jsx';
 import ConfettiOverlay from '../components/ConfettiOverlay.jsx';
 import ReportModal from '../components/ReportModal.jsx';
+import CapturedPieces from '../components/CapturedPieces.jsx';
 import { useGameTabTitle } from '../hooks/useGameTabTitle.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import '../game.css';
@@ -521,13 +522,16 @@ const GamePage = () => {
                 </span>
               </div>
             )}
-            <Timer
-              timeMs={opponentTime}
-              player={opponentName}
-              active={opponentTurnActive}
-              resultIcon={topResultIcon}
-              isPremium={topIsPremium}
-            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', justifyContent: 'center' }}>
+              <Timer
+                timeMs={opponentTime}
+                player={opponentName}
+                active={opponentTurnActive}
+                resultIcon={topResultIcon}
+                isPremium={topIsPremium}
+              />
+              <CapturedPieces fen={gameState.fen} color={topColor} />
+            </div>
 
             <ChessboardComponent
               key={boardResetKey}
@@ -584,13 +588,16 @@ const GamePage = () => {
               </button>
             )}
 
-            <Timer
-              timeMs={myTime}
-              player={myName}
-              active={myTurnActive}
-              resultIcon={bottomResultIcon}
-              isPremium={bottomIsPremium}
-            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', justifyContent: 'center' }}>
+              <CapturedPieces fen={gameState.fen} color={bottomColor} />
+              <Timer
+                timeMs={myTime}
+                player={myName}
+                active={myTurnActive}
+                resultIcon={bottomResultIcon}
+                isPremium={bottomIsPremium}
+              />
+            </div>
 
             {/* Mobile draw offer bar */}
             {isMobile && showDrawOffer && (
@@ -815,9 +822,11 @@ const GamePage = () => {
               resultIcon={topResultIcon}
               isPremium={topIsPremium}
             />
+            <CapturedPieces fen={gameState.fen} color={topColor} />
           </div>
 
           <div className="game-fullscreen-timer-bottom">
+            <CapturedPieces fen={gameState.fen} color={bottomColor} />
             <Timer
               timeMs={myTime}
               player={myName}

@@ -168,7 +168,7 @@ describe('E2E: Full Playthrough', () => {
 
   it('should add increment correctly on each move', async () => {
     const { clientW, clientB, gameId } = await matchAndJoin(server.url, {
-      timeControl: { time: 10, increment: 5 },
+      timeControl: { time: 60, increment: 5 },
     });
     clients.push(clientW, clientB);
 
@@ -177,17 +177,17 @@ describe('E2E: Full Playthrough', () => {
     clientW.emit('game:move', { gameId, from: 'e2', to: 'e4' });
     const data = await moveMade;
 
-    // White started at 10s, got +5s increment, minus small elapsed
-    expect(data.whiteTime).toBeGreaterThan(10000);
-    expect(data.whiteTime).toBeLessThanOrEqual(15100);
+    // White started at 60s, got +5s increment, minus elapsed (< 5s even on slow CI)
+    expect(data.whiteTime).toBeGreaterThan(60000);
+    expect(data.whiteTime).toBeLessThanOrEqual(65100);
 
     // Black moves quickly too
     const moveMade2 = waitForEvent(clientW, 'game:move_made');
     clientB.emit('game:move', { gameId, from: 'e7', to: 'e5' });
     const data2 = await moveMade2;
 
-    expect(data2.blackTime).toBeGreaterThan(10000);
-    expect(data2.blackTime).toBeLessThanOrEqual(15100);
+    expect(data2.blackTime).toBeGreaterThan(60000);
+    expect(data2.blackTime).toBeLessThanOrEqual(65100);
   });
 
   // --- Error handling ---

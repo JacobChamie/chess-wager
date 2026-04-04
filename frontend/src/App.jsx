@@ -14,6 +14,8 @@ const GamePage = lazy(() => import('./pages/GamePage.jsx'));
 const AdminPage = lazy(() => import('./pages/AdminPage.jsx'));
 const WalletPage = lazy(() => import('./pages/WalletPage.jsx'));
 const PremiumPage = lazy(() => import('./pages/PremiumPage.jsx'));
+const FAQPage = lazy(() => import('./pages/FAQPage.jsx'));
+const ContactPage = lazy(() => import('./pages/ContactPage.jsx'));
 
 const PageFallback = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 52px)' }}>
@@ -52,6 +54,8 @@ const App = () => {
               <Route path="/leaderboard/:username" element={<PlayerProfilePage />} />
               <Route path="/wallet" element={<WalletPage />} />
               <Route path="/premium" element={<PremiumPage />} />
+              <Route path="/faq" element={<FAQPage />} />
+              <Route path="/contact" element={<ContactPage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/verify-email" element={<VerifyEmailPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
