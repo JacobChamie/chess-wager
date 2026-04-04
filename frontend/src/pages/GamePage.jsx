@@ -53,6 +53,7 @@ const GamePage = () => {
     gameState,
     connected,
     drawOffer,
+    drawDeclined,
     rematchOffer,
     rematchGameId,
     disconnectTime,
@@ -621,10 +622,10 @@ const GamePage = () => {
                   <button
                     className="btn btn-ghost btn-sm"
                     onClick={offerDraw}
-                    disabled={!!drawOffer}
+                    disabled={!!drawOffer || drawDeclined}
                     style={{ flex: 1 }}
                   >
-                    {drawOffer === myColor ? 'Draw Offered' : 'Offer Draw'}
+                    {drawOffer === myColor ? 'Draw Offered' : drawDeclined ? 'Draw Declined' : 'Offer Draw'}
                   </button>
                 )}
               </div>
@@ -729,10 +730,10 @@ const GamePage = () => {
                   <button
                     className="btn btn-ghost"
                     onClick={offerDraw}
-                    disabled={!!drawOffer}
+                    disabled={!!drawOffer || drawDeclined}
                     style={{ flex: 1 }}
                   >
-                    {drawOffer === myColor ? 'Draw Offered' : 'Offer Draw'}
+                    {drawOffer === myColor ? 'Draw Offered' : drawDeclined ? 'Draw Declined' : 'Offer Draw'}
                   </button>
                 )}
                 {user && !gameState?.isBotGame && (

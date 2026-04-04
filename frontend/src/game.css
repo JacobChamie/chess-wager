@@ -129,10 +129,11 @@
   gap: 8px;
   width: 340px;
   flex-shrink: 0;
-  /* Bound sidebar to viewport so chatbox flex:1 doesn't push buttons off-screen */
-  height: calc(100vh - 52px - 36px);
-  max-height: calc(100vh - 52px - 36px);
-  overflow: hidden;
+  /* Cap at viewport height so sidebar never extends below the fold.
+     overflow-y: auto means a scrollbar appears instead of clipping buttons. */
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Invisible spacer keeps board in position when sidebar is hidden */

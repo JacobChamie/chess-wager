@@ -8,6 +8,7 @@ export function useGameSocket(gameId, getBehaviorData) {
   const [gameState, setGameState] = useState(null);
   const [connected, setConnected] = useState(false);
   const [drawOffer, setDrawOffer] = useState(null);
+  const [drawDeclined, setDrawDeclined] = useState(false);
   const [rematchOffer, setRematchOffer] = useState(null);
   const [disconnectTime, setDisconnectTime] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
@@ -64,6 +65,7 @@ export function useGameSocket(gameId, getBehaviorData) {
     setGameState(null);
     setConnected(false);
     setDrawOffer(null);
+    setDrawDeclined(false);
     setRematchOffer(null);
     setRematchGameId(null);
     setDisconnectTime(null);
@@ -198,6 +200,7 @@ export function useGameSocket(gameId, getBehaviorData) {
       };
 
       setDrawOffer(null);
+      setDrawDeclined(false); // any move clears the draw cooldown
 
       // If it's now our turn and we have premoves, try to execute the first one
       if (move.turn === myColorRef.current && premoveQueueRef.current.length > 0) {
@@ -278,7 +281,10 @@ export function useGameSocket(gameId, getBehaviorData) {
     };
 
     const onDrawOffered = ({ offeredBy }) => setDrawOffer(offeredBy);
-    const onDrawDeclined = () => setDrawOffer(null);
+    const onDrawDeclined = () => {
+      setDrawOffer(null);
+      setDrawDeclined(true); // cooldown: re-enable only after a move is made
+    };
     const onRematchOffered = ({ offeredBy }) => setRematchOffer(offeredBy);
     const onRematchDeclined = () => setRematchOffer(null);
     const onRematchStart = ({ gameId: newId }) => setRematchGameId(newId);
@@ -546,6 +552,7 @@ export function useGameSocket(gameId, getBehaviorData) {
     gameState,
     connected,
     drawOffer,
+    drawDeclined,
     rematchOffer,
     rematchGameId,
     disconnectTime,

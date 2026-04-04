@@ -11,12 +11,12 @@ const PromotionPicker = memo(({ color, onSelect, onCancel }) => {
   return (
     <div
       style={{
-        position: 'absolute',
+        position: 'fixed',
         inset: 0,
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        zIndex: 100,
+        zIndex: 1000,
       }}
     >
       {/* Backdrop */}
