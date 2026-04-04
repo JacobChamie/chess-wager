@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { createPortal } from 'react-dom';
 
 const PIECES = [
   { key: 'q', label: 'Queen', white: '\u2655', black: '\u265B' },
@@ -8,7 +9,7 @@ const PIECES = [
 ];
 
 const PromotionPicker = memo(({ color, onSelect, onCancel }) => {
-  return (
+  return createPortal(
     <div
       style={{
         position: 'fixed',
@@ -16,7 +17,7 @@ const PromotionPicker = memo(({ color, onSelect, onCancel }) => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        zIndex: 1000,
+        zIndex: 9999,
       }}
     >
       {/* Backdrop */}
@@ -64,7 +65,8 @@ const PromotionPicker = memo(({ color, onSelect, onCancel }) => {
           </button>
         ))}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 });
 

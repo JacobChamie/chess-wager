@@ -877,13 +877,11 @@ const GamePage = () => {
           )}
 
           {pendingPromotion && (
-            <div className="game-fullscreen-promo">
-              <PromotionPicker
-                color={myColor}
-                onSelect={handlePromotionChoice}
-                onCancel={handlePromotionCancel}
-              />
-            </div>
+            <PromotionPicker
+              color={myColor}
+              onSelect={handlePromotionChoice}
+              onCancel={handlePromotionCancel}
+            />
           )}
 
           {showDrawOffer && (
