@@ -695,21 +695,6 @@ const GamePage = () => {
               </button>
             </div>
 
-            <ChatBox
-              messages={chatMessages}
-              onSend={sendChat}
-              moves={gameState.moves}
-              myName={myName}
-              isSpectator={isSpectator}
-              spectatorMessages={spectatorChatMessages}
-              onSpectatorSend={sendSpectatorChat}
-              gameStatus={gameState.status}
-              gameResult={gameState.result}
-              gameReason={gameState.reason}
-              onMoveClick={navigateToMove}
-              viewMoveIndex={viewMoveIndex}
-            />
-
             {showDrawOffer && (
               <DrawOfferBar
                 onAccept={() => respondDraw(true)}
@@ -769,6 +754,21 @@ const GamePage = () => {
                 </button>
               </div>
             )}
+
+            <ChatBox
+              messages={chatMessages}
+              onSend={sendChat}
+              moves={gameState.moves}
+              myName={myName}
+              isSpectator={isSpectator}
+              spectatorMessages={spectatorChatMessages}
+              onSpectatorSend={sendSpectatorChat}
+              gameStatus={gameState.status}
+              gameResult={gameState.result}
+              gameReason={gameState.reason}
+              onMoveClick={navigateToMove}
+              viewMoveIndex={viewMoveIndex}
+            />
           </div>
         )}
       </div>

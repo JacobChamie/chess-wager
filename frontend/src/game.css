@@ -129,14 +129,9 @@
   gap: 8px;
   width: 340px;
   flex-shrink: 0;
-  /* Sticky so sidebar stays in viewport when the game-container scrolls.
-     Explicit height (not max-height) is required so flex: 1 on ChatBox
-     has a bounded container — making chatbox-messages scroll internally
-     rather than the sidebar. Overflow: hidden prevents clipping buttons. */
+  align-self: flex-start;
   position: sticky;
   top: 0;
-  height: calc(100vh - 64px);
-  overflow: hidden;
 }
 
 /* Invisible spacer keeps board in position when sidebar is hidden */
