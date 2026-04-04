@@ -1067,20 +1067,31 @@ body {
   justify-content: center;
   align-items: center;
   margin: 0 auto;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Smooth square highlight transitions (last-move, selection, legal-move dots) */
 .chessboard-wrap div[data-square] {
-  transition: background 150ms ease, background-color 150ms ease;
+  transition: background 100ms ease, background-color 100ms ease;
+  touch-action: none;
 }
 
-/* Piece cursor feedback */
+/* Piece drag styling — instant grab, GPU compositing, generous hit area */
 .chessboard-wrap [data-piece] {
   cursor: grab !important;
+  touch-action: none;
+  will-change: transform;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  z-index: 10;
 }
 .chessboard-wrap [data-piece]:active {
   cursor: grabbing !important;
-  will-change: transform;
+  z-index: 100;
 }
 
 .chessboard-resize-handle {

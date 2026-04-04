@@ -592,6 +592,14 @@ const GamePage = () => {
               isPremium={bottomIsPremium}
             />
 
+            {/* Mobile draw offer bar */}
+            {isMobile && showDrawOffer && (
+              <DrawOfferBar
+                onAccept={() => respondDraw(true)}
+                onDecline={() => respondDraw(false)}
+              />
+            )}
+
             {/* Mobile action buttons inline */}
             {isMobile && isActive && !isSpectator && (
               <div className="game-mobile-actions">
@@ -862,6 +870,15 @@ const GamePage = () => {
                 color={myColor}
                 onSelect={handlePromotionChoice}
                 onCancel={handlePromotionCancel}
+              />
+            </div>
+          )}
+
+          {showDrawOffer && (
+            <div style={{ position: 'absolute', top: '80px', left: '50%', transform: 'translateX(-50%)', zIndex: 1000 }}>
+              <DrawOfferBar
+                onAccept={() => respondDraw(true)}
+                onDecline={() => respondDraw(false)}
               />
             </div>
           )}

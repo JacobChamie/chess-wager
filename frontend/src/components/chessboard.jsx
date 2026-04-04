@@ -84,6 +84,10 @@ const ChessboardComponent = memo(({
         onSquareClick={onSquareClick}
         onPieceClick={onPieceClick}
         onSquareRightClick={onSquareRightClick}
+        snapToCursor={true}
+        allowDragOutsideBoard={true}
+        dropOffBoardAction="snapback"
+        arePiecesDraggable={true}
       />
 
       {/* draggable resize "button" only in normal (resizable) mode */}

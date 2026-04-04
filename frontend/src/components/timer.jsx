@@ -24,11 +24,15 @@ const Timer = memo(({ timeMs, player, active, resultIcon, isPremium }) => {
     activeRef.current = active;
     if (!active) {
       // Snap to authoritative server time when turn ends.
+      baseRef.current = timeMsRef.current;
+      syncRef.current = Date.now();
       setDisplayTime(timeMsRef.current);
       return;
     }
-    // On turn start the timeMs effect (runs first) already set baseRef.
-    // Reset sync so elapsed starts at 0.
+    // Always sync baseRef to the latest authoritative time when becoming active.
+    // The timeMs effect may have run first with a stale activeRef, so we must
+    // ensure baseRef reflects the current server time here.
+    baseRef.current = timeMsRef.current;
     syncRef.current = Date.now();
     const interval = setInterval(() => {
       const elapsed = Date.now() - syncRef.current;
