@@ -6,7 +6,6 @@ import OpenGamesBrowser from '../components/OpenGamesBrowser.jsx';
 import BotCard from '../components/BotCard.jsx';
 import WagerSelector from '../components/WagerSelector.jsx';
 import WagerGateSelector from '../components/WagerGateSelector.jsx';
-import Footer from '../components/Footer.jsx';
 
 const DEFAULT_BOT_PERSONALITIES = [
   { id: 'beginner', name: 'Woody', title: 'The Beginner', description: 'Just learning the pieces', rating: 800 },
@@ -761,6 +760,7 @@ const LobbyPage = () => {
         justifyContent: 'center',
         gap: '20px',
         marginTop: '24px',
+        marginBottom: '32px',
         flexWrap: 'wrap',
       }}>
         {[
@@ -781,8 +781,6 @@ const LobbyPage = () => {
           </div>
         ))}
       </div>
-
-      <Footer />
     </div>
   );
 };

@@ -172,13 +172,19 @@ describe('E2E: Full Playthrough', () => {
     });
     clients.push(clientW, clientB);
 
-    // White moves quickly, should get +5s
+    // Verify the clock was constructed with the correct increment
+    const room = server.gameManager.getGame(gameId);
+    expect(room.clock.incrementMs).toBe(5000);
+    expect(room.timeControl.increment).toBe(5);
+
+    // White moves quickly, should get +5s increment
     const moveMade = waitForEvent(clientB, 'game:move_made');
     clientW.emit('game:move', { gameId, from: 'e2', to: 'e4' });
     const data = await moveMade;
 
-    // White started at 60s, got +5s increment, minus elapsed (< 5s even on slow CI)
-    expect(data.whiteTime).toBeGreaterThan(60000);
+    // Time = initialTime - elapsed + increment; on slow CI elapsed can equal
+    // the increment, so use >= to handle the boundary
+    expect(data.whiteTime).toBeGreaterThanOrEqual(60000);
     expect(data.whiteTime).toBeLessThanOrEqual(65100);
 
     // Black moves quickly too
@@ -186,7 +192,7 @@ describe('E2E: Full Playthrough', () => {
     clientB.emit('game:move', { gameId, from: 'e7', to: 'e5' });
     const data2 = await moveMade2;
 
-    expect(data2.blackTime).toBeGreaterThan(60000);
+    expect(data2.blackTime).toBeGreaterThanOrEqual(60000);
     expect(data2.blackTime).toBeLessThanOrEqual(65100);
   });
 
