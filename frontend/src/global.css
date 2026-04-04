@@ -1120,9 +1120,15 @@ body {
 
 /* ── App Layout ────────────────────────────────────── */
 
+.app-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 .app-body {
   display: flex;
-  min-height: calc(100vh - 52px);
+  flex: 1;
 }
 
 .app-chat-panel {
@@ -1140,9 +1146,6 @@ body {
 .app-main {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
 }
 
 /* Mobile overlay */

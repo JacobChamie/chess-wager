@@ -5,27 +5,24 @@ const Footer = () => {
     <footer style={{
       borderTop: '1px solid var(--border)',
       background: 'var(--bg-surface)',
-      padding: '32px 20px',
-      marginTop: 'auto',
+      padding: '32px 40px',
     }}>
       <div style={{
-        maxWidth: '800px',
-        margin: '0 auto',
         display: 'flex',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
-        gap: '24px',
+        gap: '32px',
       }}>
         <div>
           <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span>{'\u265A'}</span> ELO Stakes
           </div>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '200px', lineHeight: 1.5 }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '260px', lineHeight: 1.5 }}>
             Competitive chess with real stakes. Secured by multi-layer anti-cheat.
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '40px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '56px', flexWrap: 'wrap' }}>
           <div>
             <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-muted)', marginBottom: '10px' }}>
               Platform
@@ -61,8 +58,7 @@ const Footer = () => {
       </div>
 
       <div style={{
-        maxWidth: '800px',
-        margin: '20px auto 0',
+        marginTop: '20px',
         paddingTop: '16px',
         borderTop: '1px solid var(--border)',
         display: 'flex',

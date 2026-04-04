@@ -25,6 +25,7 @@ const GlobalChat = () => {
   const [showEmojis, setShowEmojis] = useState(false);
   const [error, setError] = useState(null);
   const chatEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
   const inputRef = useRef(null);
 
   const canSend = user && user.email_verified;
@@ -62,7 +63,10 @@ const GlobalChat = () => {
   }, []);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = chatContainerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, [messages]);
 
   const handleSend = () => {
@@ -95,7 +99,7 @@ const GlobalChat = () => {
     <div className="global-chat">
       <div className="global-chat-header">Lobby Chat</div>
 
-      <div className="global-chat-messages">
+      <div className="global-chat-messages" ref={chatContainerRef}>
         {messages.length === 0 && (
           <div className="chatbox-empty">No messages yet</div>
         )}

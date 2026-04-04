@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import BottomNav from './components/BottomNav.jsx';
 import GlobalChat from './components/GlobalChat.jsx';
@@ -24,6 +24,12 @@ const PageFallback = () => (
   </div>
 );
 
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+};
+
 const App = () => {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [chatOpen, setChatOpen] = useState(() => !isMobile);
@@ -38,7 +44,8 @@ const App = () => {
   }, []);
 
   return (
-    <>
+    <div className="app-root">
+      <ScrollToTop />
       <Navbar onToggleChat={() => setChatOpen((v) => !v)} chatOpen={chatOpen} />
       <div className="app-body">
         {chatOpen && !isMobile && (
@@ -63,9 +70,9 @@ const App = () => {
               <Route path="/auth/lichess/callback" element={<LichessCallbackPage />} />
             </Routes>
           </Suspense>
-          <Footer />
         </main>
       </div>
+      <Footer />
       {isMobile && chatOpen && (
         <div className="app-chat-mobile-overlay" onClick={() => setChatOpen(false)}>
           <div className="app-chat-mobile-panel" onClick={(e) => e.stopPropagation()}>
@@ -74,7 +81,7 @@ const App = () => {
         </div>
       )}
       <BottomNav />
-    </>
+    </div>
   );
 };
 
