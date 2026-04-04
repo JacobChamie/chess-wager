@@ -65,9 +65,15 @@ const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
     onEditSeeking?.(seeker.timeControl);
   };
 
-  const handleMatchSeeker = (timeControl) => {
+  const handleMatchSeeker = (seeker) => {
     const playerName = user?.username || localStorage.getItem('chess_player_name') || 'Anonymous';
-    socket.emit('lobby:play', { timeControl, playerName });
+    socket.emit('lobby:play', {
+      timeControl: seeker.timeControl,
+      playerName,
+      wagerAmount: seeker.wagerAmount || 0,
+      colorPref: undefined,
+      rating: user?.rating || null,
+    });
   };
 
   const hasContent = openGames.length > 0 || seekers.length > 0 || activeGames.length > 0;
@@ -156,7 +162,7 @@ const OpenGamesBrowser = ({ onEditGame, onCancelSeeking, onEditSeeking }) => {
                 <div
                   key={i}
                   className={`open-game-row${isMine ? '' : ' open-game-row--joinable'}`}
-                  onClick={isMine ? undefined : () => handleMatchSeeker(seeker.timeControl)}
+                  onClick={isMine ? undefined : () => handleMatchSeeker(seeker)}
                 >
                   <div className="open-game-info">
                     <span className="open-game-name">
