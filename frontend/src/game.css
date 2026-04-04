@@ -134,6 +134,13 @@
   top: 0;
 }
 
+/* Cap chatbox height so buttons below it are never pushed off screen.
+   chatbox-messages has overflow-y: auto so messages scroll inside. */
+.game-sidebar .chatbox {
+  flex: none;
+  max-height: calc(100vh - 220px);
+}
+
 /* Invisible spacer keeps board in position when sidebar is hidden */
 .game-sidebar-spacer {
   width: 340px;
