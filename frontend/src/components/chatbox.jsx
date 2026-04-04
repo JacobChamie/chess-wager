@@ -43,16 +43,16 @@ const ChatBox = memo(({
   const [input, setInput] = useState('');
   const [activeTab, setActiveTab] = useState(isSpectator ? 'spectators' : 'chat');
   const [showEmojis, setShowEmojis] = useState(false);
-  const chatEndRef = useRef(null);
-  const spectatorEndRef = useRef(null);
+  const chatMessagesRef = useRef(null);
+  const spectatorMessagesRef = useRef(null);
   const inputRef = useRef(null);
 
   useEffect(() => {
-    if (activeTab === 'chat' && chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (activeTab === 'chat' && chatMessagesRef.current) {
+      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
     }
-    if (activeTab === 'spectators' && spectatorEndRef.current) {
-      spectatorEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (activeTab === 'spectators' && spectatorMessagesRef.current) {
+      spectatorMessagesRef.current.scrollTop = spectatorMessagesRef.current.scrollHeight;
     }
   }, [messages, spectatorMessages, activeTab]);
 
@@ -131,7 +131,7 @@ const ChatBox = memo(({
       {activeTab === 'chat' && !isSpectator && (
         <>
           {/* Messages area */}
-          <div className="chatbox-messages">
+          <div className="chatbox-messages" ref={chatMessagesRef}>
             {messages.length === 0 && (
               <div className="chatbox-empty">
                 No messages yet
@@ -157,7 +157,6 @@ const ChatBox = memo(({
                 </div>
               </div>
             ))}
-            <div ref={chatEndRef} />
           </div>
 
           {/* Emoji picker */}
@@ -213,7 +212,7 @@ const ChatBox = memo(({
 
       {activeTab === 'spectators' && (
         <>
-          <div className={`chatbox-messages${isSpectator ? '' : ' chatbox-messages--no-margin'}`}>
+          <div className={`chatbox-messages${isSpectator ? '' : ' chatbox-messages--no-margin'}`} ref={spectatorMessagesRef}>
             {spectatorMessages.length === 0 && (
               <div className="chatbox-empty">
                 No spectator messages yet
@@ -234,7 +233,6 @@ const ChatBox = memo(({
                 </div>
               </div>
             ))}
-            <div ref={spectatorEndRef} />
           </div>
 
           {isSpectator && (

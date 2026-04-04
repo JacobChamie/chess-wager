@@ -251,6 +251,15 @@ body {
   box-shadow: var(--shadow);
 }
 
+@media (hover: none) {
+  .tc-tile:hover {
+    transform: none;
+    box-shadow: none;
+    background: var(--bg-elevated);
+    border-color: var(--border);
+  }
+}
+
 .tc-tile.selected {
   border-color: var(--accent);
   background: var(--accent-glow);
@@ -1188,6 +1197,7 @@ body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0 16px;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
@@ -1255,6 +1265,7 @@ body {
   flex: 1;
   min-height: 120px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   margin-bottom: 12px;
   background: var(--bg-base);
   padding: 10px;
@@ -1495,6 +1506,30 @@ body {
   .modal-card {
     min-width: 280px;
     padding: 20px 16px;
+  }
+}
+
+/* ── Touch / Mobile Performance ───────────────────────── */
+
+@media (hover: none) and (pointer: coarse) {
+  /* Remove scale-bounce on buttons — causes jank on low-end devices */
+  .btn:active {
+    transform: none;
+  }
+
+  /* Disable transitions on interactive elements to reduce paint cost */
+  .btn {
+    transition: none;
+  }
+
+  .tc-tile {
+    transition: background var(--transition), border-color var(--transition);
+  }
+
+  /* Improve scroll performance inside chat panels */
+  .chatbox-messages,
+  .global-chat-messages {
+    -webkit-overflow-scrolling: touch;
   }
 }
 
