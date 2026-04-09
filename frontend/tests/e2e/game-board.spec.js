@@ -288,6 +288,51 @@ test('queues a drag premove through the drop handler and executes it on turn', a
   ]);
 });
 
+test('shows queued premove pieces on the board and clears the rest if a later premove becomes illegal', async ({ page }) => {
+  await installMockSocket(page, createScenario({
+    fen: BLACK_TO_MOVE_START_FEN,
+    turn: 'b',
+  }));
+  await gotoGame(page);
+
+  await page.evaluate(() => window.__CHESS_TEST_API__.simulatePieceClick('wP', 'd2'));
+  await settleUi(page);
+  await page.evaluate(() => window.__CHESS_TEST_API__.simulateSquareClick('d4'));
+  await settleUi(page);
+  await page.evaluate(() => window.__CHESS_TEST_API__.simulatePieceClick('wP', 'd4'));
+  await settleUi(page);
+  await page.evaluate(() => window.__CHESS_TEST_API__.simulateSquareClick('d5'));
+  await settleUi(page);
+
+  await expect(page.locator('[data-square="d5"] [data-piece="wP"]')).toBeVisible();
+  await expect.poll(() => getPremoveQueue(page)).toEqual([
+    { from: 'd2', to: 'd4' },
+    { from: 'd4', to: 'd5' },
+  ]);
+
+  const blackMoveOne = buildMovePayload(BLACK_TO_MOVE_START_FEN, { from: 'g8', to: 'f6' }, { whiteTime: 60_000, blackTime: 59_000 });
+  await page.evaluate((payload) => window.__CHESS_TEST_API__.emitMoveMade(payload), blackMoveOne);
+
+  await expect.poll(() => getGameMoveEmits(page)).toEqual([
+    { gameId: 'test-game', from: 'd2', to: 'd4' },
+  ]);
+  await expect(page.locator('[data-square="d5"] [data-piece="wP"]')).toBeVisible();
+  await expect.poll(() => getPremoveQueue(page)).toEqual([
+    { from: 'd4', to: 'd5' },
+  ]);
+
+  const chessAfterFirstPremove = new Chess(blackMoveOne.fen);
+  chessAfterFirstPremove.move({ from: 'd2', to: 'd4' });
+  const blackMoveTwo = buildMovePayload(chessAfterFirstPremove.fen(), { from: 'f6', to: 'd5' }, { whiteTime: 59_000, blackTime: 58_000 });
+  await page.evaluate((payload) => window.__CHESS_TEST_API__.emitMoveMade(payload), blackMoveTwo);
+
+  await expect.poll(() => getPremoveQueue(page)).toEqual([]);
+  await expect.poll(() => getGameMoveEmits(page)).toEqual([
+    { gameId: 'test-game', from: 'd2', to: 'd4' },
+  ]);
+  await expect(page.locator('[data-square="d4"] [data-piece="wP"]')).toBeVisible();
+});
+
 test('desktop layout keeps board and chat sidebar separated and scrollable', async ({ browser }) => {
   const context = await browser.newContext({
     viewport: { width: 1360, height: 700 },

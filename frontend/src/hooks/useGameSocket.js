@@ -566,7 +566,12 @@ export function useGameSocket(gameId, getBehaviorData) {
 
   // Compute display FEN based on viewMoveIndex
   const displayFen = (() => {
-    if (viewMoveIndex === null) return gameState?.fen || 'start';
+    if (viewMoveIndex === null) {
+      if (premoveQueueRef.current.length > 0) {
+        return getPremovePreviewChess().fen();
+      }
+      return gameState?.fen || 'start';
+    }
     if (viewMoveIndex === -1) return 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
     const fen = getFenAtIndex(viewMoveIndex);
     if (fen) return fen;
