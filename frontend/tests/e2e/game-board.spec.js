@@ -38,6 +38,7 @@ async function installMockSocket(page, scenario) {
     const emitted = [];
     const testState = {
       premoveQueue: [],
+      boardActions: null,
     };
     const clone = (value) => (value === undefined ? undefined : JSON.parse(JSON.stringify(value)));
 
@@ -96,6 +97,12 @@ async function installMockSocket(page, scenario) {
       },
       setPremoveQueue(queue) {
         testState.premoveQueue = clone(queue) || [];
+      },
+      setBoardActions(actions) {
+        testState.boardActions = actions || null;
+      },
+      simulatePieceDrop(from, to, piece) {
+        return testState.boardActions?.pieceDrop?.(from, to, piece);
       },
       emitGameState(state) {
         injectedScenario.state = clone(state);
@@ -191,6 +198,21 @@ test('mobile tap selects and moves a piece', async ({ browser }) => {
   }
 });
 
+test('board drop handler moves a piece through the drag-drop path', async ({ page }) => {
+  await installMockSocket(page, createScenario());
+  await gotoGame(page);
+
+  const dropAccepted = await page.evaluate(
+    () => window.__CHESS_TEST_API__.simulatePieceDrop('e2', 'e4', 'wP')
+  );
+
+  expect(dropAccepted).toBe(true);
+  await expect(page.locator('[data-square="e4"] [data-piece="wP"]')).toBeVisible();
+  await expect.poll(() => getGameMoveEmits(page)).toEqual([
+    { gameId: 'test-game', from: 'e2', to: 'e4' },
+  ]);
+});
+
 test('queues and executes multiple premoves in order', async ({ page }) => {
   await installMockSocket(page, createScenario({
     fen: BLACK_TO_MOVE_START_FEN,
@@ -233,4 +255,48 @@ test('queues and executes multiple premoves in order', async ({ page }) => {
     { gameId: 'test-game', from: 'f3', to: 'g5' },
   ]);
   await expect.poll(() => getPremoveQueue(page)).toEqual([]);
+});
+
+test('desktop layout keeps board and chat sidebar separated and scrollable', async ({ browser }) => {
+  const context = await browser.newContext({
+    viewport: { width: 1360, height: 700 },
+  });
+  const page = await context.newPage();
+
+  try {
+    await installMockSocket(page, createScenario());
+    await gotoGame(page);
+
+    const boardBox = await page.locator('.chessboard-wrap').boundingBox();
+    const sidebarBox = await page.locator('.game-sidebar').boundingBox();
+    const chatBox = await page.locator('.game-sidebar .chatbox').boundingBox();
+
+    expect(boardBox).not.toBeNull();
+    expect(sidebarBox).not.toBeNull();
+    expect(chatBox).not.toBeNull();
+    expect(boardBox.x + boardBox.width + 12).toBeLessThan(sidebarBox.x);
+    expect(chatBox.height).toBeGreaterThan(boardBox.height - 80);
+
+    const scrollMetrics = await page.evaluate(() => ({
+      scrollHeight: document.scrollingElement.scrollHeight,
+      innerHeight: window.innerHeight,
+    }));
+    expect(scrollMetrics.scrollHeight).toBeGreaterThan(scrollMetrics.innerHeight);
+
+    await page.evaluate(() => window.scrollTo(0, 500));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  } finally {
+    await context.close();
+  }
+});
+
+test('footer content spans the available desktop width', async ({ page }) => {
+  await page.goto('/');
+
+  const viewport = page.viewportSize();
+  const footerBox = await page.locator('.site-footer-grid').boundingBox();
+
+  expect(footerBox).not.toBeNull();
+  expect(footerBox.x).toBeLessThanOrEqual(32);
+  expect(viewport.width - (footerBox.x + footerBox.width)).toBeLessThanOrEqual(32);
 });

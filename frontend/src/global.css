@@ -63,7 +63,7 @@ body,
 }
 
 html, body {
-  overscroll-behavior: none;
+  overscroll-behavior-x: none;
 }
 
 body {
@@ -72,6 +72,7 @@ body {
   background-color: var(--bg-base);
   color: var(--text-primary);
   overflow-x: hidden;
+  overflow-y: auto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
@@ -296,7 +297,9 @@ body {
   background: rgba(0, 0, 0, 0.85);
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
+  overflow-y: auto;
+  padding: 24px 16px;
   z-index: 900;
   animation: fadeIn 200ms ease;
 }
@@ -312,6 +315,7 @@ body {
   max-width: 440px;
   max-height: min(90vh, 720px);
   overflow-y: auto;
+  margin: auto 0;
   text-align: center;
   animation: slideUp 250ms ease;
 }
@@ -1054,21 +1058,20 @@ body {
 .site-footer {
   border-top: 1px solid var(--border);
   background: var(--bg-surface);
-  padding: 24px 24px 18px;
+  padding: 28px 24px 18px;
 }
 
 .site-footer-grid {
-  max-width: 1120px;
-  margin: 0 auto;
+  width: 100%;
   display: grid;
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
-  gap: 24px;
+  grid-template-columns: minmax(260px, 1.7fr) repeat(3, minmax(160px, 1fr));
+  gap: 24px 32px;
   align-items: start;
 }
 
 .site-footer-meta {
-  max-width: 1120px;
-  margin: 18px auto 0;
+  width: 100%;
+  margin: 18px 0 0;
   padding-top: 14px;
   border-top: 1px solid var(--border);
   display: flex;
@@ -1076,6 +1079,60 @@ body {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.site-footer-brand {
+  min-width: 0;
+}
+
+.site-footer-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.site-footer-copy {
+  max-width: 34ch;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.site-footer-section {
+  min-width: 0;
+}
+
+.site-footer-heading {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.site-footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.site-footer-links--static {
+  color: var(--text-secondary);
+}
+
+.site-footer-link {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.site-footer-link:hover {
+  color: var(--text-primary);
 }
 
 /* ── Confetti ─────────────────────────────────────────── */
@@ -1140,7 +1197,7 @@ body {
   justify-content: center;
   align-items: center;
   margin: 0 auto;
-  touch-action: manipulation;
+  touch-action: pan-y pinch-zoom;
   -webkit-touch-callout: none;
   user-select: none;
   -webkit-user-select: none;
@@ -1159,6 +1216,7 @@ body {
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
   z-index: 10;
+  touch-action: none;
 }
 .chessboard-wrap [data-piece]:active {
   cursor: grabbing !important;
@@ -1200,7 +1258,8 @@ body {
 .app-body {
   display: flex;
   flex: 1;
-  min-height: 0;
+  min-height: calc(100vh - 52px);
+  overflow: visible;
 }
 
 .app-chat-panel {
@@ -1223,8 +1282,10 @@ body {
 .app-main {
   flex: 1;
   min-width: 0;
+  min-height: calc(100vh - 52px);
   display: flex;
   flex-direction: column;
+  overflow: visible;
 }
 
 /* Mobile overlay */
@@ -1293,14 +1354,14 @@ body {
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 18px;
   width: 100%;
   color: var(--text-primary);
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-height: 0;
+  min-height: 100%;
   contain: paint;
 }
 
@@ -1334,12 +1395,12 @@ body {
 
 .chatbox-messages {
   flex: 1;
-  min-height: 120px;
+  min-height: 220px;
   overflow-y: auto;
   overscroll-behavior: contain;
   margin-bottom: 12px;
   background: var(--bg-base);
-  padding: 10px;
+  padding: 12px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
 }

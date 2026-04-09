@@ -14,6 +14,9 @@ const SPEED_MAP = { instant: 0, fast: 100, normal: 200, slow: 400 };
 const ChessboardComponent = memo(({
   position,
   onPieceDrop,
+  onPieceClick,
+  onPieceDragBegin,
+  onPieceDragEnd,
   boardSize = 320,
   onBoardSizeChange,
   boardOrientation = 'white',
@@ -80,6 +83,9 @@ const ChessboardComponent = memo(({
         customDarkSquareStyle={{ backgroundColor: theme.darkSquare }}
         customDropSquareStyle={{ backgroundColor: 'rgba(255, 255, 0, 0.3)' }}
         customSquareStyles={premoveSquares}
+        onPieceClick={onPieceClick}
+        onPieceDragBegin={onPieceDragBegin}
+        onPieceDragEnd={onPieceDragEnd}
         onSquareClick={onSquareClick}
         onSquareRightClick={onSquareRightClick}
         snapToCursor={true}

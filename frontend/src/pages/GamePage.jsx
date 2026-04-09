@@ -95,6 +95,10 @@ const GamePage = () => {
   );
   const [chatExpanded, setChatExpanded] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const selectedSquareRef = useRef(null);
+  const lastPieceClickRef = useRef({ square: null, at: 0 });
+  const layoutRef = useRef(null);
+  const dragStateRef = useRef({ active: false, sourceSquare: null, endedAt: 0 });
 
   const computeBoardSize = useCallback(() => {
     if (typeof window === 'undefined') return 320;
@@ -103,11 +107,15 @@ const GamePage = () => {
       // Fill width minus padding
       return Math.min(window.innerWidth - 16, window.innerHeight - 336);
     }
-    const appMainWidth = document.querySelector('.app-main')?.clientWidth || window.innerWidth;
-    const sidebarWidth = sidebarOpen ? 360 : 52;
-    const maxByWidth = Math.floor(appMainWidth - sidebarWidth - 48);
-    const maxByHeight = Math.floor(window.innerHeight - 52 - 200);
-    return Math.min(480, Math.max(240, Math.min(maxByWidth, maxByHeight)));
+    const layoutWidth = layoutRef.current?.clientWidth
+      || document.querySelector('.app-main')?.clientWidth
+      || Math.max(360, window.innerWidth - 600);
+    const sidebarWidth = sidebarOpen
+      ? Math.min(420, Math.max(390, Math.floor(layoutWidth * 0.32))) + 24
+      : 68;
+    const maxByWidth = Math.floor(layoutWidth - sidebarWidth - 96);
+    const maxByHeight = Math.floor(window.innerHeight - 160);
+    return Math.min(560, Math.max(280, Math.min(maxByWidth, maxByHeight)));
   }, [sidebarOpen]);
 
   const [boardSize, setBoardSize] = useState(computeBoardSize);
@@ -122,7 +130,6 @@ const GamePage = () => {
   const [selectedSquare, setSelectedSquare] = useState(null);
   const [modalDismissed, setModalDismissed] = useState(false);
   const [flipped, setFlipped] = useState(false);
-  const selectedSquareRef = useRef(null);
 
   // Tab title + favicon badge
   useGameTabTitle(gameState ? {
@@ -266,6 +273,7 @@ const GamePage = () => {
           (gs.myColor === 'b' && targetSquare[1] === '1');
         const promotion = isPawn && isPromoRank ? 'q' : undefined;
         addPremove(sourceSquare, targetSquare, promotion);
+        updateSelectedSquare(null);
         return false;
       }
 
@@ -390,9 +398,72 @@ const GamePage = () => {
 
   // onSquareClick — fires when clicking empty squares (or squares without draggable pieces)
   const handleSquareClick = useCallback(
-    (square) => handleClickMove(square),
+    (square, piece) => {
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      if (
+        piece &&
+        lastPieceClickRef.current.square === square &&
+        now - lastPieceClickRef.current.at < 32
+      ) {
+        return;
+      }
+      handleClickMove(square);
+    },
     [handleClickMove]
   );
+
+  const handlePieceClick = useCallback(
+    (_piece, square) => {
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      if (
+        dragStateRef.current.active
+        || (
+          dragStateRef.current.sourceSquare === square
+          && now - dragStateRef.current.endedAt < 120
+        )
+      ) {
+        return;
+      }
+      lastPieceClickRef.current = {
+        square,
+        at: now,
+      };
+      handleClickMove(square);
+    },
+    [handleClickMove]
+  );
+
+  const handlePieceDragBegin = useCallback((_piece, sourceSquare) => {
+    dragStateRef.current = {
+      active: true,
+      sourceSquare,
+      endedAt: 0,
+    };
+  }, []);
+
+  const handlePieceDragEnd = useCallback((_piece, sourceSquare) => {
+    dragStateRef.current = {
+      active: false,
+      sourceSquare,
+      endedAt: typeof performance !== 'undefined' ? performance.now() : Date.now(),
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const api = window.__CHESS_TEST_API__;
+    if (!api?.setBoardActions) return undefined;
+
+    api.setBoardActions({
+      pieceDrop: handlePieceDrop,
+      pieceClick: handlePieceClick,
+      squareClick: handleSquareClick,
+    });
+
+    return () => {
+      api.setBoardActions(null);
+    };
+  }, [handlePieceClick, handlePieceDrop, handleSquareClick]);
 
   // Clear selection only when game ends (not on every FEN change)
   useEffect(() => {
@@ -520,7 +591,11 @@ const GamePage = () => {
         </div>
       )}
 
-      <div className={`game-layout ${isMobile ? 'game-layout--mobile' : 'game-layout--desktop'}`}>
+      <div
+        ref={layoutRef}
+        className={`game-layout ${isMobile ? 'game-layout--mobile' : 'game-layout--desktop'}`}
+        style={{ '--board-size': `${boardSize}px` }}
+      >
         {/* Board column */}
         {!isFullscreen && (
           <div className="game-board-col">
@@ -552,6 +627,9 @@ const GamePage = () => {
               key={boardResetKey}
               position={displayFen}
               onPieceDrop={handlePieceDrop}
+              onPieceClick={isViewingHistory ? undefined : handlePieceClick}
+              onPieceDragBegin={isViewingHistory ? undefined : handlePieceDragBegin}
+              onPieceDragEnd={isViewingHistory ? undefined : handlePieceDragEnd}
               boardSize={boardSize}
               onBoardSizeChange={isMobile ? undefined : setBoardSize}
               boardOrientation={orientation}
@@ -856,6 +934,9 @@ const GamePage = () => {
             key={`fs-${boardResetKey}`}
             position={displayFen}
             onPieceDrop={handlePieceDrop}
+            onPieceClick={isViewingHistory ? undefined : handlePieceClick}
+            onPieceDragBegin={isViewingHistory ? undefined : handlePieceDragBegin}
+            onPieceDragEnd={isViewingHistory ? undefined : handlePieceDragEnd}
             boardSize={fullscreenBoardSize}
             boardOrientation={orientation}
             premoveSquares={isViewingHistory ? {} : mergedSquareStyles}

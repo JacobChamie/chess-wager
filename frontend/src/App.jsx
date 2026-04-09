@@ -31,8 +31,12 @@ const ScrollToTop = () => {
 };
 
 const App = () => {
+  const location = useLocation();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [chatOpen, setChatOpen] = useState(() => !isMobile);
+  const isGameRoute = location.pathname.startsWith('/game/');
+  const showDesktopChat = chatOpen && !isMobile && !isGameRoute;
+  const showMobileChat = isMobile && chatOpen && !isGameRoute;
 
   useEffect(() => {
     const handleResize = () => {
@@ -48,7 +52,7 @@ const App = () => {
       <ScrollToTop />
       <Navbar onToggleChat={() => setChatOpen((v) => !v)} chatOpen={chatOpen} />
       <div className="app-body">
-        {chatOpen && !isMobile && (
+        {showDesktopChat && (
           <aside className="app-chat-panel">
             <GlobalChat />
           </aside>
@@ -71,10 +75,10 @@ const App = () => {
             </Routes>
           </Suspense>
         </main>
-        {chatOpen && !isMobile && <div className="app-chat-spacer" aria-hidden="true" />}
+        {showDesktopChat && <div className="app-chat-spacer" aria-hidden="true" />}
       </div>
       <Footer />
-      {isMobile && chatOpen && (
+      {showMobileChat && (
         <div className="app-chat-mobile-overlay" onClick={() => setChatOpen(false)}>
           <div className="app-chat-mobile-panel" onClick={(e) => e.stopPropagation()}>
             <GlobalChat />

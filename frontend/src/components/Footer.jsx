@@ -4,41 +4,41 @@ const Footer = () => {
   return (
     <footer className="site-footer">
       <div className="site-footer-grid">
-        <div>
-          <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div className="site-footer-brand">
+          <div className="site-footer-title">
             <span>{'\u265A'}</span> ELO Stakes
           </div>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '200px', lineHeight: 1.5 }}>
+          <p className="site-footer-copy">
             Competitive chess with real stakes. Secured by multi-layer anti-cheat.
           </p>
         </div>
 
-        <div>
-          <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-muted)', marginBottom: '10px' }}>
+        <div className="site-footer-section">
+          <div className="site-footer-heading">
             Platform
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <Link to="/" style={{ fontSize: '13px', color: 'var(--text-secondary)', textDecoration: 'none' }}>Play</Link>
-            <Link to="/leaderboard" style={{ fontSize: '13px', color: 'var(--text-secondary)', textDecoration: 'none' }}>Leaderboard</Link>
-            <Link to="/wallet" style={{ fontSize: '13px', color: 'var(--text-secondary)', textDecoration: 'none' }}>Wallet</Link>
+          <div className="site-footer-links">
+            <Link to="/" className="site-footer-link">Play</Link>
+            <Link to="/leaderboard" className="site-footer-link">Leaderboard</Link>
+            <Link to="/wallet" className="site-footer-link">Wallet</Link>
           </div>
         </div>
 
-        <div>
-          <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-muted)', marginBottom: '10px' }}>
+        <div className="site-footer-section">
+          <div className="site-footer-heading">
             Support
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <Link to="/faq" style={{ fontSize: '13px', color: 'var(--text-secondary)', textDecoration: 'none' }}>FAQ</Link>
-            <Link to="/contact" style={{ fontSize: '13px', color: 'var(--text-secondary)', textDecoration: 'none' }}>Contact Us</Link>
+          <div className="site-footer-links">
+            <Link to="/faq" className="site-footer-link">FAQ</Link>
+            <Link to="/contact" className="site-footer-link">Contact Us</Link>
           </div>
         </div>
 
-        <div>
-          <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-muted)', marginBottom: '10px' }}>
+        <div className="site-footer-section">
+          <div className="site-footer-heading">
             Trust & Safety
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+          <div className="site-footer-links site-footer-links--static">
             <span>{'\uD83D\uDEE1\uFE0F'} Anti-cheat protected</span>
             <span>{'\uD83D\uDD12'} Encrypted transactions</span>
             <span>{'\u2713'} Fair play verified</span>
