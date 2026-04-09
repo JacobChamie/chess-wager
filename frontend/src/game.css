@@ -157,6 +157,21 @@
   max-height: none;
 }
 
+.game-spectator-global-chat {
+  width: 100%;
+  min-height: 260px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.game-spectator-global-chat .global-chat {
+  min-height: 260px;
+  background: transparent;
+}
+
 /* Invisible spacer keeps board in position when sidebar is hidden */
 .game-sidebar-spacer {
   width: 100%;
@@ -264,6 +279,13 @@
 @media (max-width: 1040px) {
   .game-layout--desktop {
     grid-template-columns: var(--game-rail-width, 380px) minmax(0, 1fr) var(--game-rail-width, 380px);
+  }
+}
+
+@media (max-width: 639px) {
+  .game-spectator-global-chat {
+    min-height: 220px;
+    margin-top: 8px;
   }
 }
 

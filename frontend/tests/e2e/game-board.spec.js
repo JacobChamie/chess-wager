@@ -29,6 +29,8 @@ function createScenario(overrides = {}) {
   return {
     gameId: state.gameId,
     state,
+    globalChatHistory: overrides.globalChatHistory || [],
+    activeGame: overrides.activeGame || null,
   };
 }
 
@@ -71,6 +73,23 @@ async function installMockSocket(page, scenario) {
         emitted.push({ event, payload: clone(payload) });
         if (event === 'game:join' && payload?.gameId === injectedScenario.gameId) {
           queueMicrotask(() => emitToClient('game:state', clone(injectedScenario.state)));
+        }
+        if (event === 'global:chat:history') {
+          queueMicrotask(() => emitToClient('global:chat:history', clone(injectedScenario.globalChatHistory || [])));
+        }
+        if (event === 'global:chat:send') {
+          const nextMessage = {
+            id: Date.now(),
+            senderName: 'Tester',
+            message: payload?.message || '',
+            timestamp: Date.now(),
+            isPremium: false,
+          };
+          injectedScenario.globalChatHistory = [...(injectedScenario.globalChatHistory || []), nextMessage];
+          queueMicrotask(() => emitToClient('global:chat:message', clone(nextMessage)));
+        }
+        if (event === 'game:get_active') {
+          queueMicrotask(() => emitToClient('game:active', clone(injectedScenario.activeGame || { gameId: null })));
         }
       },
       connect() {
@@ -288,6 +307,62 @@ test('queues a drag premove through the drop handler and executes it on turn', a
   ]);
 });
 
+test('supports castling by dropping or clicking the king onto the rook square', async ({ page }) => {
+  await installMockSocket(page, createScenario({
+    fen: 'r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1',
+    whiteTime: 60_000,
+    blackTime: 60_000,
+  }));
+  await gotoGame(page);
+
+  const dropAccepted = await page.evaluate(
+    () => window.__CHESS_TEST_API__.simulatePieceDrop('e1', 'h1', 'wK')
+  );
+
+  expect(dropAccepted).toBe(true);
+  await expect(page.locator('[data-square="g1"] [data-piece="wK"]')).toBeVisible();
+  await expect.poll(() => getGameMoveEmits(page)).toEqual([
+    { gameId: 'test-game', from: 'e1', to: 'g1' },
+  ]);
+
+  await page.evaluate(() => window.__CHESS_TEST_API__.clearEmitted());
+  await page.evaluate((state) => {
+    window.__CHESS_TEST_API__.emitGameState(state);
+  }, {
+    ...createScenario({
+      fen: 'r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1',
+      whiteTime: 60_000,
+      blackTime: 60_000,
+    }).state,
+  });
+
+  await page.evaluate(() => window.__CHESS_TEST_API__.simulatePieceClick('wK', 'e1'));
+  await settleUi(page);
+  await page.evaluate(() => window.__CHESS_TEST_API__.simulateSquareClick('h1', 'wR'));
+
+  await expect(page.locator('[data-square="g1"] [data-piece="wK"]')).toBeVisible();
+  await expect.poll(() => getGameMoveEmits(page)).toEqual([
+    { gameId: 'test-game', from: 'e1', to: 'g1' },
+  ]);
+});
+
+test('rejects impossible premoves like capturing the king without crashing the board', async ({ page }) => {
+  await installMockSocket(page, createScenario({
+    fen: '4k3/8/8/8/8/8/4Q3/4K3 b - - 0 1',
+    turn: 'b',
+  }));
+  await gotoGame(page);
+
+  const dropAccepted = await page.evaluate(
+    () => window.__CHESS_TEST_API__.simulatePieceDrop('e2', 'e8', 'wQ')
+  );
+
+  expect(dropAccepted).toBe(false);
+  await expect.poll(() => getPremoveQueue(page)).toEqual([]);
+  await expect.poll(() => getGameMoveEmits(page)).toEqual([]);
+  await expect(page.locator('vite-error-overlay')).toHaveCount(0);
+});
+
 test('shows queued premove pieces on the board and clears the rest if a later premove becomes illegal', async ({ page }) => {
   await installMockSocket(page, createScenario({
     fen: BLACK_TO_MOVE_START_FEN,
@@ -367,6 +442,37 @@ test('desktop layout keeps board and chat sidebar separated and scrollable', asy
   } finally {
     await context.close();
   }
+});
+
+test('spectators see lobby chat inside the game page', async ({ page }) => {
+  await installMockSocket(page, createScenario({
+    myColor: null,
+    globalChatHistory: [
+      { id: 1, senderName: 'Mod', message: 'Welcome to lobby chat', timestamp: Date.now(), isPremium: false },
+    ],
+  }));
+  await gotoGame(page);
+
+  await expect(page.locator('.game-spectator-global-chat .global-chat')).toBeVisible();
+  await expect(page.getByText('Welcome to lobby chat')).toBeVisible();
+});
+
+test('lobby shows a reconnect action for an ongoing game', async ({ page }) => {
+  await installMockSocket(page, createScenario({
+    activeGame: {
+      gameId: 'resume-me',
+      color: 'w',
+      opponentName: 'Opponent',
+      isBotGame: false,
+    },
+  }));
+
+  await page.goto('/');
+
+  await expect(page.getByRole('button', { name: 'Reconnect' })).toBeVisible();
+  await expect(page.getByText('Resume vs Opponent')).toBeVisible();
+  await page.getByRole('button', { name: 'Reconnect' }).click();
+  await expect(page).toHaveURL(/\/game\/resume-me$/);
 });
 
 test('app shell has no global chat panel or chat toggle', async ({ page }) => {

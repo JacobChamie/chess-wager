@@ -13,6 +13,7 @@ import ReportModal from '../components/ReportModal.jsx';
 import CapturedPieces from '../components/CapturedPieces.jsx';
 import { useGameTabTitle } from '../hooks/useGameTabTitle.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import GlobalChat from '../components/GlobalChat.jsx';
 import '../game.css';
 
 // Live countdown banner for opponent disconnect
@@ -37,6 +38,34 @@ const DisconnectBanner = ({ disconnectTime }) => {
       Opponent disconnected — {secondsLeft}s to reconnect
     </div>
   );
+};
+
+const resolveMoveTarget = (chess, from, rawTargetSquare) => {
+  if (!chess || !from || !rawTargetSquare) return null;
+  const piece = chess.get(from);
+  if (!piece) return null;
+  const targetPiece = chess.get(rawTargetSquare);
+  if (targetPiece?.type === 'k') return null;
+
+  const legalMoves = chess.moves({ square: from, verbose: true });
+  if (!legalMoves.length) return null;
+
+  const exactMatch = legalMoves.find((move) => move.to === rawTargetSquare);
+  if (exactMatch) return exactMatch;
+
+  if (piece.type !== 'k') return null;
+
+  const rook = targetPiece;
+  if (!rook || rook.type !== 'r' || rook.color !== piece.color) return null;
+
+  const kingFile = from.charCodeAt(0);
+  const rookFile = rawTargetSquare.charCodeAt(0);
+  const wantsKingside = rookFile > kingFile;
+
+  return legalMoves.find((move) => {
+    if (!move.flags?.includes('k') && !move.flags?.includes('q')) return false;
+    return wantsKingside ? move.flags.includes('k') : move.flags.includes('q');
+  }) || null;
 };
 
 const GamePage = () => {
@@ -264,41 +293,40 @@ const GamePage = () => {
 
       if (gs.turn !== gs.myColor) {
         const preview = getPremovePreviewChess();
-        const previewMove = preview.move({
-          from: sourceSquare,
-          to: targetSquare,
-          promotion: 'q',
-        });
+        const previewMove = resolveMoveTarget(preview, sourceSquare, targetSquare);
         if (!previewMove) return false;
 
         const isPawn = piece?.[1] === 'P' || piece?.[1] === 'p';
         const isPromoRank =
-          (gs.myColor === 'w' && targetSquare[1] === '8') ||
-          (gs.myColor === 'b' && targetSquare[1] === '1');
-        const promotion = isPawn && isPromoRank ? 'q' : undefined;
-        addPremove(sourceSquare, targetSquare, promotion);
+          (gs.myColor === 'w' && previewMove.to[1] === '8') ||
+          (gs.myColor === 'b' && previewMove.to[1] === '1');
+        const promotion = isPawn && isPromoRank ? 'q' : previewMove.promotion;
+        addPremove(sourceSquare, previewMove.to, promotion);
         updateSelectedSquare(null);
         return false;
       }
 
+      const resolvedMove = resolveMoveTarget(chessRef.current, sourceSquare, targetSquare);
+      if (!resolvedMove) return false;
+
       const isPawn = piece?.[1] === 'P' || piece?.[1] === 'p';
       const isPromoRank =
-        (gs.myColor === 'w' && targetSquare[1] === '8') ||
-        (gs.myColor === 'b' && targetSquare[1] === '1');
+        (gs.myColor === 'w' && resolvedMove.to[1] === '8') ||
+        (gs.myColor === 'b' && resolvedMove.to[1] === '1');
 
       if (isPawn && isPromoRank) {
-        setPendingPromotion({ from: sourceSquare, to: targetSquare });
+        setPendingPromotion({ from: sourceSquare, to: resolvedMove.to });
         return false;
       }
 
-      const localMove = tryLocalMove(sourceSquare, targetSquare);
+      const localMove = tryLocalMove(sourceSquare, resolvedMove.to);
       if (!localMove) return false;
 
-      sendMove(sourceSquare, targetSquare);
+      sendMove(sourceSquare, resolvedMove.to);
       updateSelectedSquare(null);
       return true;
     },
-    [tryLocalMove, sendMove, addPremove, isViewingHistory, getPremovePreviewChess, updateSelectedSquare]
+    [tryLocalMove, sendMove, addPremove, isViewingHistory, getPremovePreviewChess, updateSelectedSquare, chessRef]
   );
 
   const handlePromotionChoice = useCallback(
@@ -338,37 +366,35 @@ const GamePage = () => {
           return;
         }
 
-        // If it's our own piece, re-select it
-        if (piece && piece.color === gs.myColor) {
-          updateSelectedSquare(square);
-          return;
-        }
+        const resolvedMove = resolveMoveTarget(chess, currentSelectedSquare, square);
 
         if (isMyTurn) {
-          // Check if this is a legal move from selectedSquare to square
-          const legalMoves = chess.moves({ square: currentSelectedSquare, verbose: true });
-          const matchingMove = legalMoves.find(m => m.to === square);
-
-          if (matchingMove) {
+          if (resolvedMove) {
             // Check for promotion
             const srcPiece = chess.get(currentSelectedSquare);
             const isPawn = srcPiece?.type === 'p';
             const isPromoRank =
-              (gs.myColor === 'w' && square[1] === '8') ||
-              (gs.myColor === 'b' && square[1] === '1');
+              (gs.myColor === 'w' && resolvedMove.to[1] === '8') ||
+              (gs.myColor === 'b' && resolvedMove.to[1] === '1');
 
             if (isPawn && isPromoRank) {
-              setPendingPromotion({ from: currentSelectedSquare, to: square });
+              setPendingPromotion({ from: currentSelectedSquare, to: resolvedMove.to });
               updateSelectedSquare(null);
               return;
             }
 
             // Make the move
-            const localMove = tryLocalMove(currentSelectedSquare, square);
+            const localMove = tryLocalMove(currentSelectedSquare, resolvedMove.to);
             if (localMove) {
-              sendMove(currentSelectedSquare, square);
+              sendMove(currentSelectedSquare, resolvedMove.to);
             }
             updateSelectedSquare(null);
+            return;
+          }
+
+          // If it's our own piece, re-select it
+          if (piece && piece.color === gs.myColor) {
+            updateSelectedSquare(square);
             return;
           }
 
@@ -376,9 +402,11 @@ const GamePage = () => {
           updateSelectedSquare(null);
           return;
         } else {
-          const legalMoves = chess.moves({ square: currentSelectedSquare, verbose: true });
-          const matchingMove = legalMoves.find((move) => move.to === square);
-          if (!matchingMove) {
+          if (!resolvedMove) {
+            if (piece && piece.color === gs.myColor) {
+              updateSelectedSquare(square);
+              return;
+            }
             updateSelectedSquare(null);
             return;
           }
@@ -387,10 +415,10 @@ const GamePage = () => {
           const srcPiece = chess.get(currentSelectedSquare);
           const isPawn = srcPiece?.type === 'p';
           const isPromoRank =
-            (gs.myColor === 'w' && square[1] === '8') ||
-            (gs.myColor === 'b' && square[1] === '1');
-          const promotion = isPawn && isPromoRank ? 'q' : undefined;
-          addPremove(currentSelectedSquare, square, promotion);
+            (gs.myColor === 'w' && resolvedMove.to[1] === '8') ||
+            (gs.myColor === 'b' && resolvedMove.to[1] === '1');
+          const promotion = isPawn && isPromoRank ? 'q' : resolvedMove.promotion;
+          addPremove(currentSelectedSquare, resolvedMove.to, promotion);
           updateSelectedSquare(null);
           return;
         }
@@ -649,6 +677,7 @@ const GamePage = () => {
               boardSize={boardSize}
               onBoardSizeChange={isMobile ? undefined : setBoardSize}
               boardOrientation={orientation}
+              animationDuration={isViewingHistory || Object.keys(premoveSquares).length > 0 ? 0 : undefined}
               premoveSquares={isViewingHistory ? {} : mergedSquareStyles}
               onSquareClick={isViewingHistory ? undefined : handleSquareClick}
               onSquareRightClick={handleSquareRightClick}
@@ -766,6 +795,11 @@ const GamePage = () => {
                   onMoveClick={navigateToMove}
                   viewMoveIndex={viewMoveIndex}
                 />
+                {isSpectator && (
+                  <div className="game-spectator-global-chat">
+                    <GlobalChat />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -816,6 +850,12 @@ const GamePage = () => {
               onMoveClick={navigateToMove}
               viewMoveIndex={viewMoveIndex}
             />
+
+            {isSpectator && (
+              <div className="game-spectator-global-chat">
+                <GlobalChat />
+              </div>
+            )}
 
             {showDrawOffer && (
               <DrawOfferBar
@@ -955,6 +995,7 @@ const GamePage = () => {
             onPieceDragEnd={isViewingHistory ? undefined : handlePieceDragEnd}
             boardSize={fullscreenBoardSize}
             boardOrientation={orientation}
+            animationDuration={isViewingHistory || Object.keys(premoveSquares).length > 0 ? 0 : undefined}
             premoveSquares={isViewingHistory ? {} : mergedSquareStyles}
             onSquareClick={isViewingHistory ? undefined : handleSquareClick}
             onSquareRightClick={handleSquareRightClick}

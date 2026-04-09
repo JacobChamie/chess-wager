@@ -65,9 +65,16 @@ export function useGameSocket(gameId, getBehaviorData) {
       return;
     }
     const highlights = {};
-    queue.forEach((pm) => {
-      highlights[pm.from] = { backgroundColor: 'rgba(0, 120, 215, 0.45)' };
-      highlights[pm.to] = { backgroundColor: 'rgba(0, 120, 215, 0.45)' };
+    queue.forEach((pm, index) => {
+      const intensity = Math.max(0.28, 0.46 - (index * 0.05));
+      highlights[pm.from] = {
+        backgroundColor: `rgba(255, 140, 0, ${intensity})`,
+        boxShadow: 'inset 0 0 0 2px rgba(255, 183, 77, 0.75)',
+      };
+      highlights[pm.to] = {
+        backgroundColor: `rgba(255, 87, 34, ${Math.min(0.58, intensity + 0.08)})`,
+        boxShadow: 'inset 0 0 0 2px rgba(255, 171, 64, 0.95)',
+      };
     });
     setPremoveSquares(highlights);
   }, [publishTestQueue]);

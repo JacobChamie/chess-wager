@@ -20,6 +20,7 @@ const ChessboardComponent = memo(({
   boardSize = 320,
   onBoardSizeChange,
   boardOrientation = 'white',
+  animationDuration,
   premoveSquares,
   onSquareRightClick,
   onSquareClick,
@@ -63,6 +64,7 @@ const ChessboardComponent = memo(({
   const theme = BOARD_THEMES[themeKey] || BOARD_THEMES.default;
 
   const speedKey = typeof window !== 'undefined' ? localStorage.getItem('chess_animation_speed') || 'normal' : 'normal';
+  const resolvedAnimationDuration = animationDuration ?? SPEED_MAP[speedKey] ?? 200;
 
   const wrapStyle = useMemo(() => ({
     width: boardSize,
@@ -77,7 +79,7 @@ const ChessboardComponent = memo(({
         onPieceDrop={onPieceDrop}
         boardWidth={boardSize}
         boardOrientation={boardOrientation}
-        animationDuration={SPEED_MAP[speedKey] ?? 200}
+        animationDuration={resolvedAnimationDuration}
         customBoardStyle={CUSTOM_BOARD_STYLE}
         customLightSquareStyle={{ backgroundColor: theme.lightSquare }}
         customDarkSquareStyle={{ backgroundColor: theme.darkSquare }}

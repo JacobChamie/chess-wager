@@ -79,6 +79,19 @@ describe('E2E: Disconnect & Reconnect', () => {
     expect(data.moves).toHaveLength(1);
   });
 
+  it('should report the active game for a player session', async () => {
+    const { clientW, clientB, gameId } = await matchAndJoin(server.url);
+    clients.push(clientW, clientB);
+
+    const activeGame = waitForEvent(clientW, 'game:active');
+    clientW.emit('game:get_active');
+    const data = await activeGame;
+
+    expect(data.gameId).toBe(gameId);
+    expect(data.color).toBe('w');
+    expect(data.opponentName).toBeTruthy();
+  });
+
   it('should forfeit game after disconnect timeout', async () => {
     const { clientW, clientB, gameId, sessionW } = await matchAndJoin(server.url);
     clients.push(clientB);

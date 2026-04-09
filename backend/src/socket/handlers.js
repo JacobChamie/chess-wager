@@ -295,6 +295,24 @@ export function registerHandlers(io, socket, sessionId, gameManager, lobbyManage
     }
   });
 
+  socket.on('game:get_active', () => {
+    if (!checkRate()) return;
+    const room = gameManager.getActiveGameForSession(sessionId);
+    if (!room || room.status !== 'active') {
+      socket.emit('game:active', { gameId: null });
+      return;
+    }
+
+    const color = room.getPlayerColor(sessionId);
+    const opponent = room.getOpponentOf(sessionId);
+    socket.emit('game:active', {
+      gameId: room.gameId,
+      color,
+      opponentName: opponent?.name || null,
+      isBotGame: room.isBotGame || false,
+    });
+  });
+
   socket.on('game:move', async ({ gameId, from, to, promotion }) => {
     if (!checkRate()) return;
     const room = gameManager.getGame(gameId);
