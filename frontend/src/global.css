@@ -1076,7 +1076,7 @@ body {
   justify-content: center;
   align-items: center;
   margin: 0 auto;
-  touch-action: none;
+  touch-action: manipulation;
   -webkit-touch-callout: none;
   user-select: none;
   -webkit-user-select: none;
@@ -1086,13 +1086,11 @@ body {
 /* Smooth square highlight transitions (last-move, selection, legal-move dots) */
 .chessboard-wrap div[data-square] {
   transition: background 100ms ease, background-color 100ms ease;
-  touch-action: none;
 }
 
 /* Piece drag styling — instant grab, GPU compositing, generous hit area */
 .chessboard-wrap [data-piece] {
   cursor: grab !important;
-  touch-action: none;
   will-change: transform;
   -webkit-transform: translateZ(0);
   transform: translateZ(0);

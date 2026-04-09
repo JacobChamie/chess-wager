@@ -20,7 +20,6 @@ const ChessboardComponent = memo(({
   premoveSquares,
   onSquareRightClick,
   onSquareClick,
-  onPieceClick,
 }) => {
   const minSize = 240;
   const maxSize = 640;
@@ -82,7 +81,6 @@ const ChessboardComponent = memo(({
         customDropSquareStyle={{ backgroundColor: 'rgba(255, 255, 0, 0.3)' }}
         customSquareStyles={premoveSquares}
         onSquareClick={onSquareClick}
-        onPieceClick={onPieceClick}
         onSquareRightClick={onSquareRightClick}
         snapToCursor={true}
         allowDragOutsideBoard={true}

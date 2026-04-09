@@ -1,6 +1,7 @@
 import { io } from 'socket.io-client';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+const TEST_SOCKET = typeof window !== 'undefined' ? window.__CHESS_TEST_SOCKET__ : null;
 
 // Per-tab session identity (survives refresh, unique per tab)
 let sessionId = sessionStorage.getItem('chess_session_id');
@@ -11,7 +12,7 @@ if (!sessionId) {
 
 export { sessionId };
 
-export const socket = io(SERVER_URL, {
+export const socket = TEST_SOCKET || io(SERVER_URL, {
   autoConnect: false,
   reconnection: true,
   reconnectionAttempts: 10,

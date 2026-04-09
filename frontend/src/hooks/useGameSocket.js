@@ -3,6 +3,13 @@ import { Chess } from 'chess.js';
 import { socket } from '../socket.js';
 
 const EMPTY_SQUARES = {};
+const setFenTurn = (fen, turn) => {
+  const parts = fen.split(' ');
+  if (parts.length > 1) {
+    parts[1] = turn;
+  }
+  return parts.join(' ');
+};
 
 export function useGameSocket(gameId, getBehaviorData) {
   const [gameState, setGameState] = useState(null);
@@ -43,9 +50,16 @@ export function useGameSocket(gameId, getBehaviorData) {
     lastSync: Date.now(),
   });
 
+  const publishTestQueue = useCallback(() => {
+    if (typeof window !== 'undefined' && window.__CHESS_TEST_API__?.setPremoveQueue) {
+      window.__CHESS_TEST_API__.setPremoveQueue(premoveQueueRef.current);
+    }
+  }, []);
+
   // Helper to rebuild premove highlight styles
   const _updatePremoveHighlights = useCallback(() => {
     const queue = premoveQueueRef.current;
+    publishTestQueue();
     if (queue.length === 0) {
       setPremoveSquares(EMPTY_SQUARES);
       return;
@@ -56,7 +70,7 @@ export function useGameSocket(gameId, getBehaviorData) {
       highlights[pm.to] = { backgroundColor: 'rgba(0, 120, 215, 0.45)' };
     });
     setPremoveSquares(highlights);
-  }, []);
+  }, [publishTestQueue]);
 
   useEffect(() => {
     if (!gameId) return;
@@ -80,6 +94,7 @@ export function useGameSocket(gameId, getBehaviorData) {
     setLastMove(null);
     setViewMoveIndex(null);
     premoveQueueRef.current = [];
+    publishTestQueue();
     chessRef.current = new Chess();
     myColorRef.current = null;
     movesRef.current = [];
@@ -226,10 +241,12 @@ export function useGameSocket(gameId, getBehaviorData) {
           } else {
             // Illegal premove — cancel all
             premoveQueueRef.current = [];
+            publishTestQueue();
             setPremoveSquares(EMPTY_SQUARES);
           }
         } catch {
           premoveQueueRef.current = [];
+          publishTestQueue();
           setPremoveSquares(EMPTY_SQUARES);
         }
       }
@@ -254,6 +271,7 @@ export function useGameSocket(gameId, getBehaviorData) {
       );
       // Clear premoves on game end
       premoveQueueRef.current = [];
+      publishTestQueue();
       setPremoveSquares(EMPTY_SQUARES);
       // Send behavioral data for fair-play analysis
       if (getBehaviorData && myColorRef.current) {
@@ -269,6 +287,7 @@ export function useGameSocket(gameId, getBehaviorData) {
       setMoveError(message);
       // Clear premoves on invalid move
       premoveQueueRef.current = [];
+      publishTestQueue();
       setPremoveSquares(EMPTY_SQUARES);
       // Re-sync local chess state
       setGameState((prev) => {
@@ -341,7 +360,7 @@ export function useGameSocket(gameId, getBehaviorData) {
       socket.off('spectator:chat:message', onSpectatorChatMessage);
       socket.off('game:cheer_received', onCheerReceived);
     };
-  }, [gameId, _updatePremoveHighlights, getBehaviorData]);
+  }, [gameId, _updatePremoveHighlights, getBehaviorData, publishTestQueue]);
 
   // Validate move locally and optimistically update gameState
   const tryLocalMove = useCallback((from, to, promotion) => {
@@ -449,7 +468,29 @@ export function useGameSocket(gameId, getBehaviorData) {
 
   const clearPremoves = useCallback(() => {
     premoveQueueRef.current = [];
+    publishTestQueue();
     setPremoveSquares(EMPTY_SQUARES);
+  }, [publishTestQueue]);
+
+  const getPremovePreviewChess = useCallback(() => {
+    const preview = new Chess(chessRef.current.fen());
+    const myColor = myColorRef.current;
+    for (const premove of premoveQueueRef.current) {
+      try {
+        if (myColor && preview.turn() !== myColor) {
+          preview.load(setFenTurn(preview.fen(), myColor));
+        }
+        const result = preview.move({
+          from: premove.from,
+          to: premove.to,
+          promotion: premove.promotion || 'q',
+        });
+        if (!result) break;
+      } catch {
+        break;
+      }
+    }
+    return preview;
   }, []);
 
   // --- Move navigation ---
@@ -573,6 +614,7 @@ export function useGameSocket(gameId, getBehaviorData) {
     sendSpectatorChat,
     addPremove,
     clearPremoves,
+    getPremovePreviewChess,
     spectatorCount,
     spectatorChatMessages,
     cheerReceived,
