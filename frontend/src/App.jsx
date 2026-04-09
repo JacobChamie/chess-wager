@@ -3,6 +3,7 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import BottomNav from './components/BottomNav.jsx';
 import Footer from './components/Footer.jsx';
+import GlobalChat from './components/GlobalChat.jsx';
 import LobbyPage from './pages/LobbyPage.jsx';
 import LeaderboardPage from './pages/LeaderboardPage.jsx';
 import PlayerProfilePage from './pages/PlayerProfilePage.jsx';
@@ -30,11 +31,19 @@ const ScrollToTop = () => {
 };
 
 const App = () => {
+  const location = useLocation();
+  const showLobbyChat = !location.pathname.startsWith('/game/');
+
   return (
     <div className="app-root">
       <ScrollToTop />
       <Navbar />
       <div className="app-body">
+        {showLobbyChat && (
+          <aside className="app-chat-panel">
+            <GlobalChat />
+          </aside>
+        )}
         <main className="app-main">
           <Suspense fallback={<PageFallback />}>
             <Routes>

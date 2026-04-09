@@ -69,8 +69,6 @@ const LobbyPage = () => {
   const [botPrivate, setBotPrivate] = useState(false);
   const [wagerAmount, setWagerAmount] = useState(0);
   const [wagerGates, setWagerGates] = useState({});
-  const [activeGame, setActiveGame] = useState(null);
-
   const getName = useCallback(
     () => user?.username || playerName.trim() || 'Anonymous',
     [user, playerName]
@@ -106,29 +104,20 @@ const LobbyPage = () => {
       setPendingGameId(gameId);
       setStatus('waiting');
     };
-    const onGameStart = ({ gameId }) => {
-      setActiveGame({ gameId });
-      navigate(`/game/${gameId}`);
-    };
+    const onGameStart = ({ gameId }) => navigate(`/game/${gameId}`);
     const onError = ({ message }) => {
       setError(message);
       setStatus('idle');
     };
-    const onBotGameStart = ({ gameId }) => {
-      setActiveGame({ gameId, isBotGame: true });
-      navigate(`/game/${gameId}`);
-    };
+    const onBotGameStart = ({ gameId }) => navigate(`/game/${gameId}`);
     const onBotPersonalities = (personalities) => setBotPersonalities(personalities);
     const onBotError = ({ message }) => {
       setError(message);
       setStatus('idle');
     };
-    const onActiveGame = ({ gameId, color, opponentName, isBotGame }) => {
-      if (!gameId) {
-        setActiveGame(null);
-        return;
-      }
-      setActiveGame({ gameId, color, opponentName, isBotGame });
+    const onActiveGame = ({ gameId }) => {
+      if (!gameId) return;
+      navigate(`/game/${gameId}`, { replace: true });
     };
 
     socket.on('lobby:queued', onQueued);
@@ -247,37 +236,6 @@ const LobbyPage = () => {
 
   return (
     <div className="lobby-page-shell">
-      {activeGame?.gameId && (
-        <div
-          className="card"
-          style={{
-            width: '100%',
-            maxWidth: '560px',
-            marginBottom: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '16px',
-            flexWrap: 'wrap',
-          }}
-        >
-          <div style={{ textAlign: 'left' }}>
-            <div style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--accent-text)' }}>
-              Ongoing Game
-            </div>
-            <div style={{ fontSize: '15px', fontWeight: 700 }}>
-              Resume {activeGame.isBotGame ? 'your bot game' : `vs ${activeGame.opponentName || 'your opponent'}`}
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-              {activeGame.color === 'b' ? 'Playing Black' : activeGame.color === 'w' ? 'Playing White' : 'Return to your board'}
-            </div>
-          </div>
-          <button className="btn btn-primary" onClick={() => navigate(`/game/${activeGame.gameId}`)}>
-            Reconnect
-          </button>
-        </div>
-      )}
-
       {/* Main card */}
       <div
         className="card lobby-main-card"

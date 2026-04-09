@@ -1272,6 +1272,7 @@ body {
   top: 52px;
   height: calc(100vh - 52px);
   overflow: hidden;
+  background: var(--bg-base);
 }
 
 .app-chat-spacer {
@@ -1286,6 +1287,12 @@ body {
   display: flex;
   flex-direction: column;
   overflow: visible;
+}
+
+@media (max-width: 1040px) {
+  .app-chat-panel {
+    display: none;
+  }
 }
 
 /* Mobile overlay */

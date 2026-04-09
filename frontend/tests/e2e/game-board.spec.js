@@ -457,8 +457,9 @@ test('spectators see lobby chat inside the game page', async ({ page }) => {
   await expect(page.getByText('Welcome to lobby chat')).toBeVisible();
 });
 
-test('lobby shows a reconnect action for an ongoing game', async ({ page }) => {
+test('lobby redirects back into an active game automatically', async ({ page }) => {
   await installMockSocket(page, createScenario({
+    gameId: 'resume-me',
     activeGame: {
       gameId: 'resume-me',
       color: 'w',
@@ -469,18 +470,27 @@ test('lobby shows a reconnect action for an ongoing game', async ({ page }) => {
 
   await page.goto('/');
 
-  await expect(page.getByRole('button', { name: 'Reconnect' })).toBeVisible();
-  await expect(page.getByText('Resume vs Opponent')).toBeVisible();
-  await page.getByRole('button', { name: 'Reconnect' }).click();
   await expect(page).toHaveURL(/\/game\/resume-me$/);
 });
 
-test('app shell has no global chat panel or chat toggle', async ({ page }) => {
+test('lobby shows the global chat rail on the left side', async ({ page }) => {
+  await installMockSocket(page, createScenario({
+    globalChatHistory: [
+      { id: 1, senderName: 'Mod', message: 'Left rail chat is back', timestamp: Date.now(), isPremium: false },
+    ],
+  }));
   await page.goto('/');
 
+  await expect(page.locator('.app-chat-panel')).toBeVisible();
+  await expect(page.locator('.app-chat-panel .global-chat')).toBeVisible();
+  await expect(page.getByText('Left rail chat is back')).toBeVisible();
+});
+
+test('game pages do not show the app-wide left chat rail', async ({ page }) => {
+  await installMockSocket(page, createScenario());
+  await gotoGame(page);
+
   await expect(page.locator('.app-chat-panel')).toHaveCount(0);
-  await expect(page.locator('.app-chat-mobile-overlay')).toHaveCount(0);
-  await expect(page.getByTitle(/chat/i)).toHaveCount(0);
 });
 
 test('footer content spans the available desktop width', async ({ page }) => {
