@@ -310,6 +310,8 @@ body {
   padding: 32px 40px;
   min-width: 320px;
   max-width: 440px;
+  max-height: min(90vh, 720px);
+  overflow-y: auto;
   text-align: center;
   animation: slideUp 250ms ease;
 }
@@ -1014,6 +1016,68 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+.lobby-page-shell {
+  min-height: calc(100vh - 52px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px 16px 12px;
+}
+
+.lobby-main-card {
+  width: 100%;
+}
+
+.lobby-trust-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.lobby-trust-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  background: var(--bg-surface);
+  padding: 24px 24px 18px;
+}
+
+.site-footer-grid {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 24px;
+  align-items: start;
+}
+
+.site-footer-meta {
+  max-width: 1120px;
+  margin: 18px auto 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 /* ── Confetti ─────────────────────────────────────────── */
 
 @keyframes confettiFall {
@@ -1136,6 +1200,7 @@ body {
 .app-body {
   display: flex;
   flex: 1;
+  min-height: 0;
 }
 
 .app-chat-panel {
@@ -1150,9 +1215,16 @@ body {
   overflow: hidden;
 }
 
+.app-chat-spacer {
+  width: 300px;
+  flex-shrink: 0;
+}
+
 .app-main {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Mobile overlay */
@@ -1316,6 +1388,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
+  width: 100%;
 }
 
 .chatbox-emoji-grid {
@@ -1364,6 +1437,7 @@ body {
   padding: 4px;
   width: 45%;
   border-radius: 3px;
+  text-align: left;
 }
 
 .chatbox-move-cell--active {
@@ -1403,6 +1477,10 @@ body {
 /* ── Mobile ───────────────────────────────────────────── */
 
 @media (max-width: 640px) {
+  .app-chat-spacer {
+    display: none;
+  }
+
   button, .btn {
     min-height: 44px;
     min-width: 44px;
@@ -1482,6 +1560,26 @@ body {
     min-width: 32px;
   }
 
+  .lobby-page-shell {
+    justify-content: flex-start;
+    padding-top: 12px;
+    min-height: auto;
+  }
+
+  .site-footer {
+    padding: 20px 16px 14px;
+  }
+
+  .site-footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 16px;
+  }
+
+  .site-footer-meta {
+    justify-content: center;
+    text-align: center;
+  }
+
 }
 
 @media (max-width: 420px) {
@@ -1505,6 +1603,10 @@ body {
   .modal-card {
     min-width: 280px;
     padding: 20px 16px;
+  }
+
+  .site-footer-grid {
+    grid-template-columns: 1fr;
   }
 }
 

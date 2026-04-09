@@ -2,17 +2,8 @@ import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
-    <footer style={{
-      borderTop: '1px solid var(--border)',
-      background: 'var(--bg-surface)',
-      padding: '32px 40px',
-    }}>
-      <div style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        justifyContent: 'space-evenly',
-        gap: '32px',
-      }}>
+    <footer className="site-footer">
+      <div className="site-footer-grid">
         <div>
           <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span>{'\u265A'}</span> ELO Stakes
@@ -55,16 +46,7 @@ const Footer = () => {
         </div>
       </div>
 
-      <div style={{
-        marginTop: '20px',
-        paddingTop: '16px',
-        borderTop: '1px solid var(--border)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '8px',
-      }}>
+      <div className="site-footer-meta">
         <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
           {'\u00A9'} {new Date().getFullYear()} ELO Stakes. All rights reserved.
         </span>

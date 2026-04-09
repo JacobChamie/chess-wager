@@ -9,9 +9,9 @@
   align-items: center;
   padding-top: 12px;
   position: relative;
-  overflow-y: auto;
+  overflow-y: visible;
   overflow-x: hidden;
-  overscroll-behavior: none;
+  overscroll-behavior: contain;
 }
 
 .game-loading {
@@ -43,13 +43,15 @@
   display: flex;
   justify-content: center;
   flex: 1;
+  width: 100%;
+  max-width: 1180px;
   min-height: 0;
   overflow: visible;
 }
 
 .game-layout--desktop {
   flex-direction: row;
-  align-items: stretch;
+  align-items: flex-start;
   gap: 20px;
 }
 
@@ -65,6 +67,8 @@
   flex-direction: column;
   align-items: center;
   position: relative;
+  flex: 1;
+  min-width: 0;
 }
 
 .game-nav-buttons {
@@ -131,7 +135,7 @@
   flex-shrink: 0;
   align-self: flex-start;
   position: sticky;
-  top: 0;
+  top: 12px;
 }
 
 /* Cap chatbox height so buttons below it are never pushed off screen.
@@ -231,6 +235,15 @@
 .game-fullscreen-btn {
   margin-top: 4px;
   font-size: 12px;
+}
+
+.game-player-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .game-cheer-btn--white {

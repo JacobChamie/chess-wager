@@ -57,26 +57,30 @@ const CapturedPieces = memo(({ fen, color, flip }) => {
     <div style={{
       display: 'flex',
       alignItems: 'center',
-      gap: '2px',
-      minHeight: '20px',
-      padding: '0 4px',
-      fontSize: '14px',
+      gap: '6px',
+      minHeight: '26px',
+      padding: '2px 8px',
+      fontSize: '16px',
       lineHeight: 1,
       direction: flip ? 'rtl' : 'ltr',
+      borderRadius: '999px',
+      background: pieces.length > 0 || adv > 0 ? 'rgba(255,255,255,0.05)' : 'transparent',
+      border: pieces.length > 0 || adv > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none',
     }}>
-      <span style={{ display: 'flex', gap: '0px', flexWrap: 'wrap', opacity: 0.8 }}>
+      <span style={{ display: 'flex', gap: '1px', flexWrap: 'wrap', opacity: 0.95 }}>
         {pieces.map((p, i) => (
-          <span key={i} style={{ fontSize: '13px' }}>
+          <span key={i} style={{ fontSize: '15px' }}>
             {PIECE_UNICODE[capturedColor][p]}
           </span>
         ))}
       </span>
       {adv > 0 && (
         <span style={{
-          fontSize: '11px',
-          fontWeight: 700,
-          color: 'var(--text-secondary)',
+          fontSize: '12px',
+          fontWeight: 800,
+          color: '#9ccc65',
           marginLeft: '2px',
+          fontVariantNumeric: 'tabular-nums',
         }}>
           +{adv}
         </span>

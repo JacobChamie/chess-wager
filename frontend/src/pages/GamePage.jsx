@@ -94,6 +94,7 @@ const GamePage = () => {
     typeof window !== 'undefined' && window.innerWidth < 640
   );
   const [chatExpanded, setChatExpanded] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const computeBoardSize = useCallback(() => {
     if (typeof window === 'undefined') return 320;
@@ -102,10 +103,12 @@ const GamePage = () => {
       // Fill width minus padding
       return Math.min(window.innerWidth - 16, window.innerHeight - 336);
     }
-    const maxByWidth = Math.floor(window.innerWidth * 0.9) - 40;
+    const appMainWidth = document.querySelector('.app-main')?.clientWidth || window.innerWidth;
+    const sidebarWidth = sidebarOpen ? 360 : 52;
+    const maxByWidth = Math.floor(appMainWidth - sidebarWidth - 48);
     const maxByHeight = Math.floor(window.innerHeight - 52 - 200);
     return Math.min(480, Math.max(240, Math.min(maxByWidth, maxByHeight)));
-  }, []);
+  }, [sidebarOpen]);
 
   const [boardSize, setBoardSize] = useState(computeBoardSize);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -118,7 +121,6 @@ const GamePage = () => {
   const [pendingPromotion, setPendingPromotion] = useState(null);
   const [selectedSquare, setSelectedSquare] = useState(null);
   const [modalDismissed, setModalDismissed] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [flipped, setFlipped] = useState(false);
   const selectedSquareRef = useRef(null);
 
@@ -141,6 +143,10 @@ const GamePage = () => {
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, [computeBoardSize]);
+
+  useEffect(() => {
+    setBoardSize(computeBoardSize());
+  }, [computeBoardSize, isMobile, sidebarOpen]);
 
   const gameStateRef = useRef(gameState);
   useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
@@ -531,7 +537,7 @@ const GamePage = () => {
                 </span>
               </div>
             )}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', justifyContent: 'center' }}>
+            <div className="game-player-strip">
               <Timer
                 timeMs={opponentTime}
                 player={opponentName}
@@ -596,7 +602,7 @@ const GamePage = () => {
               </button>
             )}
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', justifyContent: 'center' }}>
+            <div className="game-player-strip">
               <CapturedPieces fen={gameState.fen} color={bottomColor} />
               <Timer
                 timeMs={myTime}

@@ -215,19 +215,11 @@ const LobbyPage = () => {
     : `${Math.round(timeControl.time / 60)} min`;
 
   return (
-    <div
-      style={{
-        minHeight: 'calc(100vh - 52px)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: '24px 16px 0',
-      }}
-    >
+    <div className="lobby-page-shell">
       {/* Main card */}
       <div
-        className="card"
-        style={{ width: '100%', maxWidth: '480px', padding: '0', margin: 'auto 0' }}
+        className="card lobby-main-card"
+        style={{ width: '100%', maxWidth: '560px', padding: '0' }}
       >
         {/* Tab bar */}
         <div className="tab-bar">
@@ -242,7 +234,7 @@ const LobbyPage = () => {
           </button>
         </div>
 
-        <div style={{ padding: '0 28px 28px' }}>
+        <div style={{ padding: '0 24px 24px' }}>
           {tab === 'quick' && (
             <>
               {/* Name input — only show for guests */}
@@ -761,27 +753,13 @@ const LobbyPage = () => {
       </div>
 
       {/* Trust indicators */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        gap: '20px',
-        marginTop: '24px',
-        marginBottom: '32px',
-        flexWrap: 'wrap',
-      }}>
+      <div className="lobby-trust-row">
         {[
           { icon: '\uD83D\uDEE1\uFE0F', text: 'Anti-Cheat' },
           { icon: '\uD83D\uDD12', text: 'Secure Funds' },
           { icon: '\u26A1', text: 'Instant Match' },
         ].map((item) => (
-          <div key={item.text} style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontSize: '12px',
-            color: 'var(--text-muted)',
-            fontWeight: 600,
-          }}>
+          <div key={item.text} className="lobby-trust-pill">
             <span>{item.icon}</span>
             <span>{item.text}</span>
           </div>

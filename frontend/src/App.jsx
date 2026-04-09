@@ -71,6 +71,7 @@ const App = () => {
             </Routes>
           </Suspense>
         </main>
+        {chatOpen && !isMobile && <div className="app-chat-spacer" aria-hidden="true" />}
       </div>
       <Footer />
       {isMobile && chatOpen && (
