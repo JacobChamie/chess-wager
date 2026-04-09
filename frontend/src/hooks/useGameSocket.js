@@ -475,6 +475,9 @@ export function useGameSocket(gameId, getBehaviorData) {
   const getPremovePreviewChess = useCallback(() => {
     const preview = new Chess(chessRef.current.fen());
     const myColor = myColorRef.current;
+    if (myColor && preview.turn() !== myColor) {
+      preview.load(setFenTurn(preview.fen(), myColor));
+    }
     for (const premove of premoveQueueRef.current) {
       try {
         if (myColor && preview.turn() !== myColor) {
@@ -489,6 +492,9 @@ export function useGameSocket(gameId, getBehaviorData) {
       } catch {
         break;
       }
+    }
+    if (myColor && preview.turn() !== myColor) {
+      preview.load(setFenTurn(preview.fen(), myColor));
     }
     return preview;
   }, []);

@@ -48,7 +48,7 @@ const tcKey = (tc) => `${tc.time}+${tc.increment}`;
 
 const LobbyPage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
 
   const [tab, setTab] = useState('quick');
   const [playerName, setPlayerName] = useState(
@@ -134,6 +134,12 @@ const LobbyPage = () => {
       socket.off('bot:error', onBotError);
     };
   }, [navigate]);
+
+  useEffect(() => {
+    if (user?.id) {
+      refreshUser();
+    }
+  }, [user?.id, refreshUser]);
 
   const handleSelectPreset = (preset) => {
     setTimeControl({ time: preset.time, increment: preset.increment });

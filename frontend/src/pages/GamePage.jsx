@@ -42,7 +42,7 @@ const DisconnectBanner = ({ disconnectTime }) => {
 const GamePage = () => {
   const { gameId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [showReportModal, setShowReportModal] = useState(false);
 
   // Initialize behavior tracking (only for active players, not spectators)
@@ -99,6 +99,7 @@ const GamePage = () => {
   const lastPieceClickRef = useRef({ square: null, at: 0 });
   const layoutRef = useRef(null);
   const dragStateRef = useRef({ active: false, sourceSquare: null, endedAt: 0 });
+  const desktopRailWidth = sidebarOpen ? 360 : 84;
 
   const computeBoardSize = useCallback(() => {
     if (typeof window === 'undefined') return 320;
@@ -109,14 +110,11 @@ const GamePage = () => {
     }
     const layoutWidth = layoutRef.current?.clientWidth
       || document.querySelector('.app-main')?.clientWidth
-      || Math.max(360, window.innerWidth - 600);
-    const sidebarWidth = sidebarOpen
-      ? Math.min(420, Math.max(390, Math.floor(layoutWidth * 0.32))) + 24
-      : 68;
-    const maxByWidth = Math.floor(layoutWidth - sidebarWidth - 96);
+      || Math.max(720, window.innerWidth - 64);
+    const maxByWidth = Math.floor(layoutWidth - (desktopRailWidth * 2) - 56);
     const maxByHeight = Math.floor(window.innerHeight - 160);
     return Math.min(560, Math.max(280, Math.min(maxByWidth, maxByHeight)));
-  }, [sidebarOpen]);
+  }, [desktopRailWidth]);
 
   const [boardSize, setBoardSize] = useState(computeBoardSize);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -167,6 +165,12 @@ const GamePage = () => {
   useEffect(() => {
     setModalDismissed(false);
   }, [gameId]);
+
+  useEffect(() => {
+    if (user?.id) {
+      refreshUser();
+    }
+  }, [user?.id, refreshUser, gameId]);
 
   useEffect(() => {
     if (rematchGameId) {
@@ -372,6 +376,13 @@ const GamePage = () => {
           updateSelectedSquare(null);
           return;
         } else {
+          const legalMoves = chess.moves({ square: currentSelectedSquare, verbose: true });
+          const matchingMove = legalMoves.find((move) => move.to === square);
+          if (!matchingMove) {
+            updateSelectedSquare(null);
+            return;
+          }
+
           // Not our turn — queue as premove
           const srcPiece = chess.get(currentSelectedSquare);
           const isPawn = srcPiece?.type === 'p';
@@ -594,8 +605,13 @@ const GamePage = () => {
       <div
         ref={layoutRef}
         className={`game-layout ${isMobile ? 'game-layout--mobile' : 'game-layout--desktop'}`}
-        style={{ '--board-size': `${boardSize}px` }}
+        style={{
+          '--board-size': `${boardSize}px`,
+          '--game-rail-width': `${desktopRailWidth}px`,
+        }}
       >
+        {!isFullscreen && !isMobile && <div className="game-balance-rail" aria-hidden="true" />}
+
         {/* Board column */}
         {!isFullscreen && (
           <div className="game-board-col">

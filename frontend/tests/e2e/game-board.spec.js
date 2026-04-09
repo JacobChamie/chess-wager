@@ -101,6 +101,12 @@ async function installMockSocket(page, scenario) {
       setBoardActions(actions) {
         testState.boardActions = actions || null;
       },
+      simulatePieceClick(piece, square) {
+        return testState.boardActions?.pieceClick?.(piece, square);
+      },
+      simulateSquareClick(square, piece) {
+        return testState.boardActions?.squareClick?.(square, piece);
+      },
       simulatePieceDrop(from, to, piece) {
         return testState.boardActions?.pieceDrop?.(from, to, piece);
       },
@@ -220,13 +226,13 @@ test('queues and executes multiple premoves in order', async ({ page }) => {
   }));
   await gotoGame(page);
 
-  await page.locator('[data-square="g1"]').click();
+  await page.evaluate(() => window.__CHESS_TEST_API__.simulatePieceClick('wN', 'g1'));
   await settleUi(page);
-  await page.locator('[data-square="f3"]').click();
+  await page.evaluate(() => window.__CHESS_TEST_API__.simulateSquareClick('f3'));
   await settleUi(page);
-  await page.locator('[data-square="f3"]').click();
+  await page.evaluate(() => window.__CHESS_TEST_API__.simulatePieceClick('wN', 'f3'));
   await settleUi(page);
-  await page.locator('[data-square="g5"]').click();
+  await page.evaluate(() => window.__CHESS_TEST_API__.simulateSquareClick('g5'));
   await settleUi(page);
 
   await expect.poll(() => getGameMoveEmits(page)).toEqual([]);
@@ -257,6 +263,31 @@ test('queues and executes multiple premoves in order', async ({ page }) => {
   await expect.poll(() => getPremoveQueue(page)).toEqual([]);
 });
 
+test('queues a drag premove through the drop handler and executes it on turn', async ({ page }) => {
+  await installMockSocket(page, createScenario({
+    fen: BLACK_TO_MOVE_START_FEN,
+    turn: 'b',
+  }));
+  await gotoGame(page);
+
+  const dropAccepted = await page.evaluate(
+    () => window.__CHESS_TEST_API__.simulatePieceDrop('g1', 'f3', 'wN')
+  );
+
+  expect(dropAccepted).toBe(false);
+  await expect.poll(() => getGameMoveEmits(page)).toEqual([]);
+  await expect.poll(() => getPremoveQueue(page)).toEqual([
+    { from: 'g1', to: 'f3' },
+  ]);
+
+  const blackMove = buildMovePayload(BLACK_TO_MOVE_START_FEN, { from: 'e7', to: 'e5' }, { whiteTime: 60_000, blackTime: 59_000 });
+  await page.evaluate((payload) => window.__CHESS_TEST_API__.emitMoveMade(payload), blackMove);
+
+  await expect.poll(() => getGameMoveEmits(page)).toEqual([
+    { gameId: 'test-game', from: 'g1', to: 'f3' },
+  ]);
+});
+
 test('desktop layout keeps board and chat sidebar separated and scrollable', async ({ browser }) => {
   const context = await browser.newContext({
     viewport: { width: 1360, height: 700 },
@@ -274,6 +305,9 @@ test('desktop layout keeps board and chat sidebar separated and scrollable', asy
     expect(boardBox).not.toBeNull();
     expect(sidebarBox).not.toBeNull();
     expect(chatBox).not.toBeNull();
+    const viewportCenter = page.viewportSize().width / 2;
+    const boardCenter = boardBox.x + (boardBox.width / 2);
+    expect(Math.abs(boardCenter - viewportCenter)).toBeLessThanOrEqual(48);
     expect(boardBox.x + boardBox.width + 12).toBeLessThan(sidebarBox.x);
     expect(chatBox.height).toBeGreaterThan(boardBox.height - 80);
 
@@ -288,6 +322,14 @@ test('desktop layout keeps board and chat sidebar separated and scrollable', asy
   } finally {
     await context.close();
   }
+});
+
+test('app shell has no global chat panel or chat toggle', async ({ page }) => {
+  await page.goto('/');
+
+  await expect(page.locator('.app-chat-panel')).toHaveCount(0);
+  await expect(page.locator('.app-chat-mobile-overlay')).toHaveCount(0);
+  await expect(page.getByTitle(/chat/i)).toHaveCount(0);
 });
 
 test('footer content spans the available desktop width', async ({ page }) => {

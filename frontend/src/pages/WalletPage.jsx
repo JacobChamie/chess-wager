@@ -7,7 +7,7 @@ import WithdrawForm from '../components/WithdrawForm.jsx';
 const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
 
 const WalletPage = () => {
-  const { user } = useAuth();
+  const { user, mergeUser, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState('deposit');
   const [balance, setBalance] = useState(null);
@@ -26,9 +26,10 @@ const WalletPage = () => {
         const data = await res.json();
         setBalance(data.balance);
         setPendingDeposits(data.pendingDeposits);
+        mergeUser({ token_balance: data.balance });
       }
     } catch { /* ignore */ }
-  }, []);
+  }, [mergeUser]);
 
   const fetchLedger = useCallback(async () => {
     try {
@@ -61,6 +62,12 @@ const WalletPage = () => {
     const interval = setInterval(fetchBalance, 15000);
     return () => clearInterval(interval);
   }, [fetchBalance]);
+
+  useEffect(() => {
+    if (user?.id) {
+      refreshUser();
+    }
+  }, [user?.id, refreshUser]);
 
   if (!user) return null;
 
@@ -111,7 +118,12 @@ const WalletPage = () => {
         <div style={{ padding: '0 28px 28px' }}>
           {tab === 'deposit' && <DepositForm />}
           {tab === 'withdraw' && (
-            <WithdrawForm onBalanceChange={(newBal) => setBalance(newBal)} />
+            <WithdrawForm
+              onBalanceChange={(newBal) => {
+                setBalance(newBal);
+                mergeUser({ token_balance: newBal });
+              }}
+            />
           )}
           {tab === 'history' && (
             <div>

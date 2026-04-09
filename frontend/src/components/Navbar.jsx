@@ -8,7 +8,7 @@ import BalanceDisplay from './BalanceDisplay.jsx';
 
 const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
 
-const Navbar = ({ onToggleChat, chatOpen }) => {
+const Navbar = () => {
   const { user, logout } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -50,16 +50,6 @@ const Navbar = ({ onToggleChat, chatOpen }) => {
               <span>{activeGames}</span>
             </span>
           </div>
-          {onToggleChat && (
-            <button
-              className="navbar-icon-btn"
-              onClick={onToggleChat}
-              title={chatOpen ? 'Hide chat' : 'Show chat'}
-              style={{ opacity: chatOpen ? 1 : 0.5 }}
-            >
-              {'\uD83D\uDCAC'}
-            </button>
-          )}
         </div>
 
         <div className="navbar-actions">

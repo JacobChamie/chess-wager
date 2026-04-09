@@ -13,7 +13,7 @@ const BENEFITS = [
 ];
 
 const PremiumPage = () => {
-  const { user } = useAuth();
+  const { user, refreshUser, mergeUser } = useAuth();
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [subscribing, setSubscribing] = useState(false);
@@ -51,13 +51,19 @@ const PremiumPage = () => {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Subscription failed');
-      setSuccess('Premium activated! Refresh to see your gold name.');
+      setSuccess('Premium activated!');
       setStatus((prev) => ({
         ...prev,
         isPremium: true,
         expiresAt: data.expiresAt,
         balance: data.newBalance,
       }));
+      mergeUser({
+        is_premium: true,
+        premium_expires_at: data.expiresAt,
+        token_balance: data.newBalance,
+      });
+      refreshUser();
     } catch (err) {
       setError(err.message);
     } finally {

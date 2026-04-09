@@ -15,7 +15,7 @@ const ASSETS = {
 };
 
 const WithdrawForm = ({ onBalanceChange }) => {
-  const { user } = useAuth();
+  const { user, mergeUser, refreshUser } = useAuth();
   const balance = parseFloat(user?.token_balance) || 0;
 
   const [chain, setChain] = useState('ethereum');
@@ -95,6 +95,8 @@ const WithdrawForm = ({ onBalanceChange }) => {
       setAmount('');
       setToAddress('');
       onBalanceChange?.(data.newBalance);
+      mergeUser({ token_balance: data.newBalance });
+      refreshUser();
       fetchWithdrawals();
     } catch (err) {
       setError(err.message);

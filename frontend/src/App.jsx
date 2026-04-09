@@ -1,8 +1,7 @@
-import React, { lazy, Suspense, useState, useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import BottomNav from './components/BottomNav.jsx';
-import GlobalChat from './components/GlobalChat.jsx';
 import Footer from './components/Footer.jsx';
 import LobbyPage from './pages/LobbyPage.jsx';
 import LeaderboardPage from './pages/LeaderboardPage.jsx';
@@ -31,32 +30,11 @@ const ScrollToTop = () => {
 };
 
 const App = () => {
-  const location = useLocation();
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
-  const [chatOpen, setChatOpen] = useState(() => !isMobile);
-  const isGameRoute = location.pathname.startsWith('/game/');
-  const showDesktopChat = chatOpen && !isMobile && !isGameRoute;
-  const showMobileChat = isMobile && chatOpen && !isGameRoute;
-
-  useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   return (
     <div className="app-root">
       <ScrollToTop />
-      <Navbar onToggleChat={() => setChatOpen((v) => !v)} chatOpen={chatOpen} />
+      <Navbar />
       <div className="app-body">
-        {showDesktopChat && (
-          <aside className="app-chat-panel">
-            <GlobalChat />
-          </aside>
-        )}
         <main className="app-main">
           <Suspense fallback={<PageFallback />}>
             <Routes>
@@ -75,16 +53,8 @@ const App = () => {
             </Routes>
           </Suspense>
         </main>
-        {showDesktopChat && <div className="app-chat-spacer" aria-hidden="true" />}
       </div>
       <Footer />
-      {showMobileChat && (
-        <div className="app-chat-mobile-overlay" onClick={() => setChatOpen(false)}>
-          <div className="app-chat-mobile-panel" onClick={(e) => e.stopPropagation()}>
-            <GlobalChat />
-          </div>
-        </div>
-      )}
       <BottomNav />
     </div>
   );
